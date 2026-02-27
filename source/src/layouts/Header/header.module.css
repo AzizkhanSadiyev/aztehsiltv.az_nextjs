@@ -800,11 +800,41 @@ nav.navigation {
     -o-transition: all var(--transition-mid-ease);
 }
 nav.navigation.transformed {
-    max-width: 390px;
+    max-width: 440px;
     padding: 12px;
 }
 nav.navigation.transformed .drop_menu {
     display: flex;
+}
+nav.navigation.transformed .weather_currency {
+    flex-direction: row;
+    gap: 12px;
+}
+nav.navigation.transformed .weather,
+nav.navigation.transformed .currency_item {
+    flex-direction: row;
+    align-items: center;
+    min-height: 64px;
+    padding: 8px 12px;
+}
+nav.navigation.transformed .weather {
+    justify-content: space-between;
+}
+nav.navigation.transformed .weather_info {
+    font-size: 18px;
+}
+nav.navigation.transformed .weather_loc {
+    margin-top: 0;
+    margin-left: auto;
+}
+nav.navigation.transformed .currency_item {
+    justify-content: space-between;
+}
+nav.navigation.transformed .currency_content {
+    align-items: flex-end;
+}
+nav.navigation.transformed .currency_value {
+    margin-top: 0;
 }
 
 nav.navigation .socials_section {
