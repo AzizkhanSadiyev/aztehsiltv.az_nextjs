@@ -1,0 +1,21 @@
+.item_slider .swiper-pagination {
+    display: none;
+}
+
+.item_slider .swiper-slide {
+    height: auto;
+}
+
+@media (max-width: 1024px) {
+    .item_slider {
+        padding: 0;
+    }
+
+    .item_slider .popular_full {
+        border-radius: 0;
+        -webkit-border-radius: 0;
+        -moz-border-radius: 0;
+        -ms-border-radius: 0;
+        -o-border-radius: 0;
+    }
+}

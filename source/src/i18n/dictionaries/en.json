@@ -1,0 +1,47 @@
+{
+  "navigation": {
+    "home": "Home",
+    "categories": "Categories",
+    "contact": "Contact",
+    "about": "About Site",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Use",
+    "more": "More"
+  },
+  "home": {
+    "title": "Fins.az - News Portal",
+    "latestNews": "Latest News",
+    "popularNews": "Popular News"
+  },
+  "category": {
+    "title": "Category",
+    "allNews": "All News"
+  },
+  "news": {
+    "readMore": "Read More",
+    "shareNews": "Share",
+    "relatedNews": "Related News",
+    "publishedAt": "Published at",
+    "author": "Author"
+  },
+  "contact": {
+    "title": "Contact Us",
+    "name": "Name",
+    "email": "Email",
+    "message": "Message",
+    "send": "Send",
+    "address": "Address",
+    "phone": "Phone"
+  },
+  "common": {
+    "search": "Search",
+    "loading": "Loading...",
+    "noResults": "No results found",
+    "language": "Language"
+  },
+  "error": {
+    "title": "Oops! This Page Took a Wrong Turn.",
+    "info": "Click below to head back home or explore more of Fins.az.",
+    "backHome": "Back to Home Page"
+  }
+}

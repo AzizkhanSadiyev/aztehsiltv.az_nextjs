@@ -1,0 +1,202 @@
+/* Testimonial Section */
+.testimonialSection {
+    width: 100%;
+}
+
+.testimonialContainer {
+    display: flex;
+    align-items: center;
+    margin: 0 auto;
+    position: relative;
+    padding: 0 24px;
+}
+
+/* Navigation Buttons */
+.navButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #fff !important;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    z-index: 4;
+}
+
+.navButton:hover {
+    background: rgba(0, 0, 0, 0.05);
+    border-color: rgba(0, 0, 0, 0.2);
+}
+
+.navButton:hover {
+    border-color: #171914;
+}
+.navButton svg {
+    width: 24px;
+    height: 24px;
+}
+.navPrev {
+    left: 0;
+    border-right: 1px solid #dcd9d7;
+}
+.navNext {
+    right: 0;
+    border-left: 1px solid #dcd9d7;
+}
+
+/* Swiper Wrapper */
+.swiperWrapper {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.testimonialSwiper {
+    width: 100%;
+}
+
+.testimonialSwiper :global(.swiper-wrapper) {
+    align-items: stretch;
+}
+
+.testimonialSwiper :global(.swiper-slide) {
+    display: flex;
+    height: auto;
+}
+
+/* Testimonial Card */
+.testimonialCard {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 100%;
+    height: 100%;
+    min-height: 320px;
+    padding: 24px;
+    background: #fff;
+    border-radius: 12px;
+}
+
+/* Quote Text */
+.quoteText {
+    height: auto;
+    padding-left: 24px;
+    border-left: 1px solid #dcd9d7;
+    color: #171914;
+    font-family: "Bricolage Grotesque";
+    font-size: 24px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 30px; /* 125% */
+    margin-bottom: auto;
+    flex: 1;
+}
+
+/* Author Info */
+.authorInfo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 32px;
+}
+
+.authorLogo {
+    width: 80px;
+    height: 80px;
+    min-width: 80px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.authorLogo img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.authorDetails {
+    display: flex;
+    flex-direction: column;
+}
+
+.companyBadge {
+    display: inline-flex;
+    height: 24px;
+    padding: 4px 8px;
+    justify-content: center;
+    align-items: center;
+    width: fit-content;
+    margin-bottom: 4px;
+    border-radius: 8px;
+    background: #bfd2a6;
+
+    color: #171914;
+    font-family: "Bricolage Grotesque";
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 20px; /* 142.857% */
+}
+
+.authorName {
+    color: #171914;
+    font-family: "Bricolage Grotesque";
+    font-size: 18px;
+    font-style: normal;
+    font-weight: 600;
+    line-height: 24px; /* 133.333% */
+    margin: 0;
+}
+
+.authorPosition {
+    color: #464c3c;
+    font-family: "Bricolage Grotesque";
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 20px; /* 142.857% */
+    margin: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .testimonialContainer {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    .testimonialContainer {
+        padding: 0;
+    }
+
+    .swiperWrapper {
+        order: -1;
+        width: 100%;
+        flex: none;
+    }
+
+    .navButton {
+        margin-top: 24px;
+        position: relative;
+    }
+
+    .navPrev {
+        order: 1;
+        margin-right: 8px;
+    }
+
+    .navNext {
+        order: 2;
+        margin-left: 8px;
+    }
+
+    .testimonialCard {
+        min-height: 0;
+    }
+}
