@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef } from "react";
+import { useRef } from "react";
 import Image from "next/image";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay } from "swiper/modules";
@@ -73,66 +73,70 @@ export default function SliderPartner() {
     const swiperRef = useRef<SwiperType | null>(null);
 
     return (
-        <div className={styles.partnerSection}>
-            <div className={styles.partnerHeader}>
-                <h2 className={styles.partnerTitle}>Partners</h2>
-                <p className={styles.partnerSubtitle}>we grow with</p>
-            </div>
-            <div className={styles.partnerSlider}>
-                <Swiper
-                    modules={[Autoplay]}
-                    className={styles.partnerSwiper}
-                    slidesPerView={6}
-                    spaceBetween={24}
-                    loop
-                    speed={800}
-                    autoplay={{
-                        delay: 3000,
-                        disableOnInteraction: false,
-                    }}
-                    breakpoints={{
-                        0: {
-                            slidesPerView: 2,
-                            spaceBetween: 12,
-                        },
-                        480: {
-                            slidesPerView: 3,
-                            spaceBetween: 16,
-                        },
-                        768: {
-                            slidesPerView: 4,
-                            spaceBetween: 20,
-                        },
-                        1024: {
-                            slidesPerView: 5,
-                            spaceBetween: 24,
-                        },
-                        1280: {
-                            slidesPerView: 6,
-                            spaceBetween: 24,
-                        },
-                    }}
-                    onSwiper={(swiper) => {
-                        swiperRef.current = swiper;
-                    }}
-                >
-                    {partners.map((partner) => (
-                        <SwiperSlide key={partner.id}>
-                            <div className={styles.partnerCard}>
-                                <div className={styles.partnerLogo}>
-                                    <Image
-                                        src={partner.image}
-                                        alt={partner.name}
-                                        width={180}
-                                        height={80}
-                                        unoptimized
-                                    />
+        <section
+            className={`${styles.partnerSection} pad_top_40 margin_bottom_18`}
+            aria-label="Tərəfdaşlar"
+        >
+            <div className={styles.partnerShell}>
+                <div className={styles.partnerHeader}>
+                    <h2 className={styles.partnerTitle}>Tərəfdaşlar</h2>
+                </div>
+                <div className={styles.partnerSlider}>
+                    <Swiper
+                        modules={[Autoplay]}
+                        className={styles.partnerSwiper}
+                        slidesPerView={6}
+                        spaceBetween={20}
+                        loop
+                        speed={800}
+                        autoplay={{
+                            delay: 3000,
+                            disableOnInteraction: false,
+                        }}
+                        breakpoints={{
+                            0: {
+                                slidesPerView: 2,
+                                spaceBetween: 12,
+                            },
+                            480: {
+                                slidesPerView: 3,
+                                spaceBetween: 16,
+                            },
+                            768: {
+                                slidesPerView: 4,
+                                spaceBetween: 18,
+                            },
+                            1024: {
+                                slidesPerView: 5,
+                                spaceBetween: 20,
+                            },
+                            1280: {
+                                slidesPerView: 6,
+                                spaceBetween: 20,
+                            },
+                        }}
+                        onSwiper={(swiper) => {
+                            swiperRef.current = swiper;
+                        }}
+                    >
+                        {partners.map((partner) => (
+                            <SwiperSlide key={partner.id}>
+                                <div className={styles.partnerCard}>
+                                    <div className={styles.partnerLogo}>
+                                        <Image
+                                            src={partner.image}
+                                            alt={partner.name}
+                                            width={160}
+                                            height={100}
+                                            unoptimized
+                                        />
+                                    </div>
                                 </div>
-                            </div>
-                        </SwiperSlide>
-                    ))}
-                </Swiper>
+                            </SwiperSlide>
+                        ))}
+                    </Swiper>
+                </div>
             </div>
-        </div>
+        </section>
     );
 }

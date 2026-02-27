@@ -6,11 +6,13 @@ import styles from "./page.module.css";
 import headerStyles from "@/layouts/Header/header.module.css";
 import footerStyles from "@/layouts/Footer/footer.module.css";
 
+import SliderNews, { type NewsItem } from "@/components/SliderNews/slider";
+import SliderPartner from "@/components/SliderPartner/slider";
+
 import ServiceCard from "@/components/ServiceCard/Card";
 import TrainingCard from "@/components/TrainingCard/Card";
 import SliderTestimonial from "@/components/SliderTestimonial/slider";
 import TeamCard from "@/components/TeamCard/Card";
-import SliderPartner from "@/components/SliderPartner/slider";
 import ContactForm from "@/components/ContactForm/ContactForm";
 
 const cx = (...classes: Array<string | false | null | undefined>) =>
@@ -115,6 +117,66 @@ export default async function HomePage({
                 "Turns strategy into delivery—pragmatic roadmaps, less debt, more value.",
             image: "/assets/images/team_4.png",
             linkedinUrl: "https://linkedin.com/in/....",
+        },
+    ];
+    const newsItems: NewsItem[] = [
+        {
+            id: 1,
+            title: '"Silikon Sehrasi"nda bir mekteb sagirdleri yarimkecirici buna qosulmaga hazirlayir',
+            image: "/assets/images/card_1.png",
+            views: "1.2 M baxis",
+            date: "28 Dek 2026",
+            category: "Verilis",
+            duration: "00:35",
+            href: "#",
+            type: "video",
+        },
+        {
+            id: 2,
+            title: "Tramp mekteb naharlarina tam sud qaytaran qanun imzaladi",
+            image: "/assets/images/card_2.png",
+            views: "960 K baxis",
+            date: "27 Dek 2026",
+            category: "Verilis",
+            duration: "00:35",
+            href: "#",
+            type: "video",
+        },
+        {
+            id: 3,
+            title: "Konqres kend mektebleri ucun Fondu yeniden berpa etdi. Onlarin mubarizeleri hele bitmeyib",
+            image: "/assets/images/card_3.png",
+            views: "1.2 M baxis",
+            date: "28 Dek 2026",
+            category: "Imtahan",
+            duration: "00:35",
+            href: "#",
+            type: "video",
+        },
+        {
+            id: 4,
+            title: "STEAM laboratoriyalari ucun yeni tecrube setleri paylandi",
+            image: "/assets/images/card_4.png",
+            views: "540 K baxis",
+            date: "25 Dek 2026",
+            category: "Tehsil",
+            duration: "00:42",
+            href: "#",
+            type: "video",
+        },
+    ];
+    const newsSections: Array<{ title: string; items: NewsItem[] }> = [
+        {
+            title: "Ugur hekayeleri",
+            items: newsItems,
+        },
+        {
+            title: "Tehsil saati",
+            items: newsItems.slice(1),
+        },
+        {
+            title: "Podkast",
+            items: newsItems,
         },
     ];
 
@@ -318,6 +380,19 @@ export default async function HomePage({
                 </div>
             </div>
             {/* Page top items */}
+
+            <div className="main_center">
+                <SliderNews title="Ugur hekayeleri" items={newsItems} />
+            </div>
+
+            <div className="main_center">
+                <SliderNews title="Tehsil saati" items={newsItems} />
+                <SliderNews title="Tehsil saati" items={newsItems} />
+            </div>
+
+            <div className="main_center">
+                <SliderNews title="Podkast" items={newsItems} />
+            </div>
 
             <div className="main_center">
                 {/* wrap_manshet */}
@@ -561,6 +636,9 @@ export default async function HomePage({
                 <ContactForm />
             </div>
             {/* Contact Form*/}
+            <div className="main_center">
+                <SliderPartner />
+            </div>
         </>
     );
 }

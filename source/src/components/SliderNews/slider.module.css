@@ -1,0 +1,84 @@
+.newsSection {
+    width: 100%;
+    padding-bottom: 32px;
+}
+
+.newsHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: nowrap;
+    gap: 16px;
+}
+
+.navGroup {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    margin-left: auto;
+}
+
+.navButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--color-border-e1e1eb);
+    background: var(--color-bg-f1f0f7);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.navButton:hover {
+    background: var(--color-bg-ffffff);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.navIcon {
+    width: 20px;
+    height: 20px;
+    display: block;
+}
+
+.navPrev {
+    border-right-color: var(--color-border-e1e1eb);
+}
+
+.navNext {
+    border-left-color: var(--color-border-e1e1eb);
+}
+
+.newsSlider {
+    width: 100%;
+}
+
+.newsSwiper {
+    width: 100%;
+}
+
+.newsSwiper :global(.swiper-wrapper) {
+    align-items: stretch;
+}
+
+.newsSwiper :global(.swiper-slide) {
+    display: flex;
+    height: auto;
+}
+
+.newsSwiper :global(.swiper-slide) > * {
+    width: 100%;
+}
+
+@media (max-width: 768px) {
+    .newsHeader {
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .navGroup {
+        width: 100%;
+        justify-content: flex-end;
+    }
+}

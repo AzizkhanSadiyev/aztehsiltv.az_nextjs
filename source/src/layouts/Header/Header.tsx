@@ -503,7 +503,7 @@ export default function Header({ locale, dict: _dict }: HeaderProps) {
                     </div>
                     <div className={mobileClass}>
                         <div className={styles.socials_section}>
-                            <div className="social_title">
+                            <div className={styles.social_title}>
                                 Bizi
                                 <span>sosial şəbəkələrdən</span>
                                 izləyin:
@@ -512,11 +512,11 @@ export default function Header({ locale, dict: _dict }: HeaderProps) {
                                 <li>
                                     <a
                                         href=""
-                                        className="social_icon"
+                                        className={styles.social_icon}
                                         target="_blank"
                                         rel="noreferrer"
                                     >
-                                        <span className="scl_icn">
+                                        <span className={styles.scl_icn}>
                                             <img
                                                 className={styles["logo--light"]}
                                                 src="/assets/icons/icon_facebook_light.svg"
@@ -528,7 +528,7 @@ export default function Header({ locale, dict: _dict }: HeaderProps) {
                                                 alt="facebook"
                                             />
                                         </span>
-                                        <span className="scl_name">
+                                        <span className={styles.scl_name}>
                                             Facebook
                                         </span>
                                     </a>
@@ -536,11 +536,11 @@ export default function Header({ locale, dict: _dict }: HeaderProps) {
                                 <li>
                                     <a
                                         href=""
-                                        className="social_icon"
+                                        className={styles.social_icon}
                                         target="_blank"
                                         rel="noreferrer"
                                     >
-                                        <span className="scl_icn">
+                                        <span className={styles.scl_icn}>
                                             <img
                                                 className={styles["logo--light"]}
                                                 src="/assets/icons/icon_instagram_light.svg"
@@ -552,7 +552,7 @@ export default function Header({ locale, dict: _dict }: HeaderProps) {
                                                 alt="instagram"
                                             />
                                         </span>
-                                        <span className="scl_name">
+                                        <span className={styles.scl_name}>
                                             Instagram
                                         </span>
                                     </a>
@@ -560,11 +560,11 @@ export default function Header({ locale, dict: _dict }: HeaderProps) {
                                 <li>
                                     <a
                                         href=""
-                                        className="social_icon"
+                                        className={styles.social_icon}
                                         target="_blank"
                                         rel="noreferrer"
                                     >
-                                        <span className="scl_icn">
+                                        <span className={styles.scl_icn}>
                                             <img
                                                 className={styles["logo--light"]}
                                                 src="/assets/icons/icon_ytb_light.svg"
@@ -576,17 +576,17 @@ export default function Header({ locale, dict: _dict }: HeaderProps) {
                                                 alt="youtube"
                                             />
                                         </span>
-                                        <span className="scl_name">Youtube</span>
+                                        <span className={styles.scl_name}>Youtube</span>
                                     </a>
                                 </li>
                                 <li>
                                     <a
                                         href=""
-                                        className="social_icon"
+                                        className={styles.social_icon}
                                         target="_blank"
                                         rel="noreferrer"
                                     >
-                                        <span className="scl_icn">
+                                        <span className={styles.scl_icn}>
                                             <img
                                                 className={styles["logo--light"]}
                                                 src="/assets/icons/icon_telegram_light.svg"
@@ -598,17 +598,17 @@ export default function Header({ locale, dict: _dict }: HeaderProps) {
                                                 alt="telegram"
                                             />
                                         </span>
-                                        <span className="scl_name">Telegram</span>
+                                        <span className={styles.scl_name}>Telegram</span>
                                     </a>
                                 </li>
                                 <li>
                                     <a
                                         href=""
-                                        className="social_icon"
+                                        className={styles.social_icon}
                                         target="_blank"
                                         rel="noreferrer"
                                     >
-                                        <span className="scl_icn">
+                                        <span className={styles.scl_icn}>
                                             <img
                                                 className={styles["logo--light"]}
                                                 src="/assets/icons/icon_tiktok_light.svg"
@@ -620,7 +620,7 @@ export default function Header({ locale, dict: _dict }: HeaderProps) {
                                                 alt="tiktok"
                                             />
                                         </span>
-                                        <span className="scl_name">Tiktok</span>
+                                        <span className={styles.scl_name}>Tiktok</span>
                                     </a>
                                 </li>
                             </ul>
