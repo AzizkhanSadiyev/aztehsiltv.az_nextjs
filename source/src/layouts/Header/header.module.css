@@ -803,6 +803,8 @@ nav.navigation.transformed {
     max-width: 440px;
     padding: 12px;
 }
+
+
 nav.navigation.transformed .drop_menu {
     display: flex;
 }
