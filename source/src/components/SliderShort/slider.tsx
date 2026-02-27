@@ -11,7 +11,7 @@ import styles from "./slider.module.css";
 
 /* ================= TYPES ================= */
 
-export type NewsItem = {
+export type ShortItem = {
     id: number;
     title: string;
     image: string;
@@ -29,19 +29,22 @@ const cx = (...classes: Array<string | false | null | undefined>) =>
     classes.filter(Boolean).join(" ");
 
 type SliderNewsProps = {
-    items: NewsItem[];
+    items: ShortItem[];
     loading?: boolean;
     title?: string;
     slidesPerView?: number;
     spaceBetween?: number;
-    breakpoints?: Record<number, { slidesPerView?: number; spaceBetween?: number }>;
+    breakpoints?: Record<
+        number,
+        { slidesPerView?: number; spaceBetween?: number }
+    >;
 };
 
 export default function SliderNews({
     items,
     loading = false,
     title = "Arasdirma",
-    slidesPerView = 3,
+    slidesPerView = 5,
     spaceBetween = 20,
     breakpoints,
 }: SliderNewsProps) {
@@ -50,11 +53,11 @@ export default function SliderNews({
         breakpoints ??
         ({
             0: {
-                slidesPerView: 1,
-                spaceBetween: 16,
-            },
-            720: {
                 slidesPerView: 2,
+                spaceBetween: 18,
+            },
+            480: {
+                slidesPerView: 3,
                 spaceBetween: 18,
             },
             1100: {
@@ -77,7 +80,7 @@ export default function SliderNews({
 
     return (
         <div
-            className={`${styles.newsSection} pad_top_20 pad_bottom_20`}
+            className={`${styles.newsSection} ${styles.shortWrap} pad_top_20 pad_bottom_20`}
             aria-label={title}
         >
             <div className={cx("sect_header", styles.newsHeader)}>
@@ -136,7 +139,7 @@ export default function SliderNews({
                           ))
                         : items.map((item) => (
                               <SwiperSlide key={item.id}>
-                                  <NewsCard {...item} />
+                                  <NewsCard {...item} variant="short" />
                               </SwiperSlide>
                           ))}
                 </Swiper>

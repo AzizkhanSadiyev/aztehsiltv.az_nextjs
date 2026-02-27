@@ -6,21 +6,17 @@ import type { Swiper as SwiperType } from "swiper";
 import { Autoplay } from "swiper/modules";
 
 import "swiper/css";
-import NewsCard from "@/components/NewsCard/Card";
+import BroadcastCard from "@/components/BroadcastCard/Card";
 import styles from "./slider.module.css";
 
 /* ================= TYPES ================= */
 
-export type NewsItem = {
+export type BroadcastItem = {
     id: number;
     title: string;
+    count: string;
     image: string;
     href?: string;
-    views?: string;
-    date?: string;
-    category?: string;
-    duration?: string;
-    type?: "video" | "list";
 };
 
 /* ================= COMPONENT ================= */
@@ -28,8 +24,8 @@ export type NewsItem = {
 const cx = (...classes: Array<string | false | null | undefined>) =>
     classes.filter(Boolean).join(" ");
 
-type SliderNewsProps = {
-    items: NewsItem[];
+type SliderBroadcastProps = {
+    items: BroadcastItem[];
     loading?: boolean;
     title?: string;
     slidesPerView?: number;
@@ -37,14 +33,14 @@ type SliderNewsProps = {
     breakpoints?: Record<number, { slidesPerView?: number; spaceBetween?: number }>;
 };
 
-export default function SliderNews({
+export default function SliderBroadcast({
     items,
     loading = false,
-    title = "Arasdirma",
-    slidesPerView = 3,
+    title = "Verilisler",
+    slidesPerView = 4,
     spaceBetween = 20,
     breakpoints,
-}: SliderNewsProps) {
+}: SliderBroadcastProps) {
     const swiperRef = useRef<SwiperType | null>(null);
     const swiperBreakpoints =
         breakpoints ??
@@ -131,12 +127,16 @@ export default function SliderNews({
                     {loading
                         ? Array.from({ length: 3 }).map((_, index) => (
                               <SwiperSlide key={`loading-${index}`}>
-                                  <NewsCard loading />
+                                  <BroadcastCard
+                                      title="Loading"
+                                      count="..."
+                                      image="/assets/images/board_1.png"
+                                  />
                               </SwiperSlide>
                           ))
                         : items.map((item) => (
                               <SwiperSlide key={item.id}>
-                                  <NewsCard {...item} />
+                                  <BroadcastCard {...item} />
                               </SwiperSlide>
                           ))}
                 </Swiper>

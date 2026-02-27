@@ -6,21 +6,15 @@ import type { Swiper as SwiperType } from "swiper";
 import { Autoplay } from "swiper/modules";
 
 import "swiper/css";
-import NewsCard from "@/components/NewsCard/Card";
+import ExploreCard from "@/components/ExploreCard/Card";
 import styles from "./slider.module.css";
 
 /* ================= TYPES ================= */
 
-export type NewsItem = {
+export type ExploreItem = {
     id: number;
     title: string;
-    image: string;
     href?: string;
-    views?: string;
-    date?: string;
-    category?: string;
-    duration?: string;
-    type?: "video" | "list";
 };
 
 /* ================= COMPONENT ================= */
@@ -28,23 +22,21 @@ export type NewsItem = {
 const cx = (...classes: Array<string | false | null | undefined>) =>
     classes.filter(Boolean).join(" ");
 
-type SliderNewsProps = {
-    items: NewsItem[];
-    loading?: boolean;
+type SliderExploreProps = {
+    items: ExploreItem[];
     title?: string;
     slidesPerView?: number;
     spaceBetween?: number;
     breakpoints?: Record<number, { slidesPerView?: number; spaceBetween?: number }>;
 };
 
-export default function SliderNews({
+export default function SliderExplore({
     items,
-    loading = false,
-    title = "Arasdirma",
-    slidesPerView = 3,
-    spaceBetween = 20,
+    title = "Kesf et",
+    slidesPerView = 6,
+    spaceBetween = 16,
     breakpoints,
-}: SliderNewsProps) {
+}: SliderExploreProps) {
     const swiperRef = useRef<SwiperType | null>(null);
     const swiperBreakpoints =
         breakpoints ??
@@ -128,17 +120,11 @@ export default function SliderNews({
                         swiperRef.current = swiper;
                     }}
                 >
-                    {loading
-                        ? Array.from({ length: 3 }).map((_, index) => (
-                              <SwiperSlide key={`loading-${index}`}>
-                                  <NewsCard loading />
-                              </SwiperSlide>
-                          ))
-                        : items.map((item) => (
-                              <SwiperSlide key={item.id}>
-                                  <NewsCard {...item} />
-                              </SwiperSlide>
-                          ))}
+                    {items.map((item) => (
+                        <SwiperSlide key={item.id}>
+                            <ExploreCard title={item.title} href={item.href} />
+                        </SwiperSlide>
+                    ))}
                 </Swiper>
             </div>
         </div>

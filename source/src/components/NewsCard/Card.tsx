@@ -16,6 +16,7 @@ type NewsCardProps = {
     type?: "video" | "list";
     titleAs?: ElementType;
     loading?: boolean;
+    variant?: "default" | "short";
 };
 
 /* ================= COMPONENT ================= */
@@ -34,6 +35,7 @@ export default function NewsCard({
     type = "video",
     titleAs: TitleTag = "h6",
     loading = false,
+    variant = "default",
 }: NewsCardProps) {
     if (loading) {
         return (
@@ -74,7 +76,12 @@ export default function NewsCard({
     }
 
     return (
-        <div className={styles.card_item}>
+        <div
+            className={cx(
+                styles.card_item,
+                variant === "short" && styles.shortCard
+            )}
+        >
             <a href={href} className={styles.card_item_link}>
                 <div className={styles.item_img}>
                     <img src={image} alt={title} />

@@ -3,20 +3,19 @@ import { getDictionary } from "@/i18n/getDictionary";
 import Link from "next/link";
 import Image from "next/image";
 import styles from "./page.module.css";
-import headerStyles from "@/layouts/Header/header.module.css";
-import footerStyles from "@/layouts/Footer/footer.module.css";
 
+import NewsCard, { type newsItems } from "@/components/NewsCard/Card";
+import SliderShort, { type ShortItem } from "@/components/SliderShort/slider";
 import SliderNews, { type NewsItem } from "@/components/SliderNews/slider";
+import SliderBroadcast, {
+    type BroadcastItem,
+} from "@/components/SliderBroadcast/slider";
 import SliderPartner from "@/components/SliderPartner/slider";
-
-import ServiceCard from "@/components/ServiceCard/Card";
-import TrainingCard from "@/components/TrainingCard/Card";
-import SliderTestimonial from "@/components/SliderTestimonial/slider";
-import TeamCard from "@/components/TeamCard/Card";
-import ContactForm from "@/components/ContactForm/ContactForm";
-
-const cx = (...classes: Array<string | false | null | undefined>) =>
-    classes.filter(Boolean).join(" ");
+import PageTopItems from "@/components/PageTopItems/PageTopItems";
+import SliderExplore, {
+    type ExploreItem,
+} from "@/components/SliderExplore/slider";
+import TopVideo from "@/components/TopVideo/TopVideo";
 
 export default async function HomePage({
     params,
@@ -26,99 +25,6 @@ export default async function HomePage({
     const { locale } = await params;
     const dict = await getDictionary(locale as Locale);
 
-    const services = [
-        {
-            title: "SRE & Infrastructure",
-            description:
-                "High-availability systems that wrap your legacy core in modern resilience.",
-            image: "/assets/images/card_1.png",
-            slug: "sre-infrastructure",
-            more: "Learn more",
-        },
-        {
-            title: "DevOps Transformation",
-            description:
-                'Moving from manual to automated without the "Big Bang" risk',
-            image: "/assets/images/card_2.png",
-            slug: "devops-transformation",
-            more: "Learn more",
-        },
-        {
-            title: "Product Management",
-            description:
-                "Roadmaps that bridge the gap between technical debt and market-ready features.",
-            image: "/assets/images/card_3.png",
-            slug: "product-management",
-            more: "Learn more",
-        },
-        {
-            title: "Development",
-            description: "Building software that respond your demand",
-            image: "/assets/images/card_4.png",
-            slug: "development",
-            more: "Learn more",
-        },
-    ];
-    const trainings = [
-        {
-            title: "Kubernetes Mastery",
-            subtitle: "From local dev to production-ready clusters.",
-            description:
-                "Roadmaps that bridge the gap between technical debt and market-ready features.",
-            image: "/assets/icons/training_icon.svg",
-            slug: "kubernetes-mastery",
-        },
-        {
-            title: "Modern DevOps Culture",
-            subtitle: "Shifting mindsets along with the tech stack.",
-            description:
-                "Roadmaps that bridge the gap between technical debt and market-ready features.",
-            image: "/assets/icons/training_icon.svg",
-            slug: "modern-devops-culture",
-        },
-        {
-            title: "SRE Foundations",
-            subtitle: "Reliability as a feature, not an afterthought.",
-            description:
-                "Roadmaps that bridge the gap between technical debt and market-ready features.",
-            image: "/assets/icons/training_icon.svg",
-            slug: "sre-foundations",
-        },
-    ];
-    const teams = [
-        {
-            name: "Adrian Whitmore",
-            position: "Founder",
-            description:
-                "Leads incremental change—clear roadmaps, low risk, steady progress around legacy.",
-            image: "/assets/images/team_1.png",
-            linkedinUrl: "https://linkedin.com/in/....",
-        },
-        {
-            name: "Miles Harrington",
-            position: "Head of Platform",
-            description:
-                "Builds delivery systems—CI/CD, Kubernetes, automation around legacy.",
-            image: "/assets/images/team_2.png",
-            linkedinUrl: "https://linkedin.com/in/....",
-        },
-        {
-            name: "Elena Varga",
-            position: "Head of SRE & Reliability",
-            description:
-                "Makes reliability a feature—SLOs, observability, incident readiness, calm ops.",
-            image: "/assets/images/team_3.png",
-            linkedinUrl: "https://linkedin.com/in/....",
-        },
-        {
-            name: "Noah Kensington",
-            position: "Product Strategy Lead",
-            description:
-                "Turns strategy into delivery—pragmatic roadmaps, less debt, more value.",
-            image: "/assets/images/team_4.png",
-            linkedinUrl: "https://linkedin.com/in/....",
-        },
-    ];
     const newsItems: NewsItem[] = [
         {
             id: 1,
@@ -164,19 +70,190 @@ export default async function HomePage({
             href: "#",
             type: "video",
         },
+        {
+            id: 5,
+            title: '"Silikon Sehrasi"nda bir mekteb sagirdleri yarimkecirici buna qosulmaga hazirlayir',
+            image: "/assets/images/card_1.png",
+            views: "1.2 M baxis",
+            date: "28 Dek 2026",
+            category: "Verilis",
+            duration: "00:35",
+            href: "#",
+            type: "video",
+        },
+        {
+            id: 6,
+            title: "Tramp mekteb naharlarina tam sud qaytaran qanun imzaladi",
+            image: "/assets/images/card_2.png",
+            views: "960 K baxis",
+            date: "27 Dek 2026",
+            category: "Verilis",
+            duration: "00:35",
+            href: "#",
+            type: "video",
+        },
+        {
+            id: 7,
+            title: "Konqres kend mektebleri ucun Fondu yeniden berpa etdi. Onlarin mubarizeleri hele bitmeyib",
+            image: "/assets/images/card_3.png",
+            views: "1.2 M baxis",
+            date: "28 Dek 2026",
+            category: "Imtahan",
+            duration: "00:35",
+            href: "#",
+            type: "video",
+        },
+        {
+            id: 8,
+            title: "STEAM laboratoriyalari ucun yeni tecrube setleri paylandi",
+            image: "/assets/images/card_4.png",
+            views: "540 K baxis",
+            date: "25 Dek 2026",
+            category: "Tehsil",
+            duration: "00:42",
+            href: "#",
+            type: "video",
+        },
     ];
-    const newsSections: Array<{ title: string; items: NewsItem[] }> = [
+    const shortsItems: ShortItem[] = [
         {
-            title: "Ugur hekayeleri",
-            items: newsItems,
+            id: 1,
+            title: "Niya Rayonlar immiqrasiya ile bagli protokollar tesis edirler",
+            image: "/assets/images/short_1.png",
+            views: "1.2 M baxis",
+            date: "28 Dek 2026",
+            category: "Verilis",
+            duration: "00:35",
+            href: "#",
+            type: "video",
         },
         {
-            title: "Tehsil saati",
-            items: newsItems.slice(1),
+            id: 2,
+            title: "ABS her usaq ucun tovsiye edilen peyvendin sayi",
+            image: "/assets/images/short_2.png",
+            views: "1.2 M baxis",
+            date: "28 Dek 2026",
+            category: "Verilis",
+            duration: "00:35",
+            href: "#",
+            type: "video",
         },
         {
+            id: 3,
+            title: "Mekteb liderlerini ilhamlandirmaq ucun 14 yeni Qerari",
+            image: "/assets/images/short_3.png",
+            views: "1.2 M baxis",
+            date: "28 Dek 2026",
+            category: "Tehsil",
+            duration: "00:35",
+            href: "#",
+            type: "video",
+        },
+        {
+            id: 4,
+            title: "Bunlar direktorlarin oyrənmək istediyi yeni bacariqlardir",
+            image: "/assets/images/short_4.png",
+            views: "1.2 M baxis",
+            date: "28 Dek 2026",
+            category: "Tehsil",
+            duration: "00:35",
+            href: "#",
+            type: "video",
+        },
+        {
+            id: 5,
+            title: "Zohran Mamdani Manhetten mektebinin mudirini Nyu-York",
+            image: "/assets/images/short_5.png",
+            views: "1.2 M baxis",
+            date: "28 Dek 2026",
+            category: "Verilis",
+            duration: "00:35",
+            href: "#",
+            type: "video",
+        },
+        {
+            id: 6,
+            title: "Mekteb liderlerini ilhamlandirmaq ucun 14 yeni Qerari",
+            image: "/assets/images/short_3.png",
+            views: "1.2 M baxis",
+            date: "28 Dek 2026",
+            category: "Tehsil",
+            duration: "00:35",
+            href: "#",
+            type: "video",
+        },
+        {
+            id: 7,
+            title: "Bunlar direktorlarin oyrənmək istediyi yeni bacariqlardir",
+            image: "/assets/images/short_4.png",
+            views: "1.2 M baxis",
+            date: "28 Dek 2026",
+            category: "Tehsil",
+            duration: "00:35",
+            href: "#",
+            type: "video",
+        },
+    ];
+
+    const exploreItems: ExploreItem[] = [
+        { id: 1, title: "Butun bolmeler", href: "#" },
+        { id: 2, title: "Tehsil", href: "#" },
+        { id: 3, title: "Ugur hekayeleri", href: "#" },
+        { id: 4, title: "Reportajlar", href: "#" },
+        { id: 5, title: "Layiheler", href: "#" },
+        { id: 6, title: "Xaricde tehsil", href: "#" },
+        { id: 7, title: "Ugur hekayeleri", href: "#" },
+        { id: 8, title: "Reportajlar", href: "#" },
+    ];
+    const broadcastItems: BroadcastItem[] = [
+        {
+            id: 1,
+            title: "Metodik korpu",
+            count: "364 video",
+            image: "/assets/images/board_1.png",
+            href: "#",
+        },
+        {
+            id: 2,
+            title: "Usaqlar ve biz",
+            count: "128 video",
+            image: "/assets/images/board_2.png",
+            href: "#",
+        },
+        {
+            id: 3,
             title: "Podkast",
-            items: newsItems,
+            count: "92 video",
+            image: "/assets/images/board_3.png",
+            href: "#",
+        },
+        {
+            id: 4,
+            title: "Tehsil saati",
+            count: "56 video",
+            image: "/assets/images/board_4.png",
+            href: "#",
+        },
+        {
+            id: 5,
+            title: "Tehsil saati",
+            count: "56 video",
+            image: "/assets/images/board_5.png",
+            href: "#",
+        },
+        {
+            id: 6,
+            title: "Podkast",
+            count: "92 video",
+            image: "/assets/images/board_3.png",
+            href: "#",
+        },
+        {
+            id: 7,
+            title: "Tehsil saati",
+            count: "56 video",
+            image: "/assets/images/board_4.png",
+            href: "#",
         },
     ];
 
@@ -184,461 +261,155 @@ export default async function HomePage({
         <>
             {/* Page top items */}
             <div className="main_center">
-                <div className="desktop">
-                    <div
-                        className={cx(
-                            footerStyles.socials_section,
-                            "margin_top_12",
-                            "margin_bottom_18",
-                        )}
-                    >
-                        <div className={footerStyles.social_title}>
-                            Bizi
-                            <span>sosial şəbəkələrdən</span>
-                            izləyin:
-                        </div>
-                        <ul className={footerStyles.socials}>
-                            <li>
-                                <a
-                                    href=""
-                                    className={footerStyles.social_icon}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                >
-                                    <span className={footerStyles.scl_icn}>
-                                        <img
-                                            className={
-                                                headerStyles["logo--light"]
-                                            }
-                                            src="/assets/icons/icon_facebook_light.svg"
-                                            alt="facebook"
-                                        />
-                                        <img
-                                            className={
-                                                headerStyles["logo--dark"]
-                                            }
-                                            src="/assets/icons/icon_facebook.svg"
-                                            alt="facebook"
-                                        />
-                                    </span>
-                                    <span className={footerStyles.scl_name}>
-                                        Facebook
-                                    </span>
-                                </a>
-                            </li>
-                            <li>
-                                <a
-                                    href=""
-                                    className={footerStyles.social_icon}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                >
-                                    <span className={footerStyles.scl_icn}>
-                                        <img
-                                            className={
-                                                headerStyles["logo--light"]
-                                            }
-                                            src="/assets/icons/icon_instagram_light.svg"
-                                            alt="instagram"
-                                        />
-                                        <img
-                                            className={
-                                                headerStyles["logo--dark"]
-                                            }
-                                            src="/assets/icons/icon_instagram.svg"
-                                            alt="instagram"
-                                        />
-                                    </span>
-                                    <span className={footerStyles.scl_name}>
-                                        Instagram
-                                    </span>
-                                </a>
-                            </li>
-                            <li>
-                                <a
-                                    href=""
-                                    className={footerStyles.social_icon}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                >
-                                    <span className={footerStyles.scl_icn}>
-                                        <img
-                                            className={
-                                                headerStyles["logo--light"]
-                                            }
-                                            src="/assets/icons/icon_ytb_light.svg"
-                                            alt="youtube"
-                                        />
-                                        <img
-                                            className={
-                                                headerStyles["logo--dark"]
-                                            }
-                                            src="/assets/icons/icon_ytb.svg"
-                                            alt="youtube"
-                                        />
-                                    </span>
-                                    <span className={footerStyles.scl_name}>
-                                        Youtube
-                                    </span>
-                                </a>
-                            </li>
-                            <li>
-                                <a
-                                    href=""
-                                    className={footerStyles.social_icon}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                >
-                                    <span className={footerStyles.scl_icn}>
-                                        <img
-                                            className={
-                                                headerStyles["logo--light"]
-                                            }
-                                            src="/assets/icons/icon_telegram_light.svg"
-                                            alt="telegram"
-                                        />
-                                        <img
-                                            className={
-                                                headerStyles["logo--dark"]
-                                            }
-                                            src="/assets/icons/icon_telegram.svg"
-                                            alt="telegram"
-                                        />
-                                    </span>
-                                    <span className={footerStyles.scl_name}>
-                                        Telegram
-                                    </span>
-                                </a>
-                            </li>
-                            <li>
-                                <a
-                                    href=""
-                                    className={footerStyles.social_icon}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                >
-                                    <span className={footerStyles.scl_icn}>
-                                        <img
-                                            className={
-                                                headerStyles["logo--light"]
-                                            }
-                                            src="/assets/icons/icon_tiktok_light.svg"
-                                            alt="tiktok"
-                                        />
-                                        <img
-                                            className={
-                                                headerStyles["logo--dark"]
-                                            }
-                                            src="/assets/icons/icon_tiktok.svg"
-                                            alt="tiktok"
-                                        />
-                                    </span>
-                                    <span className={footerStyles.scl_name}>
-                                        Tiktok
-                                    </span>
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-                <div className={cx(headerStyles.mobile, "mobile")}>
-                    <div className={headerStyles.weather_currency}>
-                        <div className={headerStyles.weather}>
-                            <span className={headerStyles.weather_info}>
-                                25°
-                            </span>
-                            <span className={headerStyles.weather_icon}>
-                                <img
-                                    src="/assets/icons/weather_rainy_night.svg"
-                                    alt="Weather"
-                                />
-                            </span>
-                            <span className={headerStyles.weather_loc}>
-                                Baku
-                            </span>
-                        </div>
-                        <div className={headerStyles.currency_item}>
-                            <div className={headerStyles.currency_content}>
-                                <select
-                                    name="currency_type"
-                                    id="currency_select"
-                                    className={headerStyles.currency_select}
-                                >
-                                    <option value="USD">USD</option>
-                                    <option value="EUR">EUR</option>
-                                    <option value="RUB">RUB</option>
-                                </select>
-                                <span className={headerStyles.currency_info}>
-                                    (%0.47)
-                                </span>
-                            </div>
-                            <span className={headerStyles.currency_value}>
-                                1.7000
-                            </span>
-                        </div>
-                    </div>
-                </div>
+                <PageTopItems />
             </div>
             {/* Page top items */}
 
+            {/* Short videolar */}
             <div className="main_center">
-                <SliderNews title="Ugur hekayeleri" items={newsItems} />
+                <SliderShort
+                    title="Short videolar"
+                    items={shortsItems}
+                    slidesPerView={5}
+                />
             </div>
+            {/* Short videolar */}
 
-            <div className="main_center">
-                <SliderNews title="Tehsil saati" items={newsItems} />
-                <SliderNews title="Tehsil saati" items={newsItems} />
-            </div>
-
-            <div className="main_center">
-                <SliderNews title="Podkast" items={newsItems} />
-            </div>
-
-            <div className="main_center">
-                {/* wrap_manshet */}
-                <div className={styles.wrap_manshet}>
-                    <div className={styles.manshet_content}>
-                        <div className={styles.msh_pin}>
-                            Technical Transformation Partner
+            {/* section Last video */}
+            <div className="mobile">
+                <section className="section_wrap pad_top_20 pad_bottom_20">
+                    <div className="main_center">
+                        <div className="sect_header">
+                            <a href="#" className="sect_title">
+                                Son videolar
+                            </a>
                         </div>
-                        <div className={styles.msh_title}>
-                            <p>
-                                <strong>Incremental</strong> Progress
-                            </p>
-                            <p>
-                                <strong>Irreversible</strong> Success
-                            </p>
-                        </div>
-                        <div className={styles.msh_description}>
-                            Inspired by the Strangler Fig, we specialize in the
-                            art of incremental transformation. We build the
-                            future around your legacy systems, replacing
-                            complexity with stability—one root at a time.
-                        </div>
-                        <div className={styles.msh_buttons}>
-                            <div className={`${styles.btn_item_info} `}>
-                                Ready to talk?
+                        <div className="sect_body">
+                            <div className="row_item gap_20">
+                                {newsItems.slice(0, 12).map((item) => (
+                                    <NewsCard
+                                        key={item.id}
+                                        title={item.title}
+                                        image={item.image}
+                                        views={item.views}
+                                        date={item.date}
+                                        category={item.category}
+                                        duration={item.duration}
+                                        href={item.href}
+                                        type={item.type}
+                                    />
+                                ))}
                             </div>
-                            <Link
-                                href={`/${locale}#contact`}
-                                className={`btn_item btn_more primary`}
+                        </div>
+                        <div className="sect_footer">
+                            <a
+                                href="#"
+                                title="AztehsilTv"
+                                className="more load_more_btn"
                             >
-                                <span className="btn_icon">Get in touch</span>
-                            </Link>
+                                Daha çox
+                            </a>
                         </div>
                     </div>
-                    <div className={styles.manshet_img}>
-                        <Image
-                            src="/assets/images/manshet_1.png"
-                            alt={"Manhset image"}
-                            width={596}
-                            height={596}
-                        />
-                    </div>
-                </div>
-                {/* wrap_manshet */}
+                </section>
             </div>
+            {/* section Last video  */}
 
-            <div className="border_line"></div>
-
-            {/* Services */}
-            <div className="main_center" id="services">
-                <div className="section_wrap wrapper_services pad_top_88 pad_bottom_88">
-                    <div className="sect_header">
-                        <div>
-                            <h2 className="sect_title">Services</h2>
-                            <div className="sect_info">Core Foundations</div>
-                        </div>
-                        <Link
-                            href={`/${locale}/services`}
-                            className="btn_item w_auto btn_more white"
-                        >
-                            <span className="btn_icon">All services</span>
-                        </Link>
-                    </div>
-                    <div className="row_item gap_32">
-                        {services.map((item, index) => (
-                            <div
-                                className="col_item"
-                                key={`${item.slug}-${index}`}
-                            >
-                                <ServiceCard
-                                    title={item.title}
-                                    description={item.description}
-                                    image={item.image}
-                                    slug={item.slug}
-                                    more={item.more}
-                                    locale={locale}
-                                />
-                            </div>
-                        ))}
-                    </div>
+            {/* Xaricdə təhsil */}
+            <div className="desktop">
+                <div className="main_center">
+                    <SliderNews
+                        title="Xaricdə təhsil"
+                        items={newsItems}
+                        slidesPerView={4}
+                    />
                 </div>
             </div>
-            {/* Services */}
+            {/* Xaricdə təhsil */}
 
-            <div className="border_line"></div>
-
-            {/* Trainings */}
-            <div className="main_center" id="trainings">
-                <div className="section_wrap wrapper_trainings pad_top_88 pad_bottom_88">
-                    <div className="sect_header">
-                        <div>
-                            <h2 className="sect_title">Trainings</h2>
-                            <div className="sect_info">Growing the Talent</div>
-                        </div>
-                        <Link
-                            href={`/${locale}/trainings`}
-                            className="btn_item w_auto btn_more white"
-                        >
-                            <span className="btn_icon">All trainings</span>
-                        </Link>
-                    </div>
-                    <div className="display_flex gap_16">
-                        {trainings.map((item, index) => (
-                            <div
-                                className="col_item"
-                                key={`${item.slug}-${index}`}
-                            >
-                                <TrainingCard
-                                    title={item.title}
-                                    subtitle={item.subtitle}
-                                    description={item.description}
-                                    image={item.image}
-                                    slug={item.slug}
-                                    locale={locale}
-                                />
-                            </div>
-                        ))}
-                    </div>
+            {/* Kəşf et */}
+            <div className="desktop">
+                <div className="main_center">
+                    <SliderExplore
+                        title="Kəşf et"
+                        items={exploreItems}
+                        slidesPerView={6}
+                    />
                 </div>
             </div>
-            {/* Trainings */}
+            {/* Kəşf et */}
 
-            <div className="border_line"></div>
-
-            {/* Testimonials */}
-            <div className="main_center" id="testimonial">
-                <div className="section_wrap pad_top_88 pad_bottom_88">
-                    <div className="sect_header">
-                        <div>
-                            <div
-                                className={styles.msh_pin}
-                                style={{ marginBottom: "16px" }}
-                            >
-                                What teams say after the transition
-                            </div>
-                            <h2 className="sect_title">Testimonials:</h2>
-                            <div className="sect_info">The Proof </div>
-                        </div>
-                    </div>
-                    <div className="sect_body">
-                        <SliderTestimonial />
-                    </div>
+            {/* Araşdırma */}
+            <div className="desktop">
+                <div className="main_center">
+                    <SliderNews
+                        title="Araşdırma"
+                        items={newsItems}
+                        slidesPerView={3}
+                    />
                 </div>
             </div>
-            {/* Testimonials */}
+            {/* Araşdırma */}
 
-            <div className="border_line"></div>
-
-            {/* About Us */}
-            <div className="main_center" id="about">
-                <div className="section_wrap wrapper_services pad_top_88 pad_bottom_88">
-                    <div className="sect_header">
-                        <div>
-                            <h2 className="sect_title">About Us</h2>
-                            <div className="sect_info">The Team & Mission</div>
-                        </div>
-                    </div>
-                    <div className="display_flex gap_32">
-                        <div className={`${styles.about_item} ${styles.black}`}>
-                            <div className={styles.about_item_icon}>
-                                <Image
-                                    src="/assets/images/about_1.png"
-                                    alt="About"
-                                    width={132}
-                                    height={132}
-                                    unoptimized
-                                />
-                            </div>
-                            <div className={styles.about_item_content}>
-                                <h6 className={styles.abt_item_title}>
-                                    The Mission
-                                </h6>
-                                <p className={styles.abt_item_info}>
-                                    From local dev to production-ready clusters.
-                                </p>
-                            </div>
-                        </div>
-                        <div className={`${styles.about_item} ${styles.green}`}>
-                            <div className={styles.about_item_icon}>
-                                <Image
-                                    src="/assets/images/about_1.png"
-                                    alt="About"
-                                    width={132}
-                                    height={132}
-                                    unoptimized
-                                />
-                            </div>
-                            <div className={styles.about_item_content}>
-                                <h6 className={styles.abt_item_title}>
-                                    The Mission
-                                </h6>
-                                <p className={styles.abt_item_info}>
-                                    From local dev to production-ready clusters.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
+            {/* Verilişlər */}
+            <div className="desktop">
+                <div className="main_center">
+                    <SliderBroadcast
+                        title="Verilişlər"
+                        items={broadcastItems}
+                        slidesPerView={5}
+                    />
                 </div>
             </div>
-            {/* About Us */}
+            {/* Verilişlər */}
 
-            <div className="border_line"></div>
+            {/* Uğur hekayələri */}
+            <div className="desktop">
+                <div className="main_center">
+                    <SliderNews
+                        title="Uğur hekayələri"
+                        items={newsItems}
+                        slidesPerView={4}
+                    />
+                </div>
+            </div>
+            {/* Uğur hekayələri */}
 
-            {/* Our team */}
+            {/* TopVideo */}
             <div className="main_center">
-                <div className="section_wrap wrapper_services pad_top_88 pad_bottom_88">
-                    <div className="sect_header">
-                        <div>
-                            <h2 className="sect_title">Our team</h2>
-                            <div className="sect_info">is our business</div>
-                        </div>
-                    </div>
-                    <div className="row_item gap_32">
-                        {teams.map((item, index) => (
-                            <div className="col_item" key={`${index}`}>
-                                <TeamCard
-                                    name={item.name}
-                                    position={item.position}
-                                    description={item.description}
-                                    image={item.image}
-                                    linkedinUrl={item.linkedinUrl}
-                                    locale={locale}
-                                />
-                            </div>
-                        ))}
-                    </div>
+                <TopVideo />
+            </div>
+            {/* TopVideo */}
+
+            {/* Təhsil saatı */}
+            <div className="desktop">
+                <div className="main_center">
+                    <SliderNews
+                        title="Təhsil saatı"
+                        items={newsItems}
+                        slidesPerView={3}
+                    />
                 </div>
             </div>
-            {/* Our team */}
+            {/* Təhsil saatı */}
 
-            <div className="border_line"></div>
+            {/* Podkast */}
+            <div className="desktop">
+                <div className="main_center">
+                    <SliderNews
+                        title="Podkast"
+                        items={newsItems}
+                        slidesPerView={4}
+                    />
+                </div>
+            </div>
+            {/* Podkast */}
 
             {/* Partners */}
-            <div className="main_center pad_top_88">
+            <div className="main_center">
                 <SliderPartner />
             </div>
             {/* Partners */}
-
-            {/* Contact Form*/}
-            <div className="main_center pad_top_88 pad_bottom_88" id="contact">
-                <ContactForm />
-            </div>
-            {/* Contact Form*/}
-            <div className="main_center">
-                <SliderPartner />
-            </div>
         </>
     );
 }

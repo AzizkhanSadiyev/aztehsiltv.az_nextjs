@@ -96,21 +96,10 @@
 /* Responsive */
 @media (max-width: 1024px) {
     .partnerShell {
-        padding: 20px;
-        border-radius: var(--radius-md);
-    }
-
-    .partnerHeader {
-        margin-bottom: 16px;
-    }
-}
-
-@media (max-width: 768px) {
-    .partnerShell {
-        padding: 16px;
-    }
-
-    .partnerTitle {
-        font-size: 16px;
+        padding: 24px 16px;
+        width: calc(100% + 32px);
+        margin-right: -16px;
+        margin-left: -16px;
+        border: 0;
     }
 }

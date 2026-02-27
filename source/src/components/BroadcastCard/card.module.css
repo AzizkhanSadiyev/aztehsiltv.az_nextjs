@@ -1,0 +1,210 @@
+/* Card Item */
+.card_item {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+    transition: all var(--transition-mid-ease);
+    -webkit-transition: all var(--transition-mid-ease);
+    -moz-transition: all var(--transition-mid-ease);
+    -ms-transition: all var(--transition-mid-ease);
+    -o-transition: all var(--transition-mid-ease);
+}
+
+.card_item_link {
+    display: block;
+    width: 100%;
+    transition: all 0.25s ease-in-out;
+    -webkit-transition: all 0.25s ease-in-out;
+    -moz-transition: all 0.25s ease-in-out;
+    -ms-transition: all 0.25s ease-in-out;
+    -o-transition: all 0.25s ease-in-out;
+}
+
+/* shared card bits */
+.item_img {
+    display: block;
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+}
+
+.item_img::before {
+    content: "";
+    display: block;
+    width: 100%;
+    padding-top: 57%;
+}
+
+.item_img img {
+    display: block;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.item_content {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 100%;
+    padding: 12px 0 0;
+}
+
+.catg_date_row {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    position: relative;
+    width: 100%;
+    min-height: 40px;
+}
+
+.pad_left_48 {
+    padding-left: 48px;
+}
+
+.card_type_icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    left: 0;
+    width: 40px;
+    height: 40px;
+    background-color: var(--color-icon-f1f0f7);
+    border: 1px solid var(--color-icon-f1f0f7);
+    border-radius: var(--radius-full);
+}
+
+.card_type_icon.list_type {
+    background-color: transparent;
+    border-color: var(--color-bg-e1e1eb);
+}
+
+.card_type_icon::before {
+    content: "";
+    display: block;
+    width: 16px;
+    height: 16px;
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.list_type::before {
+    background-image: url("/assets/icons/playlist.svg");
+}
+
+[data-theme="dark"] .list_type::before {
+    background-image: url("/assets/icons/playlist_dark.svg");
+}
+
+.item_catg {
+    display: block;
+    position: relative;
+    width: 100%;
+    text-align: left;
+    font-family: var(--font-primary);
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 1.2;
+    color: var(--color-text-101019);
+    opacity: 1;
+}
+
+.bold_catg {
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.date_time_itm {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: auto;
+    gap: 5px;
+}
+
+.item_date {
+    display: flex;
+    align-items: center;
+    position: relative;
+    width: auto;
+    text-align: left;
+    padding-left: 6px;
+    font-family: var(--font-primary);
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 1.2;
+    color: var(--color-text-81818a);
+    opacity: 1;
+}
+
+.item_date::before {
+    content: "";
+    display: block;
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    left: 0;
+    background-color: var(--color-text-81818a);
+    border-radius: 50%;
+}
+
+.item_date:first-child::before {
+    display: none;
+}
+
+.item_date:first-child {
+    padding: 0;
+}
+
+/* board_item  */
+.board_item {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    position: relative;
+    width: 100%;
+    padding: 12px 0 0 0;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    -webkit-border-radius: var(--radius-lg);
+    -moz-border-radius: var(--radius-lg);
+    -ms-border-radius: var(--radius-lg);
+    -o-border-radius: var(--radius-lg);
+}
+.board_item::before,
+.board_item::after {
+    content: "";
+    display: block;
+    position: absolute;
+    height: 100%;
+    background-color: var(--color-bg-ebebf2);
+    border-radius: var(--radius-lg);
+    -webkit-border-radius: var(--radius-lg);
+    -moz-border-radius: var(--radius-lg);
+    -ms-border-radius: var(--radius-lg);
+    -o-border-radius: var(--radius-lg);
+}
+.board_item::before {
+    width: 80%;
+    top: 0px;
+}
+.board_item::after {
+    width: 90%;
+    top: 6px;
+    box-shadow: 0px -1px 2px 0px rgba(0, 0, 0, 0.08);
+}
+
+.board_item .item_img {
+    z-index: 5;
+}
+
+/* board_item  */

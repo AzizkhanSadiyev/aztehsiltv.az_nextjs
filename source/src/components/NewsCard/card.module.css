@@ -417,6 +417,56 @@
 
 /* Card Item */
 
+/* Short video variant */
+.shortCard .item_img::before {
+    padding-top: 160%;
+}
+
+.shortCard .item_content {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    flex-direction: column;
+    justify-content: flex-end;
+    height: 100%;
+    padding: 12px;
+    background: linear-gradient(
+        to top,
+        rgba(20, 26, 41, 1) 0%,
+        rgba(20, 26, 41, 0) 70%
+    );
+}
+
+.shortCard .item_title {
+    color: #fff;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+}
+
+.shortCard .item_date {
+    color: #fff;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+}
+
+.shortCard .item_catg {
+    color: #fff;
+}
+
+.shortCard .catg_date_row {
+    min-height: 32px;
+}
+
+.shortCard .card_type_icon {
+    width: 32px;
+    height: 32px;
+    background-color: #fff;
+}
+
+.shortCard .video_type::before {
+    background-image: url("/assets/icons/play.svg");
+}
+
 /* Loading skeleton */
 .isLoading .card_item_link {
     cursor: default;
