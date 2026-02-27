@@ -1,0 +1,47 @@
+{
+  "navigation": {
+    "home": "Ana səhifə",
+    "categories": "Bölmələr",
+    "contact": "Əlaqə",
+    "about": "Saytda haqqında",
+    "privacy": "Məxfilik Siyasəti",
+    "terms": "İstifadə Şərtləri",
+    "more": "Daha çox"
+  },
+  "home": {
+    "title": "Fins.az - Xəbər Portalı",
+    "latestNews": "Son Xəbərlər",
+    "popularNews": "Populyar Xəbərlər"
+  },
+  "category": {
+    "title": "Bölmə",
+    "allNews": "Bütün Xəbərlər"
+  },
+  "news": {
+    "readMore": "Ətraflı Oxu",
+    "shareNews": "Paylaş",
+    "relatedNews": "Oxşar Xəbərlər",
+    "publishedAt": "Nəşr tarixi",
+    "author": "Müəllif"
+  },
+  "contact": {
+    "title": "Bizimlə Əlaqə",
+    "name": "Ad",
+    "email": "E-poçt",
+    "message": "Mesaj",
+    "send": "Göndər",
+    "address": "Ünvan",
+    "phone": "Telefon"
+  },
+  "common": {
+    "search": "Axtar",
+    "loading": "Yüklənir...",
+    "noResults": "Nəticə tapılmadı",
+    "language": "Dil"
+  },
+  "error": {
+    "title": "Oops! Bu səhifə yanlış yola düşdü.",
+    "info": "Ana səhifəyə qayıtmaq və ya Fins.az-ı daha çox araşdırmaq üçün aşağıya klikləyin.",
+    "backHome": "Ana Səhifəyə Qayıt"
+  }
+}

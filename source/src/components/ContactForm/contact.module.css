@@ -1,0 +1,279 @@
+/* Contact Section */
+.contactSection {
+    width: 100%;
+}
+
+.contactContainer {
+    display: flex;
+    align-items: stretch;
+    gap: 32px 88px;
+    margin: 0 auto;
+    padding: 64px;
+    overflow: hidden;
+    /* min-height: 560px; */
+    border-radius: 20px;
+    background: #161912;
+}
+
+/* Left Side */
+.contactLeft {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    width: 45%;
+    position: relative;
+}
+
+.contactLabel {
+    display: inline-flex;
+    align-items: center;
+    gap: 16px;
+    color: #eef0eb;
+    font-family: "Bricolage Grotesque";
+    font-size: 18px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 1.3;
+    margin-bottom: 16px;
+}
+
+.contactLabel svg {
+    width: 24px;
+    height: 24px;
+}
+
+.contactTitle {
+    color: #eef0eb;
+    font-family: "Bricolage Grotesque";
+    font-size: 56px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 1.2; /* 114.286% */
+    letter-spacing: -1.44px;
+    margin: 0;
+}
+
+.contactIllustration {
+    display: block;
+    width: 240px;
+    height: 240px;
+    overflow: hidden;
+    margin-top: 20px;
+}
+
+.contactIllustration img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Right Side - Form */
+.contactRight {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: 55%;
+}
+
+.contactForm {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.formRow {
+    display: flex;
+    gap: 20px;
+}
+
+.formRow .formGroup {
+    flex: 1;
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.formLabel {
+    color: #eef0eb;
+    font-family: "Bricolage Grotesque";
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 700;
+    letter-spacing: -0.56px;
+    line-height: 1.4;
+}
+
+.formInput {
+    width: 100%;
+    height: 56px;
+    padding: 16px 20px;
+    border-radius: 12px;
+    color: #eef0eb;
+    font-family: "Bricolage Grotesque";
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 400;
+    letter-spacing: -0.64px;
+    transition: border-color 0.2s ease;
+    border-radius: 12px;
+    border: 1px solid #484d42;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.formInput::placeholder {
+    color: #aeb2a4;
+}
+
+.formInput:focus {
+    outline: none;
+    border-color: #5e6654;
+}
+
+.formTextarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 16px 24px;
+    color: #eef0eb;
+    font-family: "Bricolage Grotesque";
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 400;
+    letter-spacing: -0.64px;
+    resize: vertical;
+    transition: border-color 0.2s ease;
+    border-radius: 12px;
+    border: 1px solid #484d42;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.formTextarea::placeholder {
+    color: #aeb2a4;
+}
+
+.formTextarea:focus {
+    outline: none;
+    border-color: #5e6654;
+}
+
+/* Interest Options */
+.interestOptions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.interestButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 48px;
+    padding: 12px;
+    color: #aeb2a4;
+    font-family: "Bricolage Grotesque";
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 24px; /* 150% */
+    letter-spacing: -0.64px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-radius: 32px;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.interestButton:hover,
+.interestActive {
+    background: #eef0eb;
+    color: #161912;
+}
+
+/* Form Footer */
+.formFooter {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    margin-top: 16px;
+}
+
+.privacyText {
+    color: #eef0eb;
+    font-family: "Bricolage Grotesque";
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 1.4; /* 142.857% */
+    margin: 0;
+}
+
+.submitButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 48px;
+    padding: 12px 24px;
+    border: none;
+    color: #171914;
+    font-family: "Bricolage Grotesque";
+    font-size: 18px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 24px; /* 133.333% */
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    border-radius: 40px;
+    background: #bfd2a6;
+    box-shadow:
+        0 4px 8px 0 rgba(0, 0, 0, 0.04),
+        0 4px 4px 0 rgba(255, 255, 255, 0.4) inset,
+        0 -4px 6px 0 rgba(144, 168, 114, 0.4) inset;
+}
+
+.submitButton:hover {
+    background: #b8c990;
+    transform: translateY(-1px);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .contactContainer {
+        flex-direction: column;
+        padding: 48px 16px;
+    }
+
+    .contactLeft {
+        width: 100%;
+        min-height: auto;
+    }
+
+    .contactTitle {
+        font-size: 36px;
+    }
+
+    .contactIllustration {
+        width: 96px;
+        height: 96px;
+    }
+
+    .contactRight {
+        width: 100%;
+    }
+
+    .formRow {
+        flex-direction: column;
+        gap: 16px;
+    }
+    .formFooter {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 20px;
+    }
+    .submitButton {
+        margin-left: auto;
+    }
+}

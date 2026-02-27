@@ -1,0 +1,66 @@
+name: Deploy to the Kubernetes
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+      
+    - name: Set Image Tag
+      id: image_tag
+      run: |
+        echo "Generating image tag..."
+        DATE=$(date +"%Y%m%d%H%M")
+        RANDOM_STRING=$(openssl rand -hex 2)
+        IMAGE_TAG="${DATE}-${RANDOM_STRING}"
+        echo "::set-output name=tag::${IMAGE_TAG}"
+        echo $IMAGE_TAG
+
+    - name: Docker Login
+      env:
+        DOCKER_USER: ${{ secrets.REGISTRY_USERNAME }}
+        DOCKER_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+      run: |
+        echo "$DOCKER_PASSWORD" | docker login container-registry.smartbee.az \
+          --username "$DOCKER_USER" --password-stdin
+
+    
+    - name: Build image
+      env:
+          IMAGE_TAG: ${{ steps.image_tag.outputs.tag }}
+      run: |
+        docker build \
+          -t container-registry.smartbee.az/strafig-web:$IMAGE_TAG \
+          -f Dockerfile \
+          .
+    
+    - name: Push image
+      env:
+          IMAGE_TAG: ${{ steps.image_tag.outputs.tag }}
+      run: |
+        docker push container-registry.smartbee.az/strafig-web:$IMAGE_TAG 
+
+
+    - name: Configure kubectl
+      env:
+        KUBECONFIG: ${{ secrets.KUBECONF }}
+      run: |
+        mkdir -p $HOME/.kube
+        echo "$KUBECONFIG"  > $HOME/.kube/config
+
+    - name: Set image tag to the deployment
+      env:
+          IMAGE_TAG: ${{ steps.image_tag.outputs.tag }}
+      run: |
+        sed -i 's/image_version/'"$IMAGE_TAG"'/g' k8s-manifests/*.yaml
+        cat k8s-manifests/deployment.yaml
+        
+      
+    - name: Apply Kubernetes Manifests
+      run: kubectl apply -f k8s-manifests/

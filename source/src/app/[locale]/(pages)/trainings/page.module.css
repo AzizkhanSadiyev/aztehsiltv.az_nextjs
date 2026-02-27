@@ -1,0 +1,28 @@
+.trainings_list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    width: 100%;
+}
+.trainings_list_item {
+    display: flex;
+    width: calc(50% - 8px);
+}
+/* Responsive tweaks */
+@media only screen and (max-width: 1200px) {
+    .trainings_list {
+        flex-direction: column;
+    }
+    .trainings_list_item {
+        width: 100%;
+    }
+}
+
+@media only screen and (max-width: 767px) {
+    .trainings_list {
+        flex-direction: column;
+    }
+    .trainings_list_item {
+        width: 100%;
+    }
+}
