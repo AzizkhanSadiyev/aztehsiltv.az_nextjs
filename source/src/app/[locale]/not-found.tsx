@@ -3,7 +3,7 @@ import Image from "next/image";
 
 export default function NotFound() {
     return (
-        <div className="section_wrap wrap_error_page">
+        <div className="section_wrap wrap_error_page pad_bottom_40 pad_top_40">
             <div className="main_center">
                 <div className="sect_body">
                     <div className="error_page">
