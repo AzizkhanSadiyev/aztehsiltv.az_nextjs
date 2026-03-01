@@ -1,5 +1,6 @@
 "use client";
-
+import Link from "next/link";
+import Image from "next/image";
 import { useRef } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import type { Swiper as SwiperType } from "swiper";
@@ -14,7 +15,7 @@ import styles from "./slider.module.css";
 export type ExploreItem = {
     id: number;
     title: string;
-    href?: string;
+    slug?: string;
 };
 
 /* ================= COMPONENT ================= */
@@ -81,11 +82,12 @@ export default function SliderExplore({
                         onClick={handlePrev}
                         aria-label="Previous"
                     >
-                        <img
+                        <Image
                             className={styles.navIcon}
                             src="/assets/icons/prev.svg"
-                            alt=""
-                            aria-hidden="true"
+                            width={36}
+                            height={36}
+                            alt="Previous"
                         />
                     </button>
                     <button
@@ -94,11 +96,12 @@ export default function SliderExplore({
                         onClick={handleNext}
                         aria-label="Next"
                     >
-                        <img
+                        <Image
                             className={styles.navIcon}
                             src="/assets/icons/next.svg"
-                            alt=""
-                            aria-hidden="true"
+                            width={36}
+                            height={36}
+                            alt="Next"
                         />
                     </button>
                 </div>
@@ -122,7 +125,7 @@ export default function SliderExplore({
                 >
                     {items.map((item) => (
                         <SwiperSlide key={item.id}>
-                            <ExploreCard title={item.title} href={item.href} />
+                            <ExploreCard title={item.title} slug={item.slug} />
                         </SwiperSlide>
                     ))}
                 </Swiper>

@@ -1,4 +1,6 @@
 "use client";
+import Link from "next/link";
+import Image from "next/image";
 
 import type { ElementType } from "react";
 import styles from "./card.module.css";
@@ -7,7 +9,7 @@ import styles from "./card.module.css";
 
 type ExploreCardProps = {
     title: string;
-    href?: string;
+    slug?: string;
     titleAs?: ElementType;
 };
 
@@ -15,18 +17,18 @@ type ExploreCardProps = {
 
 export default function ExploreCard({
     title,
-    href = "#",
+    slug = "#",
     titleAs: TitleTag = "span",
 }: ExploreCardProps) {
     return (
         <div className={styles.card_item}>
-            <a href={href} className={styles.card_item_link}>
+            <Link href={slug} className={styles.card_item_link}>
                 <div className={styles.explore_item}>
                     <TitleTag className={styles.explore_title}>
                         {title}
                     </TitleTag>
                 </div>
-            </a>
+            </Link>
         </div>
     );
 }

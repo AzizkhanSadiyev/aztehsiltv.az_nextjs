@@ -2,7 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
+
 import Link from "next/link";
+import Image from "next/image";
+
 import styles from "./header.module.css";
 import { locales } from "@/i18n/config";
 
@@ -220,15 +223,19 @@ export default function Header({ locale, dict: _dict }: HeaderProps) {
                 <div className={styles.logo_sect}>
                     <Link href="/" className={styles.logo}>
                         <div className={styles.logo_img}>
-                            <img
+                            <Image
                                 className={styles["logo--light"]}
                                 src="/assets/icons/logo.svg"
                                 alt="AzTehsilTV Logo"
+                                width={154}
+                                height={32}
                             />
-                            <img
+                            <Image
                                 className={styles["logo--dark"]}
                                 src="/assets/icons/logo_dark.svg"
                                 alt="AzTehsilTV Logo"
+                                width={154}
+                                height={32}
                             />
                         </div>
                     </Link>
@@ -381,7 +388,7 @@ export default function Header({ locale, dict: _dict }: HeaderProps) {
                 <div className={styles.mob_body}>
                     <ul className={styles.hdr_menu}>
                         <li className={styles.active}>
-                            <a href="#">
+                            <Link href="#">
                                 <span
                                     className={cx(
                                         styles.menu_icon,
@@ -389,10 +396,10 @@ export default function Header({ locale, dict: _dict }: HeaderProps) {
                                     )}
                                 ></span>
                                 Canlı
-                            </a>
+                            </Link>
                         </li>
                         <li>
-                            <a href="#">
+                            <Link href="#">
                                 <span
                                     className={cx(
                                         styles.menu_icon,
@@ -400,10 +407,10 @@ export default function Header({ locale, dict: _dict }: HeaderProps) {
                                     )}
                                 ></span>
                                 Press-relizlər
-                            </a>
+                            </Link>
                         </li>
                         <li>
-                            <a href="#">
+                            <Link href="#">
                                 <span
                                     className={cx(
                                         styles.menu_icon,
@@ -411,10 +418,10 @@ export default function Header({ locale, dict: _dict }: HeaderProps) {
                                     )}
                                 ></span>
                                 Shorts
-                            </a>
+                            </Link>
                         </li>
                         <li className={styles.has_sub}>
-                            <a href="#">
+                            <Link href="#">
                                 <span
                                     className={cx(
                                         styles.menu_icon,
@@ -422,30 +429,30 @@ export default function Header({ locale, dict: _dict }: HeaderProps) {
                                     )}
                                 ></span>
                                 Kəşf et
-                            </a>
+                            </Link>
                             <ul className={styles.drop_menu}>
                                 <li>
-                                    <a href="#">Bütün bölmələr</a>
+                                    <Link href="#">Bütün bölmələr</Link>
                                 </li>
                                 <li>
-                                    <a href="#">Təhsil </a>
+                                    <Link href="#">Təhsil </Link>
                                 </li>
                                 <li>
-                                    <a href="#">Uğur hekayələri </a>
+                                    <Link href="#">Uğur hekayələri </Link>
                                 </li>
                                 <li>
-                                    <a href="#">Reportajlar</a>
+                                    <Link href="#">Reportajlar</Link>
                                 </li>
                                 <li>
-                                    <a href="#">Layihələr</a>
+                                    <Link href="#">Layihələr</Link>
                                 </li>
                                 <li>
-                                    <a href="#">Xaricdə təhsil</a>
+                                    <Link href="#">Xaricdə təhsil</Link>
                                 </li>
                             </ul>
                         </li>
                         <li className={styles.has_sub}>
-                            <a href="#">
+                            <Link href="#">
                                 <span
                                     className={cx(
                                         styles.menu_icon,
@@ -453,19 +460,19 @@ export default function Header({ locale, dict: _dict }: HeaderProps) {
                                     )}
                                 ></span>
                                 Verilişlər
-                            </a>
+                            </Link>
                             <ul className={styles.drop_menu}>
                                 <li>
-                                    <a href="#">Metodik körpü </a>
+                                    <Link href="#">Metodik körpü </Link>
                                 </li>
                                 <li>
-                                    <a href="#">Uşaqlar və biz </a>
+                                    <Link href="#">Uşaqlar və biz </Link>
                                 </li>
                                 <li>
-                                    <a href="#">Podkast </a>
+                                    <Link href="#">Podkast </Link>
                                 </li>
                                 <li>
-                                    <a href="#">Təhsil saatı </a>
+                                    <Link href="#">Təhsil saatı </Link>
                                 </li>
                             </ul>
                         </li>
@@ -476,9 +483,11 @@ export default function Header({ locale, dict: _dict }: HeaderProps) {
                         <div className={styles.weather}>
                             <span className={styles.weather_info}> 25° </span>
                             <span className={styles.weather_icon}>
-                                <img
+                                <Image
                                     src="/assets/icons/weather_rainy_night.svg"
                                     alt="Weather"
+                                    width={32}
+                                    height={32}
                                 />
                             </span>
                             <span className={styles.weather_loc}> Baki </span>
@@ -510,130 +519,150 @@ export default function Header({ locale, dict: _dict }: HeaderProps) {
                             </div>
                             <ul className={styles.socials}>
                                 <li>
-                                    <a
+                                    <Link
                                         href=""
                                         className={styles.social_icon}
                                         target="_blank"
                                         rel="noreferrer"
                                     >
                                         <span className={styles.scl_icn}>
-                                            <img
+                                            <Image
                                                 className={styles["logo--light"]}
                                                 src="/assets/icons/icon_facebook_light.svg"
                                                 alt="facebook"
+                                                width={16}
+                                                height={16}
                                             />
-                                            <img
+                                            <Image
                                                 className={styles["logo--dark"]}
                                                 src="/assets/icons/icon_facebook.svg"
                                                 alt="facebook"
+                                                width={16}
+                                                height={16}
                                             />
                                         </span>
                                         <span className={styles.scl_name}>
                                             Facebook
                                         </span>
-                                    </a>
+                                    </Link>
                                 </li>
                                 <li>
-                                    <a
+                                    <Link
                                         href=""
                                         className={styles.social_icon}
                                         target="_blank"
                                         rel="noreferrer"
                                     >
                                         <span className={styles.scl_icn}>
-                                            <img
+                                            <Image
                                                 className={styles["logo--light"]}
                                                 src="/assets/icons/icon_instagram_light.svg"
                                                 alt="instagram"
+                                                width={16}
+                                                height={16}
                                             />
-                                            <img
+                                            <Image
                                                 className={styles["logo--dark"]}
                                                 src="/assets/icons/icon_instagram.svg"
                                                 alt="instagram"
+                                                width={16}
+                                                height={16}
                                             />
                                         </span>
                                         <span className={styles.scl_name}>
                                             Instagram
                                         </span>
-                                    </a>
+                                    </Link>
                                 </li>
                                 <li>
-                                    <a
+                                    <Link
                                         href=""
                                         className={styles.social_icon}
                                         target="_blank"
                                         rel="noreferrer"
                                     >
                                         <span className={styles.scl_icn}>
-                                            <img
+                                            <Image
                                                 className={styles["logo--light"]}
                                                 src="/assets/icons/icon_ytb_light.svg"
                                                 alt="youtube"
+                                                width={16}
+                                                height={16}
                                             />
-                                            <img
+                                            <Image
                                                 className={styles["logo--dark"]}
                                                 src="/assets/icons/icon_ytb.svg"
                                                 alt="youtube"
+                                                width={16}
+                                                height={16}
                                             />
                                         </span>
                                         <span className={styles.scl_name}>Youtube</span>
-                                    </a>
+                                    </Link>
                                 </li>
                                 <li>
-                                    <a
+                                    <Link
                                         href=""
                                         className={styles.social_icon}
                                         target="_blank"
                                         rel="noreferrer"
                                     >
                                         <span className={styles.scl_icn}>
-                                            <img
+                                            <Image
                                                 className={styles["logo--light"]}
                                                 src="/assets/icons/icon_telegram_light.svg"
                                                 alt="telegram"
+                                                width={16}
+                                                height={16}
                                             />
-                                            <img
+                                            <Image
                                                 className={styles["logo--dark"]}
                                                 src="/assets/icons/icon_telegram.svg"
                                                 alt="telegram"
+                                                width={16}
+                                                height={16}
                                             />
                                         </span>
                                         <span className={styles.scl_name}>Telegram</span>
-                                    </a>
+                                    </Link>
                                 </li>
                                 <li>
-                                    <a
+                                    <Link
                                         href=""
                                         className={styles.social_icon}
                                         target="_blank"
                                         rel="noreferrer"
                                     >
                                         <span className={styles.scl_icn}>
-                                            <img
+                                            <Image
                                                 className={styles["logo--light"]}
                                                 src="/assets/icons/icon_tiktok_light.svg"
                                                 alt="tiktok"
+                                                width={16}
+                                                height={16}
                                             />
-                                            <img
+                                            <Image
                                                 className={styles["logo--dark"]}
                                                 src="/assets/icons/icon_tiktok.svg"
                                                 alt="tiktok"
+                                                width={16}
+                                                height={16}
                                             />
                                         </span>
                                         <span className={styles.scl_name}>Tiktok</span>
-                                    </a>
+                                    </Link>
                                 </li>
                             </ul>
                         </div>
                         <ul className={styles.desk_little_menu}>
                             <li>
-                                <a href="#">Haqqımızda </a>
+                                <Link href="#">Haqqımızda </Link>
                             </li>
                             <li>
-                                <a href="#">Saytda reklam </a>
+                                <Link href="#">Saytda reklam </Link>
                             </li>
                             <li>
-                                <a href="#">Əlaqə </a>
+                                <Link href="#">Əlaqə </Link>
                             </li>
                         </ul>
                     </div>

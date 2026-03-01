@@ -1,3 +1,5 @@
+import Link from "next/link";
+import Image from "next/image";
 import styles from "./PageTopItems.module.css";
 
 const cx = (...classes: Array<string | false | null | undefined>) =>
@@ -19,118 +21,138 @@ export default function PageTopItems() {
                     </div>
                     <ul className={styles.socials}>
                         <li>
-                            <a
+                            <Link
                                 href=""
                                 className={styles.socialIcon}
                                 target="_blank"
                                 rel="noreferrer"
                             >
                                 <span className={styles.sclIcon}>
-                                    <img
+                                    <Image
                                         className={styles.logoLight}
                                         src="/assets/icons/icon_facebook_light.svg"
+                                        width={16}
+                                        height={16}
                                         alt="facebook"
                                     />
-                                    <img
+                                    <Image
                                         className={styles.logoDark}
                                         src="/assets/icons/icon_facebook.svg"
+                                        width={16}
+                                        height={16}
                                         alt="facebook"
                                     />
                                 </span>
                                 <span className={styles.sclName}>
                                     Facebook
                                 </span>
-                            </a>
+                            </Link>
                         </li>
                         <li>
-                            <a
+                            <Link
                                 href=""
                                 className={styles.socialIcon}
                                 target="_blank"
                                 rel="noreferrer"
                             >
                                 <span className={styles.sclIcon}>
-                                    <img
+                                    <Image
                                         className={styles.logoLight}
                                         src="/assets/icons/icon_instagram_light.svg"
+                                        width={16}
+                                        height={16}
                                         alt="instagram"
                                     />
-                                    <img
+                                    <Image
                                         className={styles.logoDark}
                                         src="/assets/icons/icon_instagram.svg"
+                                        width={16}
+                                        height={16}
                                         alt="instagram"
                                     />
                                 </span>
                                 <span className={styles.sclName}>
                                     Instagram
                                 </span>
-                            </a>
+                            </Link>
                         </li>
                         <li>
-                            <a
+                            <Link
                                 href=""
                                 className={styles.socialIcon}
                                 target="_blank"
                                 rel="noreferrer"
                             >
                                 <span className={styles.sclIcon}>
-                                    <img
+                                    <Image
                                         className={styles.logoLight}
                                         src="/assets/icons/icon_ytb_light.svg"
+                                        width={16}
+                                        height={16}
                                         alt="youtube"
                                     />
-                                    <img
+                                    <Image
                                         className={styles.logoDark}
                                         src="/assets/icons/icon_ytb.svg"
+                                        width={16}
+                                        height={16}
                                         alt="youtube"
                                     />
                                 </span>
                                 <span className={styles.sclName}>Youtube</span>
-                            </a>
+                            </Link>
                         </li>
                         <li>
-                            <a
+                            <Link
                                 href=""
                                 className={styles.socialIcon}
                                 target="_blank"
                                 rel="noreferrer"
                             >
                                 <span className={styles.sclIcon}>
-                                    <img
+                                    <Image
                                         className={styles.logoLight}
                                         src="/assets/icons/icon_telegram_light.svg"
+                                        width={16}
+                                        height={16}
                                         alt="telegram"
                                     />
-                                    <img
+                                    <Image
                                         className={styles.logoDark}
                                         src="/assets/icons/icon_telegram.svg"
+                                        width={16}
+                                        height={16}
                                         alt="telegram"
                                     />
                                 </span>
                                 <span className={styles.sclName}>Telegram</span>
-                            </a>
+                            </Link>
                         </li>
                         <li>
-                            <a
+                            <Link
                                 href=""
                                 className={styles.socialIcon}
                                 target="_blank"
                                 rel="noreferrer"
                             >
                                 <span className={styles.sclIcon}>
-                                    <img
+                                    <Image
                                         className={styles.logoLight}
                                         src="/assets/icons/icon_tiktok_light.svg"
+                                        width={16}
+                                        height={16}
                                         alt="tiktok"
                                     />
-                                    <img
+                                    <Image
                                         className={styles.logoDark}
                                         src="/assets/icons/icon_tiktok.svg"
+                                        width={16}
+                                        height={16}
                                         alt="tiktok"
                                     />
                                 </span>
                                 <span className={styles.sclName}>Tiktok</span>
-                            </a>
+                            </Link>
                         </li>
                     </ul>
                 </div>
@@ -141,8 +163,10 @@ export default function PageTopItems() {
                     <div className={styles.weather}>
                         <span className={styles.weatherInfo}>25°</span>
                         <span className={styles.weatherIcon}>
-                            <img
+                            <Image
                                 src="/assets/icons/weather_rainy_night.svg"
+                                width={32}
+                                height={32}
                                 alt="Weather"
                             />
                         </span>

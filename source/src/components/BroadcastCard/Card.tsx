@@ -2,14 +2,15 @@
 
 import type { ElementType } from "react";
 import styles from "./card.module.css";
-
+import Link from "next/link";
+import Image from "next/image";
 /* ================= TYPES ================= */
 
 type BroadcastCardProps = {
     title: string;
     count: string;
     image: string;
-    href?: string;
+    slug?: string;
     titleAs?: ElementType;
 };
 
@@ -22,15 +23,15 @@ export default function BroadcastCard({
     title,
     count,
     image,
-    href = "#",
+    slug = "#",
     titleAs: TitleTag = "span",
 }: BroadcastCardProps) {
     return (
         <div className={styles.card_item}>
-            <a href={href} className={styles.card_item_link}>
+            <Link href={slug} className={styles.card_item_link}>
                 <div className={styles.board_item}>
                     <div className={styles.item_img}>
-                        <img src={image} alt={title} />
+                        <Image src={image}  width={306} height={172} alt={title}/>
                     </div>
                 </div>
                 <div className={styles.item_content}>
@@ -53,7 +54,7 @@ export default function BroadcastCard({
                         </div>
                     </div>
                 </div>
-            </a>
+            </Link>
         </div>
     );
 }

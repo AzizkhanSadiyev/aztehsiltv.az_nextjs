@@ -2,9 +2,10 @@ import { type Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/getDictionary";
 import Link from "next/link";
 import Image from "next/image";
+
 import styles from "./page.module.css";
 
-import NewsCard, { type newsItems } from "@/components/NewsCard/Card";
+import NewsCard from "@/components/NewsCard/Card";
 import SliderShort, { type ShortItem } from "@/components/SliderShort/slider";
 import SliderNews, { type NewsItem } from "@/components/SliderNews/slider";
 import SliderBroadcast, {
@@ -34,7 +35,7 @@ export default async function HomePage({
             date: "28 Dek 2026",
             category: "Verilis",
             duration: "00:35",
-            href: "#",
+            slug: "#",
             type: "video",
         },
         {
@@ -45,7 +46,7 @@ export default async function HomePage({
             date: "27 Dek 2026",
             category: "Verilis",
             duration: "00:35",
-            href: "#",
+            slug: "#",
             type: "video",
         },
         {
@@ -56,7 +57,7 @@ export default async function HomePage({
             date: "28 Dek 2026",
             category: "Imtahan",
             duration: "00:35",
-            href: "#",
+            slug: "#",
             type: "video",
         },
         {
@@ -67,7 +68,7 @@ export default async function HomePage({
             date: "25 Dek 2026",
             category: "Tehsil",
             duration: "00:42",
-            href: "#",
+            slug: "#",
             type: "video",
         },
         {
@@ -78,7 +79,7 @@ export default async function HomePage({
             date: "28 Dek 2026",
             category: "Verilis",
             duration: "00:35",
-            href: "#",
+            slug: "#",
             type: "video",
         },
         {
@@ -89,7 +90,7 @@ export default async function HomePage({
             date: "27 Dek 2026",
             category: "Verilis",
             duration: "00:35",
-            href: "#",
+            slug: "#",
             type: "video",
         },
         {
@@ -100,7 +101,7 @@ export default async function HomePage({
             date: "28 Dek 2026",
             category: "Imtahan",
             duration: "00:35",
-            href: "#",
+            slug: "#",
             type: "video",
         },
         {
@@ -111,7 +112,7 @@ export default async function HomePage({
             date: "25 Dek 2026",
             category: "Tehsil",
             duration: "00:42",
-            href: "#",
+            slug: "#",
             type: "video",
         },
     ];
@@ -124,7 +125,7 @@ export default async function HomePage({
             date: "28 Dek 2026",
             category: "Verilis",
             duration: "00:35",
-            href: "#",
+            slug: "#",
             type: "video",
         },
         {
@@ -135,7 +136,7 @@ export default async function HomePage({
             date: "28 Dek 2026",
             category: "Verilis",
             duration: "00:35",
-            href: "#",
+            slug: "#",
             type: "video",
         },
         {
@@ -146,7 +147,7 @@ export default async function HomePage({
             date: "28 Dek 2026",
             category: "Tehsil",
             duration: "00:35",
-            href: "#",
+            slug: "#",
             type: "video",
         },
         {
@@ -157,7 +158,7 @@ export default async function HomePage({
             date: "28 Dek 2026",
             category: "Tehsil",
             duration: "00:35",
-            href: "#",
+            slug: "#",
             type: "video",
         },
         {
@@ -168,7 +169,7 @@ export default async function HomePage({
             date: "28 Dek 2026",
             category: "Verilis",
             duration: "00:35",
-            href: "#",
+            slug: "#",
             type: "video",
         },
         {
@@ -179,7 +180,7 @@ export default async function HomePage({
             date: "28 Dek 2026",
             category: "Tehsil",
             duration: "00:35",
-            href: "#",
+            slug: "#",
             type: "video",
         },
         {
@@ -190,20 +191,20 @@ export default async function HomePage({
             date: "28 Dek 2026",
             category: "Tehsil",
             duration: "00:35",
-            href: "#",
+            slug: "#",
             type: "video",
         },
     ];
 
     const exploreItems: ExploreItem[] = [
-        { id: 1, title: "Butun bolmeler", href: "#" },
-        { id: 2, title: "Tehsil", href: "#" },
-        { id: 3, title: "Ugur hekayeleri", href: "#" },
-        { id: 4, title: "Reportajlar", href: "#" },
-        { id: 5, title: "Layiheler", href: "#" },
-        { id: 6, title: "Xaricde tehsil", href: "#" },
-        { id: 7, title: "Ugur hekayeleri", href: "#" },
-        { id: 8, title: "Reportajlar", href: "#" },
+        { id: 1, title: "Butun bolmeler", slug: "#" },
+        { id: 2, title: "Tehsil", slug: "#" },
+        { id: 3, title: "Ugur hekayeleri", slug: "#" },
+        { id: 4, title: "Reportajlar", slug: "#" },
+        { id: 5, title: "Layiheler", slug: "#" },
+        { id: 6, title: "Xaricde tehsil", slug: "#" },
+        { id: 7, title: "Ugur hekayeleri", slug: "#" },
+        { id: 8, title: "Reportajlar", slug: "#" },
     ];
     const broadcastItems: BroadcastItem[] = [
         {
@@ -211,49 +212,49 @@ export default async function HomePage({
             title: "Metodik korpu",
             count: "364 video",
             image: "/assets/images/board_1.png",
-            href: "#",
+            slug: "#",
         },
         {
             id: 2,
             title: "Usaqlar ve biz",
             count: "128 video",
             image: "/assets/images/board_2.png",
-            href: "#",
+            slug: "#",
         },
         {
             id: 3,
             title: "Podkast",
             count: "92 video",
             image: "/assets/images/board_3.png",
-            href: "#",
+            slug: "#",
         },
         {
             id: 4,
             title: "Tehsil saati",
             count: "56 video",
             image: "/assets/images/board_4.png",
-            href: "#",
+            slug: "#",
         },
         {
             id: 5,
             title: "Tehsil saati",
             count: "56 video",
             image: "/assets/images/board_5.png",
-            href: "#",
+            slug: "#",
         },
         {
             id: 6,
             title: "Podkast",
             count: "92 video",
             image: "/assets/images/board_3.png",
-            href: "#",
+            slug: "#",
         },
         {
             id: 7,
             title: "Tehsil saati",
             count: "56 video",
             image: "/assets/images/board_4.png",
-            href: "#",
+            slug: "#",
         },
     ];
 
@@ -280,9 +281,9 @@ export default async function HomePage({
                 <section className="section_wrap pad_top_20 pad_bottom_20">
                     <div className="main_center">
                         <div className="sect_header">
-                            <a href="#" className="sect_title">
+                            <Link href="#" className="sect_title">
                                 Son videolar
-                            </a>
+                            </Link>
                         </div>
                         <div className="sect_body">
                             <div className="row_item gap_20">
@@ -295,20 +296,20 @@ export default async function HomePage({
                                         date={item.date}
                                         category={item.category}
                                         duration={item.duration}
-                                        href={item.href}
+                                        slug={item.slug}
                                         type={item.type}
                                     />
                                 ))}
                             </div>
                         </div>
                         <div className="sect_footer">
-                            <a
+                            <Link
                                 href="#"
                                 title="AztehsilTv"
                                 className="more load_more_btn"
                             >
                                 Daha çox
-                            </a>
+                            </Link>
                         </div>
                     </div>
                 </section>

@@ -1,8 +1,9 @@
 import Link from "next/link";
+import Image from "next/image";
 import styles from "./top.module.css";
 
 type TopVideoProps = {
-    href?: string;
+    slug?: string;
     cover?: string;
     badgeIcon?: string;
     badgeText?: string;
@@ -13,7 +14,7 @@ type TopVideoProps = {
 };
 
 export default function TopVideo({
-    href = "#",
+    slug = "#",
     cover = "/assets/images/top_video_cover.png",
     badgeIcon = "/assets/icons/icon_fire.svg",
     badgeText = "Gunun videosu",
@@ -29,9 +30,9 @@ export default function TopVideo({
         <section
             className={cx(styles.top_video_sect, "pad_bottom_20", "pad_top_20")}
         >
-            <Link href={href} className={styles.top_video__wrap}>
+            <Link href={slug} className={styles.top_video__wrap}>
                 <div className={styles.top_video__media}>
-                    <img src={cover} alt="Top video cover" />
+                    <Image src={cover} width={690} height={390} alt="Top video cover" />
                     <span
                         className={styles.play_white}
                         aria-hidden="true"
@@ -40,7 +41,7 @@ export default function TopVideo({
 
                 <div className={styles.top_video__info}>
                     <span className={styles.top_video__badge}>
-                        <img src={badgeIcon} alt="" aria-hidden="true" />
+                        <Image src={badgeIcon} width={16} height={16} alt="Badge icon" aria-hidden="true" />
                         <span>{badgeText}</span>
                     </span>
 

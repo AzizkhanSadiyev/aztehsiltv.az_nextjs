@@ -1,4 +1,6 @@
 "use client";
+import Link from "next/link";
+import Image from "next/image";
 
 import { useRef } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
@@ -15,7 +17,7 @@ export type NewsItem = {
     id: number;
     title: string;
     image: string;
-    href?: string;
+    slug?: string;
     views?: string;
     date?: string;
     category?: string;
@@ -89,11 +91,12 @@ export default function SliderNews({
                         onClick={handlePrev}
                         aria-label="Previous"
                     >
-                        <img
+                        <Image
                             className={styles.navIcon}
                             src="/assets/icons/prev.svg"
-                            alt=""
-                            aria-hidden="true"
+                            width={36}
+                            height={36}
+                            alt="Previous"
                         />
                     </button>
                     <button
@@ -102,11 +105,12 @@ export default function SliderNews({
                         onClick={handleNext}
                         aria-label="Next"
                     >
-                        <img
+                        <Image
                             className={styles.navIcon}
                             src="/assets/icons/next.svg"
-                            alt=""
-                            aria-hidden="true"
+                            width={36}
+                            height={36}
+                            alt="Next"
                         />
                     </button>
                 </div>

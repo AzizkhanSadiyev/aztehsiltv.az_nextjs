@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-    title: "Stafig",
-    description: "Azərbaycanın ən etibarlı xəbər portalı",
+    title: "AztəhsilTv.az - Azərbaycanın ən etibarlı video portalı",
+    description: "Azərbaycanın ən etibarlı video portalı. Təhsil, metodik korpus, podkast və daha çox mövzularda geniş video kolleksiyası.",
 };
 
 export default function RootLayout({

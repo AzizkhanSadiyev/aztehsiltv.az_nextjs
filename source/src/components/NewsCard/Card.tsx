@@ -1,5 +1,6 @@
 "use client";
-
+import Link from "next/link";
+import Image from "next/image";
 import type { ElementType } from "react";
 import styles from "./card.module.css";
 
@@ -8,7 +9,7 @@ import styles from "./card.module.css";
 type NewsCardProps = {
     title?: string;
     image?: string;
-    href?: string;
+    slug?: string;
     views?: string;
     date?: string;
     category?: string;
@@ -27,7 +28,7 @@ const cx = (...classes: Array<string | false | null | undefined>) =>
 export default function NewsCard({
     title = "Konqres kend mektebleri ucun fondu yeniden berpa etdi",
     image = "/assets/images/card_1.png",
-    href = "#",
+    slug = "#",
     views = "1.2 M baxis",
     date = "28 Dek 2026",
     category = "Imtahan",
@@ -43,7 +44,7 @@ export default function NewsCard({
                 className={cx(styles.card_item, styles.isLoading)}
                 aria-busy="true"
             >
-                <div className={styles.card_item_link}>
+                <Link href="#" className={styles.card_item_link}>
                     <div className={styles.item_img}>
                         <div className={styles.skeletonMedia}></div>
                     </div>
@@ -70,7 +71,7 @@ export default function NewsCard({
                             <div className={styles.skeletonTag}></div>
                         </div>
                     </div>
-                </div>
+                </Link>
             </div>
         );
     }
@@ -82,9 +83,9 @@ export default function NewsCard({
                 variant === "short" && styles.shortCard
             )}
         >
-            <a href={href} className={styles.card_item_link}>
+            <Link href={slug} className={styles.card_item_link}>
                 <div className={styles.item_img}>
-                    <img src={image} alt={title} />
+                    <Image src={image} alt={title} width={306} height={172} />
                     {duration ? (
                         <div className={styles.video_timer}>{duration}</div>
                     ) : null}
@@ -123,7 +124,7 @@ export default function NewsCard({
                         ) : null}
                     </div>
                 </div>
-            </a>
+            </Link>
         </div>
     );
 }
