@@ -89,16 +89,17 @@ export default function VideoPlayer({
         const ensureHlsQualityControls = (player: Plyr, hls: Hls) => {
             const levels = buildQualityOptions(hls.levels.map((level) => level.height));
             if (!levels.length) return;
-            player.options.quality = {
+            const playerWithOptions = player as Plyr & { options: Plyr.Options };
+            playerWithOptions.options.quality = {
                 default: 0,
                 options: [0, ...levels],
                 forced: true,
                 onChange: onQualityChange,
             };
-            player.options.i18n = {
-                ...(player.options.i18n ?? {}),
+            playerWithOptions.options.i18n = {
+                ...(playerWithOptions.options.i18n ?? {}),
                 qualityLabel: {
-                    ...(player.options.i18n?.qualityLabel ?? {}),
+                    ...(playerWithOptions.options.i18n?.qualityLabel ?? {}),
                     0: "Auto",
                 },
             };
