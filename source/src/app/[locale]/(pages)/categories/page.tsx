@@ -110,7 +110,7 @@ const newsItems: NewsItem[] = [
         type: "video",
     },
 ];
-export default async function TrainingsPage({
+export default async function CategoriesPage({
     params,
     searchParams,
 }: {

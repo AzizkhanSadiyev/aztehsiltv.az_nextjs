@@ -1,5 +1,6 @@
 import "@/styles/globals.css";
 import "@/styles/form.css";
+import "@/styles/pages.css";
 import { locales, type Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/getDictionary";
 import { notFound } from "next/navigation";
