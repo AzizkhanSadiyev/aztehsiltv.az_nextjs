@@ -10,8 +10,10 @@
   },
   "dependencies": {
     "@fancyapps/ui": "^6.1.10",
+    "hls.js": "^1.6.15",
     "i18next": "^25.8.0",
     "next": "^16.1.6",
+    "plyr": "^3.7.8",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-i18next": "^16.5.4",

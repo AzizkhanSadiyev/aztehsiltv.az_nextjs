@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 
 import PageTopItems from "@/components/PageTopItems/PageTopItems";
 import NewsCard from "@/components/NewsCard/Card";
+import VideoPlayer from "@/components/VideoPlayer/VideoPlayer";
 
 type NewsItem = {
     id: number;
@@ -100,6 +101,20 @@ const shareItems = [
 ];
 
 const tagItems = ["Imtahan", "Azərbaycan", "Təhsil", "Məktəb", "Ədəbiyyat"];
+const demoVideo = {
+    sources: [
+        {
+            src: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+            type: "application/x-mpegURL",
+        },
+        {
+            src: "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+            type: "video/mp4",
+        },
+    ],
+    isLive: false,
+};
+
 const videosData: Record<
     string,
     {
@@ -112,6 +127,17 @@ const videosData: Record<
         description: string[];
         slug: string;
         type: "video" | "list";
+        video?: {
+            sources: { src: string; type: string }[];
+            tracks?: {
+                src: string;
+                srclang: string;
+                label: string;
+                default?: boolean;
+            }[];
+            thumbnails?: string;
+            isLive?: boolean;
+        };
     }
 > = {
     "silikon-sehrasi-mekteb-sagirdleri": {        
@@ -123,6 +149,7 @@ const videosData: Record<
         duration: "00:35",
         slug: "silikon-sehrasi-mekteb-sagirdleri",
         type: "video",
+        video: demoVideo,
         description: [
             "Azərbaycan tarixi fənni ilə yanaşı, digər fənlərin də ana dilində tədrisi məsələsinə aydınlıq gətirilib.",
             "AzTehsil.com xəbər verir ki, bu barədə Təhsil İnstitutunun direktoru səlahiyyətlərini müvəqqəti icra edən, elm və təhsil nazirinin müşaviri Elnur Əliyev jurnalistlərə açıqlamasında deyib.",
@@ -256,6 +283,7 @@ export default async function VideoDetailPage({
     const metaDate = videos.date || "28 Dek 2026";
     const metaViews = videos.views || "1.2 M baxış";
     const sidebarItems = [...similarItems, ...similarItems].slice(0, 8);
+    const videoConfig = videos.video;
 
     const resolveSlug = (slug: string) => {
         if (!slug || slug === "#") return "#";
@@ -283,12 +311,23 @@ export default async function VideoDetailPage({
                         <div className="wrap_left">
                             <div className="detail_content_card">
                                 <div className="news_in_img">
-                                    <Image
-                                        src={videos.image}
-                                        alt={videos.title}
-                                        width={800}
-                                        height={450}
-                                    />
+                                    {videoConfig ? (
+                                        <VideoPlayer
+                                            title={videos.title}
+                                            poster={videos.image}
+                                            sources={videoConfig.sources}
+                                            tracks={videoConfig.tracks}
+                                            thumbnails={videoConfig.thumbnails}
+                                            isLive={videoConfig.isLive}
+                                        />
+                                    ) : (
+                                        <Image
+                                            src={videos.image}
+                                            alt={videos.title}
+                                            width={800}
+                                            height={450}
+                                        />
+                                    )}
                                 </div>
                                 <div className="news_header">
                                     <h1 className="news_hd">
@@ -479,3 +518,6 @@ export default async function VideoDetailPage({
         </div>
     );
 }
+
+
+

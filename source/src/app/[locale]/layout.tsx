@@ -1,4 +1,5 @@
 import "@/styles/globals.css";
+import "plyr/dist/plyr.css";
 import "@/styles/form.css";
 import "@/styles/pages.css";
 import { locales, type Locale } from "@/i18n/config";

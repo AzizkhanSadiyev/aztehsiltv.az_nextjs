@@ -1,0 +1,90 @@
+.root {
+    position: relative;
+    width: 100%;
+    background: #0b0b0b;
+    border-radius: inherit;
+}
+
+.video {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: inherit;
+    background: #0b0b0b;
+}
+
+.root :global(.plyr) {
+    border-radius: inherit;
+    --plyr-color-main: #ff3b30;
+    --plyr-control-radius: 10px;
+    --plyr-font-family: "Satoshi", "Space Grotesk", "Manrope", "Inter", sans-serif;
+}
+
+.root :global(.plyr__video-wrapper) {
+    border-radius: inherit;
+    aspect-ratio: 16 / 9;
+    background: #0b0b0b;
+}
+
+.root :global(.plyr__poster) {
+    background-size: cover;
+    background-position: center;
+}
+
+.root :global(.plyr__controls) {
+    background: linear-gradient(
+        to top,
+        rgba(4, 4, 4, 0.9),
+        rgba(4, 4, 4, 0.7) 40%,
+        rgba(4, 4, 4, 0)
+    );
+}
+
+.root :global(.plyr__progress__buffer) {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.root :global(.plyr__tooltip) {
+    background: rgba(12, 12, 12, 0.9);
+    border-radius: 8px;
+}
+
+.liveBadge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(16, 16, 16, 0.75);
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    backdrop-filter: blur(6px);
+    z-index: 2;
+}
+
+.liveDot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #ff3b30;
+    box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.7);
+    animation: pulse 1.6s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(255, 59, 48, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 59, 48, 0);
+    }
+}
