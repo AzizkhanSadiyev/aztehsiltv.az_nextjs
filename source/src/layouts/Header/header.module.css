@@ -756,6 +756,9 @@ ul.hdr_menu > li.active > a .menu_icon::before {
     height: calc(100% - 210px);
     overflow: auto;
 }
+.transformed .mob_body {
+    height: calc(100% - 86px);
+}
 
 .mob_footer {
     display: flex;
@@ -803,7 +806,6 @@ nav.navigation.transformed {
     max-width: 390px;
     padding: 12px;
 }
-
 
 nav.navigation.transformed .drop_menu {
     display: flex;
@@ -1214,6 +1216,9 @@ nav.navigation .socials {
         /* height: calc(100% - 176px); */
         height: auto;
     }
+    .transformed .mob_body {
+        height: auto;
+    }
     .mob_footer {
         padding: 16px 0;
         position: relative;
@@ -1315,6 +1320,9 @@ nav.navigation .socials {
         /* height: calc(100% - 176px); */
         height: auto;
     }
+    .transformed .mob_body {
+        height: auto;
+    }
     .mob_footer {
         padding: 16px 0;
         position: relative;
@@ -1414,6 +1422,10 @@ nav.navigation .socials {
         overflow: visible;
         height: auto;
     }
+    .transformed .mob_body {
+        height: auto;
+    }
+
     .mob_footer {
         padding: 16px 0;
         position: relative;

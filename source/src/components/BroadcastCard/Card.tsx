@@ -4,6 +4,7 @@ import type { ElementType } from "react";
 import styles from "./card.module.css";
 import Link from "next/link";
 import Image from "next/image";
+import { useParams } from "next/navigation";
 /* ================= TYPES ================= */
 
 type BroadcastCardProps = {
@@ -26,9 +27,38 @@ export default function BroadcastCard({
     slug = "#",
     titleAs: TitleTag = "span",
 }: BroadcastCardProps) {
+    const params = useParams<{ locale?: string | string[] }>();
+    const localeParam =
+        typeof params?.locale === "string"
+            ? params.locale
+            : Array.isArray(params?.locale)
+              ? params.locale[0]
+              : undefined;
+    const resolvedHref = (() => {
+        if (!slug || slug === "#") {
+            return "#";
+        }
+
+        const slugValue = slug.trim();
+        if (
+            slugValue.startsWith("/") ||
+            slugValue.startsWith("http://") ||
+            slugValue.startsWith("https://") ||
+            slugValue.startsWith("#")
+        ) {
+            return slugValue;
+        }
+
+        if (localeParam) {
+            return `/${localeParam}/broadcasts/${slugValue}`;
+        }
+
+        return `/broadcasts/${slugValue}`;
+    })();
+
     return (
         <div className={styles.card_item}>
-            <Link href={slug} className={styles.card_item_link}>
+            <Link href={resolvedHref} className={styles.card_item_link}>
                 <div className={styles.board_item}>
                     <div className={styles.item_img}>
                         <Image src={image}  width={306} height={172} alt={title}/>
@@ -58,7 +88,6 @@ export default function BroadcastCard({
         </div>
     );
 }
-
 
 
 

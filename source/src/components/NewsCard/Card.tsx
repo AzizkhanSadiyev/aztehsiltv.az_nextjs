@@ -2,6 +2,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import type { ElementType } from "react";
+import { useParams } from "next/navigation";
 import styles from "./card.module.css";
 
 /* ================= TYPES ================= */
@@ -38,6 +39,35 @@ export default function NewsCard({
     loading = false,
     variant = "default",
 }: NewsCardProps) {
+    const params = useParams<{ locale?: string | string[] }>();
+    const localeParam =
+        typeof params?.locale === "string"
+            ? params.locale
+            : Array.isArray(params?.locale)
+              ? params.locale[0]
+              : undefined;
+    const resolvedHref = (() => {
+        if (!slug || slug === "#") {
+            return "#";
+        }
+
+        const slugValue = slug.trim();
+        if (
+            slugValue.startsWith("/") ||
+            slugValue.startsWith("http://") ||
+            slugValue.startsWith("https://") ||
+            slugValue.startsWith("#")
+        ) {
+            return slugValue;
+        }
+
+        if (localeParam) {
+            return `/${localeParam}/categories/${slugValue}`;
+        }
+
+        return `/categories/${slugValue}`;
+    })();
+
     if (loading) {
         return (
             <div
@@ -83,7 +113,7 @@ export default function NewsCard({
                 variant === "short" && styles.shortCard
             )}
         >
-            <Link href={slug} className={styles.card_item_link}>
+            <Link href={resolvedHref} className={styles.card_item_link}>
                 <div className={styles.item_img}>
                     <Image src={image} alt={title} width={306} height={172} />
                     {duration ? (
@@ -128,7 +158,6 @@ export default function NewsCard({
         </div>
     );
 }
-
 
 
 

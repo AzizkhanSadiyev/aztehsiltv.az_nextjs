@@ -1,4 +1,7 @@
+
 import Link from "next/link";
+import Image from "next/image";
+
 import styles from "./footer.module.css";
 
 interface Dictionary {
@@ -30,25 +33,27 @@ export default function Footer({ locale: _locale, dict: _dict }: FooterProps) {
                             <div className={styles["footer-brand"]}>
                                 <Link href="/" className={styles["footer-logo"]}>
                                     <div className={styles.logo_img}>
-                                        <img
+                                        <Image
                                             src="/assets/icons/logo_dark.svg"
                                             alt="AzTehsilTV"
+                                            width={154}
+                                            height={32}
                                         />
                                     </div>
                                 </Link>
                             </div>
                             <ul className={styles.desk_little_menu}>
                                 <li>
-                                    <a href="#">Haqqımızda </a>
+                                    <Link href="#">Haqqımızda </Link>
                                 </li>
                                 <li>
-                                    <a href="#">Press-relizlər </a>
+                                    <Link href="#">Press-relizlər </Link>
                                 </li>
                                 <li>
-                                    <a href="#">Saytda reklam </a>
+                                    <Link href="#">Saytda reklam </Link>
                                 </li>
                                 <li>
-                                    <a href="#">Əlaqə </a>
+                                    <Link href="#">Əlaqə </Link>
                                 </li>
                             </ul>
                         </div>
@@ -62,94 +67,104 @@ export default function Footer({ locale: _locale, dict: _dict }: FooterProps) {
                             </div>
                             <ul className={styles.socials}>
                                 <li>
-                                    <a
+                                    <Link
                                         href=""
                                         className={styles.social_icon}
                                         target="_blank"
                                         rel="noreferrer"
                                     >
                                         <span className={styles.scl_icn}>
-                                            <img
+                                            <Image
                                                 src="/assets/icons/icon_facebook.svg"
                                                 alt="facebook"
+                                                width={16}
+                                                height={16}
                                             />
                                         </span>
                                         <span className={styles.scl_name}>
                                             Facebook
                                         </span>
-                                    </a>
+                                    </Link>
                                 </li>
                                 <li>
-                                    <a
+                                    <Link
                                         href=""
                                         className={styles.social_icon}
                                         target="_blank"
                                         rel="noreferrer"
                                     >
                                         <span className={styles.scl_icn}>
-                                            <img
+                                            <Image
                                                 src="/assets/icons/icon_instagram.svg"
                                                 alt="instagram"
+                                                width={16}
+                                                height={16}
                                             />
                                         </span>
                                         <span className={styles.scl_name}>
                                             Instagram
                                         </span>
-                                    </a>
+                                    </Link>
                                 </li>
                                 <li>
-                                    <a
+                                    <Link
                                         href=""
                                         className={styles.social_icon}
                                         target="_blank"
                                         rel="noreferrer"
                                     >
                                         <span className={styles.scl_icn}>
-                                            <img
+                                            <Image
                                                 src="/assets/icons/icon_ytb.svg"
                                                 alt="youtube"
+                                                width={16}
+                                                height={16}
                                             />
                                         </span>
                                         <span className={styles.scl_name}>
                                             Youtube
                                         </span>
-                                    </a>
+                                    </Link>
                                 </li>
                                 <li>
-                                    <a
+                                    <Link
                                         href=""
                                         className={styles.social_icon}
                                         target="_blank"
                                         rel="noreferrer"
                                     >
                                         <span className={styles.scl_icn}>
-                                            <img
+                                            <Image
                                                 src="/assets/icons/icon_telegram.svg"
                                                 alt="telegram"
+                                                width={16}
+                                                height={16}
                                             />
                                         </span>
                                         <span className={styles.scl_name}>
                                             Telegram
                                         </span>
-                                    </a>
+                                    </Link>
                                 </li>
                                 <li>
-                                    <a
+                                    <Link
                                         href=""
                                         className={styles.social_icon}
                                         target="_blank"
                                         rel="noreferrer"
                                     >
                                         <span className={styles.scl_icn}>
-                                            <img
+                                            <Image
                                                 src="/assets/icons/icon_tiktok.svg"
                                                 alt="tiktok"
+                                                width={16}
+                                                height={16}
                                             />
                                         </span>
                                         <span className={styles.scl_name}>
                                             Tiktok
                                         </span>
-                                    </a>
+                                    </Link>
                                 </li>
                             </ul>
                         </div>
@@ -161,13 +176,15 @@ export default function Footer({ locale: _locale, dict: _dict }: FooterProps) {
                             qorunur. Məlumatdan istifadə edərkən hiperlinklə
                             istinad olunmalıdır.
                         </p>
-                        <div className={styles["footer-powered"]}>
+                        <Link href="https://coresoft.az/" target="_blank" className={styles["footer-powered"]}>
                             <span>Powered by:</span>
-                            <img
+                            <Image
                                 src="/assets/icons/coresoft.svg"
                                 alt="Coresoft"
+                                width={78}
+                                height={24}
                             />
-                        </div>
+                        </Link>
                     </div>
                 </div>
             </div>

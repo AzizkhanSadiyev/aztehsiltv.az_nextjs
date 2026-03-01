@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import {
+    useCallback,
+    useEffect,
+    useRef,
+    useState,
+    useSyncExternalStore,
+} from "react";
 import { usePathname } from "next/navigation";
 
 import Link from "next/link";
@@ -40,12 +46,110 @@ const localeLabelMap: Record<string, string> = {
     ru: "Ru",
 };
 
+type ThemeMode = "light" | "dark";
+type MenuState = {
+    pathKey: string;
+    isMobileMenuOpen: boolean;
+    isSearchOpen: boolean;
+    isLangOpen: boolean;
+};
+
+const THEME_STORAGE_KEY = "theme";
+const DEFAULT_THEME: ThemeMode = "light";
+
+const getPreferredTheme = (): ThemeMode => {
+    if (typeof window === "undefined") return DEFAULT_THEME;
+    const savedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
+    if (savedTheme === "dark" || savedTheme === "light") {
+        return savedTheme;
+    }
+    const prefersDark =
+        window.matchMedia &&
+        window.matchMedia("(prefers-color-scheme: dark)").matches;
+    return prefersDark ? "dark" : "light";
+};
+
+let currentTheme: ThemeMode = DEFAULT_THEME;
+const themeListeners = new Set<() => void>();
+
+const notifyThemeListeners = () => {
+    for (const listener of themeListeners) {
+        listener();
+    }
+};
+
+const applyTheme = (nextTheme: ThemeMode) => {
+    if (typeof document !== "undefined") {
+        document.documentElement.setAttribute("data-theme", nextTheme);
+    }
+};
+
+const setTheme = (nextTheme: ThemeMode) => {
+    currentTheme = nextTheme;
+    applyTheme(nextTheme);
+    if (typeof window !== "undefined") {
+        window.localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
+    }
+    notifyThemeListeners();
+};
+
+const themeStore = {
+    subscribe(listener: () => void) {
+        themeListeners.add(listener);
+        return () => {
+            themeListeners.delete(listener);
+        };
+    },
+    getSnapshot() {
+        return currentTheme;
+    },
+    getServerSnapshot() {
+        return DEFAULT_THEME;
+    },
+    setTheme,
+};
+
+if (typeof window !== "undefined") {
+    currentTheme = getPreferredTheme();
+    applyTheme(currentTheme);
+}
+
 export default function Header({ locale, dict: _dict }: HeaderProps) {
     const pathname = usePathname();
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    const [isSearchOpen, setIsSearchOpen] = useState(false);
-    const [isLangOpen, setIsLangOpen] = useState(false);
-    const [isDarkMode, setIsDarkMode] = useState(false);
+    const pathKey = pathname ?? "";
+    const [menuState, setMenuState] = useState<MenuState>(() => ({
+        pathKey,
+        isMobileMenuOpen: false,
+        isSearchOpen: false,
+        isLangOpen: false,
+    }));
+    const updateMenuState = useCallback(
+        (updater: (prev: MenuState) => MenuState) => {
+            setMenuState((prev) => {
+                const base =
+                    prev.pathKey === pathKey
+                        ? prev
+                        : {
+                              pathKey,
+                              isMobileMenuOpen: false,
+                              isSearchOpen: false,
+                              isLangOpen: false,
+                          };
+                return updater(base);
+            });
+        },
+        [pathKey]
+    );
+    const isSamePath = menuState.pathKey === pathKey;
+    const isMobileMenuOpen = isSamePath && menuState.isMobileMenuOpen;
+    const isSearchOpen = isSamePath && menuState.isSearchOpen;
+    const isLangOpen = isSamePath && menuState.isLangOpen;
+    const theme = useSyncExternalStore(
+        themeStore.subscribe,
+        themeStore.getSnapshot,
+        themeStore.getServerSnapshot
+    );
+    const isDarkMode = theme === "dark";
     const mobileMenuRef = useRef<HTMLElement | null>(null);
     const searchRef = useRef<HTMLDivElement | null>(null);
     const langRef = useRef<HTMLDivElement | null>(null);
@@ -64,19 +168,28 @@ export default function Header({ locale, dict: _dict }: HeaderProps) {
                     mobileMenuRef.current &&
                     !mobileMenuRef.current.contains(target)
                 ) {
-                    setIsMobileMenuOpen(false);
+                    updateMenuState((prev) => ({
+                        ...prev,
+                        isMobileMenuOpen: false,
+                    }));
                 }
             }
 
             if (isSearchOpen && !clickedSearchToggle) {
                 if (searchRef.current && !searchRef.current.contains(target)) {
-                    setIsSearchOpen(false);
+                    updateMenuState((prev) => ({
+                        ...prev,
+                        isSearchOpen: false,
+                    }));
                 }
             }
 
             if (isLangOpen && !clickedLangToggle) {
                 if (langRef.current && !langRef.current.contains(target)) {
-                    setIsLangOpen(false);
+                    updateMenuState((prev) => ({
+                        ...prev,
+                        isLangOpen: false,
+                    }));
                 }
             }
         };
@@ -85,7 +198,7 @@ export default function Header({ locale, dict: _dict }: HeaderProps) {
         return () => {
             document.removeEventListener("mousedown", handleClickOutside);
         };
-    }, [isLangOpen, isMobileMenuOpen, isSearchOpen]);
+    }, [isLangOpen, isMobileMenuOpen, isSearchOpen, updateMenuState]);
 
     useEffect(() => {
         if (!isMobileMenuOpen) return;
@@ -105,55 +218,36 @@ export default function Header({ locale, dict: _dict }: HeaderProps) {
         };
     }, [isMobileMenuOpen]);
 
-    useEffect(() => {
-        const savedTheme = localStorage.getItem("theme");
-        const prefersDark =
-            window.matchMedia &&
-            window.matchMedia("(prefers-color-scheme: dark)").matches;
-        const nextDark =
-            savedTheme === "dark" || (savedTheme === null && prefersDark);
-
-        setIsDarkMode(nextDark);
-        document.documentElement.setAttribute(
-            "data-theme",
-            nextDark ? "dark" : "light"
-        );
-    }, []);
-
-    useEffect(() => {
-        setIsMobileMenuOpen(false);
-        setIsSearchOpen(false);
-        setIsLangOpen(false);
-    }, [pathname]);
-
-    const toggleMobileMenu = () => setIsMobileMenuOpen((prev) => !prev);
+    const toggleMobileMenu = () =>
+        updateMenuState((prev) => ({
+            ...prev,
+            isMobileMenuOpen: !prev.isMobileMenuOpen,
+        }));
     const toggleSearch = () =>
-        setIsSearchOpen((prev) => {
-            const next = !prev;
-            if (next) {
-                setIsLangOpen(false);
-            }
-            return next;
+        updateMenuState((prev) => {
+            const next = !prev.isSearchOpen;
+            return {
+                ...prev,
+                isSearchOpen: next,
+                isLangOpen: next ? false : prev.isLangOpen,
+            };
         });
-    const closeSearch = () => setIsSearchOpen(false);
+    const closeSearch = () =>
+        updateMenuState((prev) => ({
+            ...prev,
+            isSearchOpen: false,
+        }));
     const toggleLang = () =>
-        setIsLangOpen((prev) => {
-            const next = !prev;
-            if (next) {
-                setIsSearchOpen(false);
-            }
-            return next;
+        updateMenuState((prev) => {
+            const next = !prev.isLangOpen;
+            return {
+                ...prev,
+                isLangOpen: next,
+                isSearchOpen: next ? false : prev.isSearchOpen,
+            };
         });
     const toggleDarkMode = () => {
-        setIsDarkMode((prev) => {
-            const next = !prev;
-            document.documentElement.setAttribute(
-                "data-theme",
-                next ? "dark" : "light"
-            );
-            localStorage.setItem("theme", next ? "dark" : "light");
-            return next;
-        });
+        themeStore.setTheme(isDarkMode ? "light" : "dark");
     };
 
     const menuButtonClass = cx(
@@ -290,7 +384,12 @@ export default function Header({ locale, dict: _dict }: HeaderProps) {
                                 >
                                     <Link
                                         href={buildLocaleHref("en")}
-                                        onClick={() => setIsLangOpen(false)}
+                                        onClick={() =>
+                                            updateMenuState((prev) => ({
+                                                ...prev,
+                                                isLangOpen: false,
+                                            }))
+                                        }
                                     >
                                         En
                                     </Link>
@@ -302,7 +401,12 @@ export default function Header({ locale, dict: _dict }: HeaderProps) {
                                 >
                                     <Link
                                         href={buildLocaleHref("ru")}
-                                        onClick={() => setIsLangOpen(false)}
+                                        onClick={() =>
+                                            updateMenuState((prev) => ({
+                                                ...prev,
+                                                isLangOpen: false,
+                                            }))
+                                        }
                                     >
                                         Ru
                                     </Link>
@@ -314,7 +418,12 @@ export default function Header({ locale, dict: _dict }: HeaderProps) {
                                 >
                                     <Link
                                         href={buildLocaleHref("az")}
-                                        onClick={() => setIsLangOpen(false)}
+                                        onClick={() =>
+                                            updateMenuState((prev) => ({
+                                                ...prev,
+                                                isLangOpen: false,
+                                            }))
+                                        }
                                     >
                                         Az
                                     </Link>
