@@ -1,0 +1,31 @@
+[
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "email": "admin@aztehsiltv.az",
+    "name": "Admin User",
+    "avatar": null,
+    "role": "admin",
+    "password": "$2a$10$0HjQl4TBvgVcmuchvh9KEOwVCIBVoh7ogpc3zjv0o2EZM9SWAHdpa",
+    "isActive": true,
+    "lastLoginAt": null,
+    "createdAt": "2026-02-16T19:09:01.126Z",
+    "updatedAt": "2026-02-16T22:51:38.331Z",
+    "permissions": [
+      "videos.view",
+      "videos.create",
+      "videos.edit",
+      "videos.delete",
+      "videos.publish",
+      "categories.manage",
+      "broadcasts.manage",
+      "partners.manage",
+      "media.view",
+      "media.upload",
+      "media.delete",
+      "users.view",
+      "users.manage",
+      "settings.view",
+      "settings.edit"
+    ]
+  }
+]
