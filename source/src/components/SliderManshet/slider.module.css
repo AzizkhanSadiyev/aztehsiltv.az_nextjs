@@ -21,6 +21,7 @@
     top: auto;
     right: 24px;
     bottom: 26px;
+    z-index: 3;
 }
 
 .navButton {
@@ -32,16 +33,14 @@
     height: 36px;
     border-radius: 50%;
     background-color: var(--color-bg-e1e1eb);
-    background: var(--color-bg-f1f0f7);
     cursor: pointer;
     transition: all var(--transition-fast);
-    z-index: 3;
 }
 
-.navButton:hover {
+/* .navButton:hover {
     background: var(--color-bg-ffffff);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-}
+} */
 
 .navIcon {
     width: 20px;
