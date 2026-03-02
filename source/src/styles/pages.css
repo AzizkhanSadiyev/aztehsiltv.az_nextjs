@@ -82,9 +82,25 @@
 
 .row_item_manshet {
     display: flex;
-    align-items: flex-start;
+    align-items: stretch;
+    position: relative;
     width: 100%;
     gap: 20px;
+}
+.row_item_manshet .wrap_left {
+    float: none;
+    width: calc(100% - 470px);
+    margin-right: 20px;
+}
+.row_item_manshet .wrap_right {
+    float: none;
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 450px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
 }
 .row_item_manshet .wrap_manshet_slider {
     width: calc(100% - 470px);
@@ -1125,6 +1141,13 @@ body:not([data-theme="dark"]) .wrap_contact_page {
     .row_item_manshet .wrap_manshet_slider {
         width: calc(100% + 32px);
         margin-left: -16px;
+    }
+    .row_item_manshet .wrap_left {
+        width: 100%;
+        margin-right: 0;
+    }
+    .row_item_manshet .wrap_right {
+        display: none;
     }
     .row_item_manshet .video-card {
         display: none !important;

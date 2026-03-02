@@ -7,6 +7,9 @@ import styles from "./page.module.css";
 
 import NewsCard from "@/components/NewsCard/Card";
 import SliderShort, { type ShortItem } from "@/components/SliderShort/slider";
+import SliderManhet, {
+    type ManshetItem,
+} from "@/components/SliderManshet/slider";
 import SliderNews, { type NewsItem } from "@/components/SliderNews/slider";
 import SliderBroadcast, {
     type BroadcastItem,
@@ -25,7 +28,54 @@ export default async function HomePage({
 }) {
     const { locale } = await params;
     const dict = await getDictionary(locale as Locale);
+    const categoryBasePath = `/${locale}/categories`;
 
+    const manshetItems: ManshetItem[] = [
+        {
+            id: 1,
+            title: "Konqres kend mektebleri ucun Fondu yeniden berpa etdi",
+            image: "/assets/images/card_3.png",
+            views: "1.2 M baxis",
+            date: "28 Dek 2026",
+            category: "Imtahan",
+            duration: "00:35",
+            slug: "konqres-kend-mektebleri-fond",
+            type: "video",
+        },
+        {
+            id: 2,
+            title: "STEAM laboratoriyalari ucun yeni tecrube setleri paylandi",
+            image: "/assets/images/card_4.png",
+            views: "540 K baxis",
+            date: "25 Dek 2026",
+            category: "Tehsil",
+            duration: "00:42",
+            slug: "steam-laboratoriyalari-tecrube-setleri",
+            type: "video",
+        },
+        {
+            id: 3,
+            title: '"Silikon Sehrasi"nda bir mekteb sagirdleri yarimkecirici buna qosulmaga hazirlayir',
+            image: "/assets/images/card_1.png",
+            views: "1.2 M baxis",
+            date: "28 Dek 2026",
+            category: "Verilis",
+            duration: "00:35",
+            slug: "silikon-sehrasi-mekteb-sagirdleri",
+            type: "video",
+        },
+        {
+            id: 4,
+            title: "Tramp mekteb naharlarina tam sud qaytaran qanun imzaladi",
+            image: "/assets/images/card_2.png",
+            views: "960 K baxis",
+            date: "27 Dek 2026",
+            category: "Verilis",
+            duration: "00:35",
+            slug: "tramp-mekteb-naharlari-sud-qanun",
+            type: "video",
+        },
+    ];
     const newsItems: NewsItem[] = [
         {
             id: 1,
@@ -71,7 +121,7 @@ export default async function HomePage({
             slug: "tramp-mekteb-naharlari-sud-qanun",
             type: "video",
         },
-            {
+        {
             id: 5,
             title: "Konqres kend mektebleri ucun Fondu yeniden berpa etdi",
             image: "/assets/images/card_3.png",
@@ -257,7 +307,109 @@ export default async function HomePage({
             slug: "tramp-mekteb-naharlari-sud-qanun-2",
         },
     ];
+    const sidebarItems: NewsItem[] = [
+        {
+            id: 1,
+            title: "Konqres kend mektebleri ucun Fondu yeniden berpa etdi",
+            image: "/assets/images/card_3.png",
+            views: "1.2 M baxis",
+            date: "28 Dek 2026",
+            category: "Imtahan",
+            duration: "00:35",
+            slug: "konqres-kend-mektebleri-fond",
+            type: "video",
+        },
+        {
+            id: 2,
+            title: "STEAM laboratoriyalari ucun yeni tecrube setleri paylandi",
+            image: "/assets/images/card_4.png",
+            views: "540 K baxis",
+            date: "25 Dek 2026",
+            category: "Tehsil",
+            duration: "00:42",
+            slug: "steam-laboratoriyalari-tecrube-setleri",
+            type: "video",
+        },
+        {
+            id: 3,
+            title: '"Silikon Sehrasi"nda bir mekteb sagirdleri yarimkecirici buna qosulmaga hazirlayir',
+            image: "/assets/images/card_1.png",
+            views: "1.2 M baxis",
+            date: "28 Dek 2026",
+            category: "Verilis",
+            duration: "00:35",
+            slug: "silikon-sehrasi-mekteb-sagirdleri",
+            type: "video",
+        },
+        {
+            id: 4,
+            title: "Tramp mekteb naharlarina tam sud qaytaran qanun imzaladi",
+            image: "/assets/images/card_2.png",
+            views: "960 K baxis",
+            date: "27 Dek 2026",
+            category: "Verilis",
+            duration: "00:35",
+            slug: "tramp-mekteb-naharlari-sud-qanun",
+            type: "video",
+        },
+        {
+            id: 5,
+            title: "Konqres kend mektebleri ucun Fondu yeniden berpa etdi",
+            image: "/assets/images/card_3.png",
+            views: "1.2 M baxis",
+            date: "28 Dek 2026",
+            category: "Imtahan",
+            duration: "00:35",
+            slug: "konqres-kend-mektebleri-fond-2",
+            type: "video",
+        },
+        {
+            id: 6,
+            title: "STEAM laboratoriyalari ucun yeni tecrube setleri paylandi",
+            image: "/assets/images/card_4.png",
+            views: "540 K baxis",
+            date: "25 Dek 2026",
+            category: "Tehsil",
+            duration: "00:42",
+            slug: "steam-laboratoriyalari-tecrube-setleri-2",
+            type: "video",
+        },
+        {
+            id: 7,
+            title: '"Silikon Sehrasi"nda bir mekteb sagirdleri yarimkecirici buna qosulmaga hazirlayir',
+            image: "/assets/images/card_1.png",
+            views: "1.2 M baxis",
+            date: "28 Dek 2026",
+            category: "Verilis",
+            duration: "00:35",
+            slug: "silikon-sehrasi-mekteb-sagirdleri-2",
+            type: "video",
+        },
+        {
+            id: 8,
+            title: "Tramp mekteb naharlarina tam sud qaytaran qanun imzaladi",
+            image: "/assets/images/card_2.png",
+            views: "960 K baxis",
+            date: "27 Dek 2026",
+            category: "Verilis",
+            duration: "00:35",
+            slug: "tramp-mekteb-naharlari-sud-qanun-2",
+            type: "video",
+        },
+    ];
 
+    const resolveSlug = (slug?: string) => {
+        if (!slug || slug === "#") return "#";
+        if (
+            slug.startsWith("/") ||
+            slug.startsWith("http://") ||
+            slug.startsWith("https://") ||
+            slug.startsWith("#")
+        ) {
+            return slug;
+        }
+        return `${categoryBasePath}/${slug}`;
+    };
     return (
         <>
             {/* Page top items */}
@@ -265,6 +417,89 @@ export default async function HomePage({
                 <PageTopItems />
             </div>
             {/* Page top items */}
+
+            {/* Main slider section */}
+            <div
+                className="section_wrap pad_bottom_20"
+                style={{ paddingBottom: "24px" }}
+            >
+                <div className="main_center">
+                    <div className="row_item_manshet same_h_block">
+                        <div className="wrap_left">
+                            <SliderManhet
+                                items={manshetItems}
+                                slidesPerView={1}
+                            />
+                        </div>
+                        <div className="wrap_right">
+                            <section className="card video-card">
+                                <div className="video-card__header">
+                                    <div className="section-label">
+                                        <span className="">Son</span>
+                                        <span className="accent">Videolar</span>
+                                    </div>
+                                    <Link
+                                        className="link-more"
+                                        href={categoryBasePath}
+                                    >
+                                        {"Daha çox"}
+                                        <span className="link-arrow">
+                                            <Image
+                                                src="/assets/icons/chevron-right.svg"
+                                                alt="right"
+                                                width={12}
+                                                height={12}
+                                            />
+                                        </span>
+                                    </Link>
+                                </div>
+                                <div
+                                    className="video-list"
+                                    style={{
+                                        overflow: "auto",
+                                    }}
+                                >
+                                    {sidebarItems.map((item, index) => (
+                                        <Link
+                                            key={`${item.id}-${index}`}
+                                            className="video-item"
+                                            href={resolveSlug(item.slug)}
+                                        >
+                                            <div className="video-thumb">
+                                                <Image
+                                                    src={item.image}
+                                                    alt={item.title}
+                                                    width={153}
+                                                    height={86}
+                                                />
+                                                <span className="duration">
+                                                    {item.duration}
+                                                </span>
+                                            </div>
+                                            <div className="video-copy">
+                                                <h4 className="video-title">
+                                                    {item.title}
+                                                </h4>
+                                                <div className="video-meta">
+                                                    <span className="meta-icon play"></span>
+                                                    <span className="meta-text">
+                                                        {item.views}
+                                                    </span>
+                                                    <span className="meta-dot"></span>
+                                                    <span className="meta-text">
+                                                        {item.date}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </Link>
+                                    ))}
+                                </div>
+                            </section>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {/* Main slider section  */}
 
             {/* Short videolar */}
             <div className="main_center">
