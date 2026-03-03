@@ -21,18 +21,32 @@ CREATE TABLE IF NOT EXISTS users (
     INDEX idx_users_is_active (is_active)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Languages table
+CREATE TABLE IF NOT EXISTS languages (
+    id CHAR(36) PRIMARY KEY,
+    code VARCHAR(10) NOT NULL UNIQUE,
+    name VARCHAR(100) NOT NULL,
+    native_name VARCHAR(100) NULL,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    sort_order INT NOT NULL DEFAULT 0,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_languages_active (is_active),
+    INDEX idx_languages_order (sort_order)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Seed default languages
+INSERT IGNORE INTO languages (id, code, name, native_name, is_active, sort_order, created_at, updated_at) VALUES
+    (UUID(), 'az', 'Azerbaijani', 'Azerbaijani', TRUE, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    (UUID(), 'en', 'English', 'English', TRUE, 2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    (UUID(), 'ru', 'Russian', 'Russian', TRUE, 3, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+
 -- Categories table
 CREATE TABLE IF NOT EXISTS categories (
     id CHAR(36) PRIMARY KEY,
-    name_az VARCHAR(255) NOT NULL,
-    name_en VARCHAR(255) NOT NULL,
-    name_ru VARCHAR(255) NOT NULL,
-    slug_az VARCHAR(255) NOT NULL,
-    slug_en VARCHAR(255) NOT NULL,
-    slug_ru VARCHAR(255) NOT NULL,
-    description_az TEXT NULL,
-    description_en TEXT NULL,
-    description_ru TEXT NULL,
+    name JSON NOT NULL,
+    slug VARCHAR(255) NOT NULL,
+    description JSON NULL,
     parent_id CHAR(36) NULL,
     icon VARCHAR(100) NULL,
     color VARCHAR(7) NOT NULL DEFAULT '#6366f1',
@@ -41,9 +55,7 @@ CREATE TABLE IF NOT EXISTS categories (
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    UNIQUE KEY uk_categories_slug_az (slug_az),
-    UNIQUE KEY uk_categories_slug_en (slug_en),
-    UNIQUE KEY uk_categories_slug_ru (slug_ru),
+    UNIQUE INDEX uk_categories_slug (slug),
     INDEX idx_categories_parent_id (parent_id),
     INDEX idx_categories_is_active (is_active),
     INDEX idx_categories_order (`order`),
@@ -61,12 +73,8 @@ CREATE TABLE IF NOT EXISTS media (
     size INT UNSIGNED NOT NULL,
     width INT UNSIGNED NULL,
     height INT UNSIGNED NULL,
-    alt_az TEXT NULL,
-    alt_en TEXT NULL,
-    alt_ru TEXT NULL,
-    title_az VARCHAR(255) NULL,
-    title_en VARCHAR(255) NULL,
-    title_ru VARCHAR(255) NULL,
+    alt JSON NULL,
+    title JSON NULL,
     uploaded_by CHAR(36) NOT NULL,
     uploaded_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     metadata JSON NULL COMMENT 'Additional metadata: dimensions, format, folder, tags',
@@ -79,23 +87,14 @@ CREATE TABLE IF NOT EXISTS media (
 -- Broadcasts (shows / playlists)
 CREATE TABLE IF NOT EXISTS broadcasts (
     id CHAR(36) PRIMARY KEY,
-    title_az VARCHAR(255) NOT NULL,
-    title_en VARCHAR(255) NOT NULL,
-    title_ru VARCHAR(255) NOT NULL,
-    slug_az VARCHAR(255) NOT NULL,
-    slug_en VARCHAR(255) NOT NULL,
-    slug_ru VARCHAR(255) NOT NULL,
-    description_az TEXT NULL,
-    description_en TEXT NULL,
-    description_ru TEXT NULL,
+    title JSON NOT NULL,
+    slug JSON NOT NULL,
+    description JSON NULL,
     image_url VARCHAR(500) NOT NULL,
     status ENUM('draft', 'published') NOT NULL DEFAULT 'draft',
     sort_order INT NOT NULL DEFAULT 0,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    UNIQUE KEY uk_broadcasts_slug_az (slug_az),
-    UNIQUE KEY uk_broadcasts_slug_en (slug_en),
-    UNIQUE KEY uk_broadcasts_slug_ru (slug_ru),
     INDEX idx_broadcasts_status_order_updated (status, sort_order, updated_at),
     INDEX idx_broadcasts_sort_updated (sort_order, updated_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -103,15 +102,9 @@ CREATE TABLE IF NOT EXISTS broadcasts (
 -- Videos table
 CREATE TABLE IF NOT EXISTS videos (
     id CHAR(36) PRIMARY KEY,
-    title_az VARCHAR(500) NOT NULL,
-    title_en VARCHAR(500) NOT NULL,
-    title_ru VARCHAR(500) NOT NULL,
-    slug_az VARCHAR(500) NOT NULL,
-    slug_en VARCHAR(500) NOT NULL,
-    slug_ru VARCHAR(500) NOT NULL,
-    description_az TEXT NULL,
-    description_en TEXT NULL,
-    description_ru TEXT NULL,
+    title JSON NOT NULL,
+    slug JSON NOT NULL,
+    description JSON NULL,
     cover_url VARCHAR(500) NULL,
     category_id CHAR(36) NULL,
     broadcast_id CHAR(36) NULL,
@@ -127,9 +120,6 @@ CREATE TABLE IF NOT EXISTS videos (
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     metadata JSON NULL,
-    UNIQUE KEY uk_videos_slug_az (slug_az),
-    UNIQUE KEY uk_videos_slug_en (slug_en),
-    UNIQUE KEY uk_videos_slug_ru (slug_ru),
     INDEX idx_videos_status (status),
     INDEX idx_videos_category (category_id),
     INDEX idx_videos_broadcast (broadcast_id),

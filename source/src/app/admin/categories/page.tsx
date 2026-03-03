@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/admin/DataTable";
 import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import { 
   Edit, 
   FolderTree,
@@ -40,6 +41,11 @@ interface Category {
   createdAt: string;
   updatedAt: string;
 }
+
+type CategoryRow = Category & {
+  depth?: number;
+  parentName?: string;
+};
 
 export default function CategoriesPage() {
   const router = useRouter();
@@ -108,24 +114,75 @@ export default function CategoriesPage() {
     }
   };
 
-  const filteredCategories = categories.filter((category) =>
+  const orderedCategories = useMemo(() => {
+    if (!categories.length) return [];
+
+    const byId = new Map(categories.map((cat) => [cat.id, cat]));
+    const childrenMap = new Map<string, Category[]>();
+    const roots: Category[] = [];
+
+    categories.forEach((cat) => {
+      if (cat.parentId && byId.has(cat.parentId)) {
+        const list = childrenMap.get(cat.parentId) ?? [];
+        list.push(cat);
+        childrenMap.set(cat.parentId, list);
+      } else {
+        roots.push(cat);
+      }
+    });
+
+    const sortByOrder = (a: Category, b: Category) => {
+      const orderDiff = (a.order ?? 0) - (b.order ?? 0);
+      if (orderDiff !== 0) return orderDiff;
+      return a.name.localeCompare(b.name);
+    };
+
+    roots.sort(sortByOrder);
+    childrenMap.forEach((list) => list.sort(sortByOrder));
+
+    const ordered: CategoryRow[] = [];
+    roots.forEach((parent) => {
+      ordered.push({ ...parent, depth: 0 });
+      const children = childrenMap.get(parent.id) || [];
+      children.forEach((child) => {
+        ordered.push({
+          ...child,
+          depth: 1,
+          parentName: parent.name,
+        });
+      });
+    });
+
+    return ordered;
+  }, [categories]);
+
+  const filteredCategories = orderedCategories.filter((category) =>
     searchQuery === "" ||
     category.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     category.slug.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const columns: ColumnDef<Category>[] = [
+  const columns: ColumnDef<CategoryRow>[] = [
     {
       accessorKey: "name",
       header: "Name",
       cell: ({ row }) => {
         const category = row.original;
+        const isChild = Boolean(category.parentId);
         return (
-          <div className="flex items-center gap-2">
-            <FolderTree className="h-4 w-4 text-muted-foreground" />
+          <div className={cn("admin-category-name", isChild && "is-child")}>
+            {isChild && <span className="admin-category-branch" aria-hidden="true" />}
+            <FolderTree className={cn("admin-category-icon", isChild && "is-child")} />
             <div>
-              <p className="font-medium">{category.name}</p>
+              <p className={cn("admin-category-title", isChild && "is-child")}>
+                {category.name}
+              </p>
               <p className="text-xs text-muted-foreground">/{category.slug}</p>
+              {isChild && category.parentName && (
+                <span className="admin-category-parent">
+                  Main: {category.parentName}
+                </span>
+              )}
             </div>
           </div>
         );
@@ -204,11 +261,11 @@ export default function CategoriesPage() {
       id: "actions",
       header: () => <div className="text-right pr-2">Actions</div>,
       cell: ({ row }) => (
-        <div className="flex justify-end gap-2">
+        <div className="admin-row-actions">
           <Button
             variant="outline"
             size="sm"
-            className="h-8 px-3 gap-1 text-xs"
+            className="admin-row-action"
             onClick={() => router.push(`/admin/categories/${row.original.id}`)}
           >
             <Edit className="h-3.5 w-3.5" />
@@ -217,7 +274,7 @@ export default function CategoriesPage() {
           <Button
             variant="outline"
             size="sm"
-            className="h-8 px-3 gap-1 text-xs text-destructive border-destructive/40 hover:text-destructive"
+            className="admin-row-action admin-row-action--danger"
             onClick={() => {
               setCategoryToDelete(row.original);
               setDeleteDialogOpen(true);

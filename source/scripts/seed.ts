@@ -121,13 +121,57 @@ async function seed(): Promise<void> {
       { name: "Təhsil saatı", parentName: "VERİLİŞLƏR", order: 4 },
     ];
 
+    const normalizeLocalized = (value: unknown): Record<string, string> => {
+      let raw: unknown = value;
+      if (typeof raw === "string") {
+        try {
+          raw = JSON.parse(raw);
+        } catch {
+          return {};
+        }
+      }
+      if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
+      const result: Record<string, string> = {};
+      for (const [key, entry] of Object.entries(raw as Record<string, unknown>)) {
+        if (typeof entry === "string") {
+          result[key] = entry;
+        }
+      }
+      return result;
+    };
+
+    const normalizeSlugValue = (value: unknown): string | null => {
+      if (!value) return null;
+      if (typeof value === "string") {
+        const trimmed = value.trim();
+        if (!trimmed) return null;
+        if (trimmed.startsWith("{")) {
+          try {
+            const parsed = normalizeLocalized(trimmed);
+            const first = Object.values(parsed).find((v) => v.trim().length > 0);
+            return first || null;
+          } catch {
+            return trimmed;
+          }
+        }
+        return trimmed;
+      }
+      if (typeof value === "object") {
+        const parsed = normalizeLocalized(value);
+        const first = Object.values(parsed).find((v) => v.trim().length > 0);
+        return first || null;
+      }
+      return null;
+    };
+
     const [existingCategories] = await db.query<
       mysql.RowDataPacket[]
-    >("SELECT id, slug_az FROM categories");
+    >("SELECT id, slug FROM categories");
 
     const existingBySlug = new Map<string, string>();
     for (const row of existingCategories) {
-      if (row.slug_az) existingBySlug.set(String(row.slug_az), String(row.id));
+      const firstSlug = normalizeSlugValue(row.slug);
+      if (firstSlug) existingBySlug.set(String(firstSlug), String(row.id));
     }
 
     const idByName = new Map<string, string>();
@@ -149,25 +193,18 @@ async function seed(): Promise<void> {
         ? idByName.get(item.parentName) || null
         : null;
 
+      const localizedValue = { az: item.name, en: item.name, ru: item.name };
       await db.query(
         `INSERT INTO categories
          (id,
-          name_az, name_en, name_ru,
-          slug_az, slug_en, slug_ru,
-          description_az, description_en, description_ru,
+          name, slug, description,
           parent_id, icon, color, \`order\`, positions, is_active,
           created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           id,
-          item.name,
-          item.name,
-          item.name,
+          JSON.stringify(localizedValue),
           slug,
-          slug,
-          slug,
-          null,
-          null,
           null,
           parentId,
           null,

@@ -259,7 +259,7 @@ export default function BroadcastEditPage() {
               onChange={(e) => handleChange("title", e.target.value)}
               placeholder="Show title"
               error={!!errors.title}
-              style={{ marginTop: "8px" }}
+             
             />
           </FormField>
 
@@ -270,7 +270,7 @@ export default function BroadcastEditPage() {
               onChange={(e) => handleChange("slug", e.target.value)}
               placeholder="show-slug"
               error={!!errors.slug}
-              style={{ marginTop: "8px" }}
+             
             />
           </FormField>
 
@@ -281,7 +281,7 @@ export default function BroadcastEditPage() {
               onChange={(e) => handleChange("description", e.target.value)}
               placeholder="Short description..."
               rows={4}
-              style={{ marginTop: "8px" }}
+             
             />
           </FormField>
         </FormSection>
@@ -360,7 +360,7 @@ export default function BroadcastEditPage() {
                   handleChange("status", value as BroadcastFormData["status"])
                 }
               >
-                <SelectTrigger style={{ marginTop: "8px" }}>
+                <SelectTrigger>
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
                 <SelectContent className="text-black">

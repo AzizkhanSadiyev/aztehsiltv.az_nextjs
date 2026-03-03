@@ -10,7 +10,11 @@ import {
   type MediaUpdateInput,
   type MediaFilters,
 } from "@/types/media.types";
-import type { LocalizedString } from "@/types/admin.types";
+import {
+  mergeLocalized,
+  normalizeLocalizedNullable,
+  toJsonOrNull,
+} from "@/lib/localization";
 
 type MediaRow = {
   id: string;
@@ -22,28 +26,11 @@ type MediaRow = {
   size: number;
   width: number | null;
   height: number | null;
-  alt_az: string | null;
-  alt_en: string | null;
-  alt_ru: string | null;
-  title_az: string | null;
-  title_en: string | null;
-  title_ru: string | null;
+  alt: any;
+  title: any;
   uploaded_by: string;
   uploaded_at: Date;
   metadata: any;
-};
-
-const toLocalizedNullable = (
-  az: string | null,
-  en: string | null,
-  ru: string | null,
-): LocalizedString | null => {
-  if (az == null && en == null && ru == null) return null;
-  return {
-    az: az ?? "",
-    en: en ?? "",
-    ru: ru ?? "",
-  };
 };
 
 const parseMetadata = (value: any): Media["metadata"] => {
@@ -111,8 +98,8 @@ function mapRow(row: MediaRow): Media {
     size: row.size,
     width: row.width,
     height: row.height,
-    alt: toLocalizedNullable(row.alt_az, row.alt_en, row.alt_ru),
-    title: toLocalizedNullable(row.title_az, row.title_en, row.title_ru),
+    alt: normalizeLocalizedNullable(row.alt),
+    title: normalizeLocalizedNullable(row.title),
     uploadedBy: row.uploaded_by,
     uploadedAt: row.uploaded_at.toISOString(),
     metadata: parseMetadata(row.metadata),
@@ -136,9 +123,9 @@ function buildFilters(filters?: MediaFilters) {
   if (filters?.search) {
     const search = `%${filters.search.toLowerCase()}%`;
     where.push(
-      "(LOWER(filename) LIKE ? OR LOWER(alt_az) LIKE ? OR LOWER(alt_en) LIKE ? OR LOWER(alt_ru) LIKE ? OR LOWER(title_az) LIKE ? OR LOWER(title_en) LIKE ? OR LOWER(title_ru) LIKE ?)",
+      "(LOWER(filename) LIKE ? OR LOWER(CAST(alt AS CHAR)) LIKE ? OR LOWER(CAST(title AS CHAR)) LIKE ?)",
     );
-    params.push(search, search, search, search, search, search, search);
+    params.push(search, search, search);
   }
 
   const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
@@ -166,7 +153,7 @@ export async function getAllMedia(options?: {
 
   const rows = await query<MediaRow>(
     `SELECT id, filename, url, path, mime_type, type, size, width, height,
-            alt_az, alt_en, alt_ru, title_az, title_en, title_ru,
+            alt, title,
             uploaded_by, uploaded_at, metadata
      FROM media
      ${whereSql}
@@ -187,7 +174,7 @@ export async function getAllMedia(options?: {
 export async function getMediaById(id: string): Promise<Media | null> {
   const row = await queryOne<MediaRow>(
     `SELECT id, filename, url, path, mime_type, type, size, width, height,
-            alt_az, alt_en, alt_ru, title_az, title_en, title_ru,
+            alt, title,
             uploaded_by, uploaded_at, metadata
      FROM media
      WHERE id = ?`,
@@ -214,9 +201,9 @@ export async function createMedia(
   await insert(
     `INSERT INTO media
      (id, filename, url, path, mime_type, type, size, width, height,
-      alt_az, alt_en, alt_ru, title_az, title_en, title_ru,
+      alt, title,
       uploaded_by, uploaded_at, metadata)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       data.filename,
@@ -227,12 +214,8 @@ export async function createMedia(
       data.size,
       data.width,
       data.height,
-      data.alt?.az ?? null,
-      data.alt?.en ?? null,
-      data.alt?.ru ?? null,
-      data.title?.az ?? null,
-      data.title?.en ?? null,
-      data.title?.ru ?? null,
+      toJsonOrNull(data.alt ?? null),
+      toJsonOrNull(data.title ?? null),
       data.uploadedBy,
       now,
       JSON.stringify(data.metadata ?? {}),
@@ -249,12 +232,8 @@ export async function createMedia(
     size: data.size,
     width: data.width,
     height: data.height,
-    alt_az: data.alt?.az ?? null,
-    alt_en: data.alt?.en ?? null,
-    alt_ru: data.alt?.ru ?? null,
-    title_az: data.title?.az ?? null,
-    title_en: data.title?.en ?? null,
-    title_ru: data.title?.ru ?? null,
+    alt: data.alt ?? null,
+    title: data.title ?? null,
     uploaded_by: data.uploadedBy,
     uploaded_at: now,
     metadata: data.metadata ?? {},
@@ -274,8 +253,18 @@ export async function updateMedia(
 
   const merged: Media = {
     ...existing,
-    alt: input.alt !== undefined ? input.alt : existing.alt,
-    title: input.title !== undefined ? input.title : existing.title,
+    alt:
+      input.alt !== undefined
+        ? input.alt === null
+          ? null
+          : mergeLocalized(existing.alt ?? {}, input.alt)
+        : existing.alt,
+    title:
+      input.title !== undefined
+        ? input.title === null
+          ? null
+          : mergeLocalized(existing.title ?? {}, input.title)
+        : existing.title,
     metadata: {
       ...(existing.metadata || {}),
       ...(input.metadata || {}),
@@ -284,17 +273,11 @@ export async function updateMedia(
 
   await updateQuery(
     `UPDATE media SET
-      alt_az = ?, alt_en = ?, alt_ru = ?,
-      title_az = ?, title_en = ?, title_ru = ?,
-      metadata = ?
+      alt = ?, title = ?, metadata = ?
      WHERE id = ?`,
     [
-      merged.alt?.az ?? null,
-      merged.alt?.en ?? null,
-      merged.alt?.ru ?? null,
-      merged.title?.az ?? null,
-      merged.title?.en ?? null,
-      merged.title?.ru ?? null,
+      toJsonOrNull(merged.alt),
+      toJsonOrNull(merged.title),
       JSON.stringify(merged.metadata ?? {}),
       merged.id,
     ],

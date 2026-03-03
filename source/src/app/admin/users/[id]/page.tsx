@@ -94,7 +94,7 @@ function PasswordField({
                     placeholder={placeholder}
                     error={!!error}
                     className="pr-12"
-                    style={{ marginTop: "8px" }}
+                   
                 />
                 <button
                     type="button"
@@ -412,7 +412,7 @@ export default function UserEditPage() {
                             }
                             placeholder="Enter full name"
                             error={!!errors.name}
-                            style={{ marginTop: "8px" }}
+                           
                         />
                     </FormField>
 
@@ -431,7 +431,7 @@ export default function UserEditPage() {
                             }
                             placeholder="user@example.com"
                             error={!!errors.email}
-                            style={{ marginTop: "8px" }}
+                           
                         />
                     </FormField>
 
@@ -503,7 +503,7 @@ export default function UserEditPage() {
                                 handleRoleChange(value as UserRole)
                             }
                         >
-                            <SelectTrigger style={{ marginTop: "8px" }}>
+                            <SelectTrigger>
                                 <SelectValue placeholder="Select role" />
                             </SelectTrigger>
                             <SelectContent className="text-black">

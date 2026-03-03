@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
   FolderTree,
+  Languages,
   Image,
   Users,
   Handshake,
@@ -26,8 +27,9 @@ interface SidebarProps {
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/videos", label: "Videos", icon: Video },
-  { href: "/admin/broadcasts", label: "Broadcasts", icon: Radio },
+  // { href: "/admin/broadcasts", label: "Broadcasts", icon: Radio },
   { href: "/admin/categories", label: "Categories", icon: FolderTree },
+  { href: "/admin/languages", label: "Languages", icon: Languages },
   { href: "/admin/media", label: "Media", icon: Image },
   { href: "/admin/partners", label: "Partners", icon: Handshake },
   { href: "/admin/users", label: "Users", icon: Users },

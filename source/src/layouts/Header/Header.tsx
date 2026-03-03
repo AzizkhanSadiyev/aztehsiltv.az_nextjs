@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import {
     useCallback,
@@ -53,6 +53,17 @@ type MenuState = {
     isSearchOpen: boolean;
     isLangOpen: boolean;
 };
+
+type CategoryNavItem = {
+    id: string;
+    name: string;
+    slug: string;
+    parentId: string | null;
+    positions?: number[];
+    isActive?: boolean;
+    order?: number;
+};
+
 
 const THEME_STORAGE_KEY = "theme";
 const DEFAULT_THEME: ThemeMode = "light";
@@ -153,6 +164,8 @@ export default function Header({ locale, dict: _dict }: HeaderProps) {
     const mobileMenuRef = useRef<HTMLElement | null>(null);
     const searchRef = useRef<HTMLDivElement | null>(null);
     const langRef = useRef<HTMLDivElement | null>(null);
+    const [categories, setCategories] = useState<CategoryNavItem[]>([]);
+    const [isCategoriesLoading, setIsCategoriesLoading] = useState(false);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -270,6 +283,110 @@ export default function Header({ locale, dict: _dict }: HeaderProps) {
             ? locale
             : "az";
     const localeLabel = localeLabelMap[currentLocale] || currentLocale;
+    const categoryBasePath = `/${currentLocale}/categories`;
+    const broadcastBasePath = `/${currentLocale}/broadcasts`;
+
+    useEffect(() => {
+        let isMounted = true;
+        const controller = new AbortController();
+
+        const loadCategories = async () => {
+            setIsCategoriesLoading(true);
+            try {
+                const response = await fetch(
+                    `/api/categories?lang=${currentLocale}`,
+                    { signal: controller.signal }
+                );
+                const payload = await response.json();
+                if (!response.ok || !payload?.success) {
+                    throw new Error(
+                        payload?.error?.message || "Failed to load categories"
+                    );
+                }
+                if (isMounted) {
+                    setCategories(payload?.data ?? []);
+                }
+            } catch (error) {
+                if ((error as Error)?.name !== "AbortError") {
+                    console.error("Failed to load categories", error);
+                }
+                if (isMounted) {
+                    setCategories([]);
+                }
+            } finally {
+                if (isMounted) {
+                    setIsCategoriesLoading(false);
+                }
+            }
+        };
+
+        loadCategories();
+
+        return () => {
+            isMounted = false;
+            controller.abort();
+        };
+    }, [currentLocale]);
+
+
+    const normalizeKey = (value: string) =>
+        value
+            .normalize("NFKD")
+            .toLowerCase()
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/ə/g, "e")
+            .replace(/ı/g, "i")
+            .replace(/ş/g, "s")
+            .replace(/ğ/g, "g")
+            .replace(/ç/g, "c")
+            .replace(/ö/g, "o")
+            .replace(/ü/g, "u")
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/^-+|-+$/g, "");
+
+    const findParent = (slugCandidates: string[], nameCandidates: string[]) =>
+        categories.find(
+            (category) =>
+                slugCandidates.includes(category.slug) ||
+                nameCandidates.some(
+                    (name) => normalizeKey(category.name) === normalizeKey(name)
+                )
+        );
+
+    const sortCategories = (list: CategoryNavItem[]) =>
+        list.slice().sort((a, b) => {
+            const orderDiff = (a.order ?? 0) - (b.order ?? 0);
+            if (orderDiff !== 0) return orderDiff;
+            return a.name.localeCompare(b.name);
+        });
+
+    const activeCategories = categories.filter(
+        (category) => category.isActive !== false
+    );
+
+    const exploreParent = findParent(
+        ["kesf-et", "keshf-et", "kashf-et", "explore", "discover"],
+        ["Kəşf et", "Kesf et", "Kashf et", "Explore", "Discover"]
+    );
+    const broadcastParent = findParent(
+        ["verilisler", "verilislar", "broadcasts", "broadcast"],
+        ["Verilişlər", "Verilisler", "Broadcasts"]
+    );
+
+    const exploreChildren = exploreParent
+        ? sortCategories(
+              activeCategories.filter(
+                  (category) => category.parentId === exploreParent.id
+              )
+          )
+        : [];
+    const broadcastChildren = broadcastParent
+        ? sortCategories(
+              activeCategories.filter(
+                  (category) => category.parentId === broadcastParent.id
+              )
+          )
+        : [];
 
     const pathWithoutLocale = (() => {
         const rawPath = pathname ?? "/";
@@ -541,23 +658,34 @@ export default function Header({ locale, dict: _dict }: HeaderProps) {
                             </Link>
                             <ul className={styles.drop_menu}>
                                 <li>
-                                    <Link href="#">Bütün bölmələr</Link>
+                                    <Link href={categoryBasePath}>
+                                        Bütün bölmələr
+                                    </Link>
                                 </li>
-                                <li>
-                                    <Link href="#">Təhsil </Link>
-                                </li>
-                                <li>
-                                    <Link href="#">Uğur hekayələri </Link>
-                                </li>
-                                <li>
-                                    <Link href="#">Reportajlar</Link>
-                                </li>
-                                <li>
-                                    <Link href="#">Layihələr</Link>
-                                </li>
-                                <li>
-                                    <Link href="#">Xaricdə təhsil</Link>
-                                </li>
+                                {isCategoriesLoading ? (
+                                    <li>
+                                        <span>Yüklənir...</span>
+                                    </li>
+                                ) : exploreChildren.length > 0 ? (
+                                    exploreChildren
+                                        .filter(
+                                            (item) =>
+                                                item.slug !== "butun-bolmeler"
+                                        )
+                                        .map((item) => (
+                                        <li key={item.id}>
+                                            <Link
+                                                href={`${categoryBasePath}/${item.slug}`}
+                                            >
+                                                {item.name}
+                                            </Link>
+                                        </li>
+                                    ))
+                                ) : (
+                                    <li>
+                                        <span>Kateqoriya yoxdur</span>
+                                    </li>
+                                )}
                             </ul>
                         </li>
                         <li className={styles.has_sub}>
@@ -572,17 +700,34 @@ export default function Header({ locale, dict: _dict }: HeaderProps) {
                             </Link>
                             <ul className={styles.drop_menu}>
                                 <li>
-                                    <Link href="#">Metodik körpü </Link>
+                                    <Link href={broadcastBasePath}>
+                                        Bütün verilişlər
+                                    </Link>
                                 </li>
-                                <li>
-                                    <Link href="#">Uşaqlar və biz </Link>
-                                </li>
-                                <li>
-                                    <Link href="#">Podkast </Link>
-                                </li>
-                                <li>
-                                    <Link href="#">Təhsil saatı </Link>
-                                </li>
+                                {isCategoriesLoading ? (
+                                    <li>
+                                        <span>Yüklənir...</span>
+                                    </li>
+                                ) : broadcastChildren.length > 0 ? (
+                                    broadcastChildren
+                                        .filter(
+                                            (item) =>
+                                                item.slug !== "butun-verilisler"
+                                        )
+                                        .map((item) => (
+                                            <li key={item.id}>
+                                                <Link
+                                                    href={`${categoryBasePath}/${item.slug}`}
+                                                >
+                                                    {item.name}
+                                                </Link>
+                                            </li>
+                                        ))
+                                ) : (
+                                    <li>
+                                        <span>Veriliş yoxdur</span>
+                                    </li>
+                                )}
                             </ul>
                         </li>
                     </ul>
@@ -780,3 +925,5 @@ export default function Header({ locale, dict: _dict }: HeaderProps) {
         </header>
     );
 }
+
+

@@ -2,42 +2,45 @@
  * Category Model with Zod Validation
  */
 
-import { z } from 'zod';
+import { z } from "zod";
+import { defaultLocale } from "@/i18n/config";
 
 // Localized string schemas
-const LocalizedStringSchema = z.object({
-  az: z.string(),
-  en: z.string(),
-  ru: z.string()
-});
+const hasLocales = (value: Record<string, string>) =>
+  Object.keys(value).length > 0;
 
-const LocalizedStringRequiredSchema = z.object({
-  az: z.string().min(1, 'Azerbaijani name is required'),
-  en: z.string().min(1, 'English name is required'),
-  ru: z.string().min(1, 'Russian name is required')
-});
+const LocalizedStringSchema = z
+  .record(z.string())
+  .refine(hasLocales, { message: "At least one locale is required" });
+
+const LocalizedStringRequiredSchema = z
+  .record(z.string().min(1))
+  .refine(hasLocales, { message: "At least one locale is required" });
 
 const toLocalizedString = (value: string) => ({
-  az: value,
-  en: value,
-  ru: value
+  [defaultLocale]: value,
 });
 
 const LocalizedStringInputSchema = z
   .union([LocalizedStringSchema, z.string().min(1)])
-  .transform((value) => (typeof value === 'string' ? toLocalizedString(value) : value));
+  .transform((value) => (typeof value === "string" ? toLocalizedString(value) : value));
 
 const LocalizedStringRequiredInputSchema = z
   .union([LocalizedStringRequiredSchema, z.string().min(1)])
-  .transform((value) => (typeof value === 'string' ? toLocalizedString(value) : value));
+  .transform((value) => (typeof value === "string" ? toLocalizedString(value) : value));
 
 const LocalizedStringOptionalInputSchema = z
   .union([LocalizedStringSchema, z.string(), z.null()])
   .transform((value) => {
     if (value === null) return null;
-    if (typeof value === 'string') return toLocalizedString(value);
+    if (typeof value === "string") return toLocalizedString(value);
     return value;
   });
+
+const SlugSchema = z
+  .string()
+  .min(1)
+  .regex(/^[a-z0-9-]+$/, "Slug can only contain lowercase letters, numbers, and hyphens");
 
 // Position schema (1 = header, 2 = footer)
 const PositionValueSchema = z.union([z.literal(1), z.literal(2)]);
@@ -47,10 +50,11 @@ const PositionsArraySchema = z.array(PositionValueSchema).default([]);
 export const CategorySchema = z.object({
   id: z.string().uuid(),
   name: LocalizedStringSchema,
-  slug: LocalizedStringSchema,
+  slug: SlugSchema,
   description: LocalizedStringSchema.nullable(),
   parentId: z.string().uuid().nullable(),
   icon: z.string().nullable(),
+  coverUrl: z.string().nullable(),
   color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid hex color'),
   order: z.number().int().nonnegative(),
   positions: PositionsArraySchema,
@@ -62,10 +66,11 @@ export const CategorySchema = z.object({
 // Category create validation schema
 export const CategoryCreateSchema = z.object({
   name: LocalizedStringRequiredInputSchema,
-  slug: LocalizedStringInputSchema.optional(),
+  slug: SlugSchema.optional(),
   description: LocalizedStringOptionalInputSchema.optional(),
   parentId: z.string().uuid().nullable().optional(),
   icon: z.string().nullable().optional(),
+  coverUrl: z.string().nullable().optional(),
   color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid hex color').optional().default('#6366f1'),
   order: z.number().int().nonnegative().optional().default(0),
   positions: PositionsArraySchema.optional()
@@ -75,10 +80,11 @@ export const CategoryCreateSchema = z.object({
 export const CategoryUpdateSchema = z.object({
   id: z.string().uuid(),
   name: LocalizedStringInputSchema.optional(),
-  slug: LocalizedStringInputSchema.optional(),
+  slug: SlugSchema.optional(),
   description: LocalizedStringOptionalInputSchema.optional(),
   parentId: z.string().uuid().nullable().optional(),
   icon: z.string().nullable().optional(),
+  coverUrl: z.string().nullable().optional(),
   color: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
   order: z.number().int().nonnegative().optional(),
   positions: PositionsArraySchema.optional(),

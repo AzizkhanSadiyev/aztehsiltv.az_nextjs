@@ -8,10 +8,11 @@ import { LocalizedString } from './admin.types';
 export interface Category {
   id: string;
   name: LocalizedString;
-  slug: LocalizedString;
+  slug: string;
   description: LocalizedString | null;
   parentId: string | null;
   icon: string | null;
+  coverUrl: string | null;
   color: string;
   order: number;
   positions: number[];
@@ -22,10 +23,11 @@ export interface Category {
 
 export interface CategoryCreateInput {
   name: LocalizedString;
-  slug?: LocalizedString;
+  slug?: string;
   description?: LocalizedString | null;
   parentId?: string | null;
   icon?: string | null;
+  coverUrl?: string | null;
   color?: string;
   order?: number;
   positions?: number[];

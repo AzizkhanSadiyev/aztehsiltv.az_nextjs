@@ -161,11 +161,11 @@ export default function PartnersPage() {
       id: "actions",
       header: () => <div className="text-right pr-2">Actions</div>,
       cell: ({ row }) => (
-        <div className="flex justify-end gap-2">
+        <div className="admin-row-actions">
           <Button
             variant="outline"
             size="sm"
-            className="h-8 px-3 gap-1 text-xs"
+            className="admin-row-action"
             onClick={() => router.push(`/admin/partners/${row.original.id}`)}
           >
             <Edit className="h-3.5 w-3.5" />
@@ -174,7 +174,7 @@ export default function PartnersPage() {
           <Button
             variant="outline"
             size="sm"
-            className="h-8 px-3 gap-1 text-xs text-destructive border-destructive/40 hover:text-destructive"
+            className="admin-row-action admin-row-action--danger"
             onClick={() => {
               setPartnerToDelete(row.original);
               setDeleteDialogOpen(true);

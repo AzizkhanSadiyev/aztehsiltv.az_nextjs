@@ -20,24 +20,19 @@ import {
   deleteVideo,
 } from "@/lib/data/videos.data";
 import { VideoUpdateSchema } from "@/lib/models/video.model";
+import { pickLocalized } from "@/lib/localization";
 import type { Video } from "@/types/video.types";
-import type { LocalizedString, Locale } from "@/types/admin.types";
 
-const DEFAULT_LOCALE: Locale = "az";
-const isLocale = (value: string): value is Locale =>
-  value === "az" || value === "en" || value === "ru";
-
-function pickLocalized(value: LocalizedString, locale: string = DEFAULT_LOCALE) {
-  const safeLocale = isLocale(locale) ? locale : DEFAULT_LOCALE;
-  return value?.[safeLocale] || value?.az || value?.en || value?.ru || "";
-}
+const DEFAULT_LOCALE = "az";
 
 function toAdminVideo(video: Video, locale: string = DEFAULT_LOCALE) {
   return {
     ...video,
-    title: pickLocalized(video.title, locale),
-    slug: pickLocalized(video.slug, locale),
-    description: video.description ? pickLocalized(video.description, locale) : "",
+    title: pickLocalized(video.title, locale, DEFAULT_LOCALE),
+    slug: pickLocalized(video.slug, locale, DEFAULT_LOCALE),
+    description: video.description
+      ? pickLocalized(video.description, locale, DEFAULT_LOCALE)
+      : "",
     languageCode: locale,
   };
 }

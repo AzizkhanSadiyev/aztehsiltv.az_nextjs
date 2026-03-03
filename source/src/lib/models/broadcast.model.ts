@@ -3,23 +3,21 @@
  */
 
 import { z } from "zod";
+import { defaultLocale } from "@/i18n/config";
 
-const LocalizedStringSchema = z.object({
-  az: z.string(),
-  en: z.string(),
-  ru: z.string(),
-});
+const hasLocales = (value: Record<string, string>) =>
+  Object.keys(value).length > 0;
 
-const LocalizedStringRequiredSchema = z.object({
-  az: z.string().min(1, "Azerbaijani title is required"),
-  en: z.string().min(1, "English title is required"),
-  ru: z.string().min(1, "Russian title is required"),
-});
+const LocalizedStringSchema = z
+  .record(z.string())
+  .refine(hasLocales, { message: "At least one locale is required" });
+
+const LocalizedStringRequiredSchema = z
+  .record(z.string().min(1))
+  .refine(hasLocales, { message: "At least one locale is required" });
 
 const toLocalizedString = (value: string) => ({
-  az: value,
-  en: value,
-  ru: value,
+  [defaultLocale]: value,
 });
 
 const LocalizedStringInputSchema = z

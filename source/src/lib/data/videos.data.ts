@@ -10,19 +10,19 @@ import type {
   VideoUpdateInput,
   VideoStatus,
 } from "@/types/video.types";
-import type { LocalizedString, Locale } from "@/types/admin.types";
+import {
+  buildSlugMap,
+  mergeLocalized,
+  normalizeLocalized,
+  normalizeLocalizedNullable,
+  toJsonOrNull,
+} from "@/lib/localization";
 
 type VideoRow = {
   id: string;
-  title_az: string;
-  title_en: string;
-  title_ru: string;
-  slug_az: string;
-  slug_en: string;
-  slug_ru: string;
-  description_az: string | null;
-  description_en: string | null;
-  description_ru: string | null;
+  title: any;
+  slug: any;
+  description: any;
   cover_url: string | null;
   category_id: string | null;
   broadcast_id: string | null;
@@ -45,25 +45,6 @@ export type VideoFilters = {
   categoryId?: string;
   broadcastId?: string;
   search?: string;
-};
-
-const toLocalized = (az: string, en: string, ru: string): LocalizedString => ({
-  az: az ?? "",
-  en: en ?? "",
-  ru: ru ?? "",
-});
-
-const toLocalizedNullable = (
-  az: string | null,
-  en: string | null,
-  ru: string | null,
-): LocalizedString | null => {
-  if (az == null && en == null && ru == null) return null;
-  return {
-    az: az ?? "",
-    en: en ?? "",
-    ru: ru ?? "",
-  };
 };
 
 const parseMetadata = (value: any) => {
@@ -90,13 +71,9 @@ const generateSlug = (value: string): string => {
 function mapRow(row: VideoRow): Video {
   return {
     id: row.id,
-    title: toLocalized(row.title_az, row.title_en, row.title_ru),
-    slug: toLocalized(row.slug_az, row.slug_en, row.slug_ru),
-    description: toLocalizedNullable(
-      row.description_az,
-      row.description_en,
-      row.description_ru,
-    ),
+    title: normalizeLocalized(row.title),
+    slug: normalizeLocalized(row.slug),
+    description: normalizeLocalizedNullable(row.description),
     coverUrl: row.cover_url,
     categoryId: row.category_id,
     broadcastId: row.broadcast_id,
@@ -117,9 +94,7 @@ function mapRow(row: VideoRow): Video {
 
 export async function getAllVideos(limit = 500): Promise<Video[]> {
   const rows = await query<VideoRow>(
-    `SELECT id, title_az, title_en, title_ru,
-            slug_az, slug_en, slug_ru,
-            description_az, description_en, description_ru,
+    `SELECT id, title, slug, description,
             cover_url, category_id, broadcast_id,
             type, duration, views, status,
             is_manshet, is_short, is_sidebar, is_top_video,
@@ -151,9 +126,9 @@ function buildFilters(filters?: VideoFilters) {
   if (filters?.search) {
     const search = `%${filters.search.toLowerCase()}%`;
     where.push(
-      "(LOWER(title_az) LIKE ? OR LOWER(title_en) LIKE ? OR LOWER(title_ru) LIKE ? OR LOWER(slug_az) LIKE ? OR LOWER(slug_en) LIKE ? OR LOWER(slug_ru) LIKE ?)",
+      "(LOWER(CAST(title AS CHAR)) LIKE ? OR LOWER(CAST(slug AS CHAR)) LIKE ?)",
     );
-    params.push(search, search, search, search, search, search);
+    params.push(search, search);
   }
 
   const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
@@ -177,9 +152,7 @@ export async function getVideosList(options?: {
   );
 
   const rows = await query<VideoRow>(
-    `SELECT id, title_az, title_en, title_ru,
-            slug_az, slug_en, slug_ru,
-            description_az, description_en, description_ru,
+    `SELECT id, title, slug, description,
             cover_url, category_id, broadcast_id,
             type, duration, views, status,
             is_manshet, is_short, is_sidebar, is_top_video,
@@ -199,9 +172,7 @@ export async function getVideosList(options?: {
 
 export async function getVideoById(id: string): Promise<Video | null> {
   const row = await queryOne<VideoRow>(
-    `SELECT id, title_az, title_en, title_ru,
-            slug_az, slug_en, slug_ru,
-            description_az, description_en, description_ru,
+    `SELECT id, title, slug, description,
             cover_url, category_id, broadcast_id,
             type, duration, views, status,
             is_manshet, is_short, is_sidebar, is_top_video,
@@ -250,9 +221,7 @@ export async function getPublishedVideos(options?: {
   }
 
   const rows = await query<VideoRow>(
-    `SELECT id, title_az, title_en, title_ru,
-            slug_az, slug_en, slug_ru,
-            description_az, description_en, description_ru,
+    `SELECT id, title, slug, description,
             cover_url, category_id, broadcast_id,
             type, duration, views, status,
             is_manshet, is_short, is_sidebar, is_top_video,
@@ -268,13 +237,10 @@ export async function getPublishedVideos(options?: {
 
 export async function getVideosByCategorySlug(
   slug: string,
-  locale: Locale,
   limit = 24,
 ): Promise<Video[]> {
-  const slugColumn =
-    locale === "az" ? "slug_az" : locale === "ru" ? "slug_ru" : "slug_en";
   const category = await queryOne<{ id: string }>(
-    `SELECT id FROM categories WHERE ${slugColumn} = ? LIMIT 1`,
+    `SELECT id FROM categories WHERE slug = ? LIMIT 1`,
     [slug],
   );
   if (!category?.id) return [];
@@ -284,36 +250,27 @@ export async function getVideosByCategorySlug(
 export async function createVideo(input: VideoCreateInput): Promise<Video> {
   const id = uuidv4();
   const now = new Date();
-  const slug = input.slug ?? {
-    az: generateSlug(input.title.az),
-    en: generateSlug(input.title.en),
-    ru: generateSlug(input.title.ru),
-  };
+  const title = normalizeLocalized(input.title);
+  const slug = input.slug
+    ? normalizeLocalized(input.slug)
+    : buildSlugMap(title, generateSlug);
 
   const description = input.description ?? null;
   const publishedAt = input.publishedAt ? new Date(input.publishedAt) : null;
 
   await insert(
     `INSERT INTO videos
-     (id, title_az, title_en, title_ru,
-      slug_az, slug_en, slug_ru,
-      description_az, description_en, description_ru,
+     (id, title, slug, description,
       cover_url, category_id, broadcast_id,
       type, duration, views, status,
       is_manshet, is_short, is_sidebar, is_top_video,
       published_at, created_at, updated_at, metadata)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
-      input.title.az,
-      input.title.en,
-      input.title.ru,
-      slug.az,
-      slug.en,
-      slug.ru,
-      description?.az ?? null,
-      description?.en ?? null,
-      description?.ru ?? null,
+      JSON.stringify(title),
+      JSON.stringify(slug),
+      toJsonOrNull(description),
       input.coverUrl ?? null,
       input.categoryId ?? null,
       input.broadcastId ?? null,
@@ -334,15 +291,9 @@ export async function createVideo(input: VideoCreateInput): Promise<Video> {
 
   const row: VideoRow = {
     id,
-    title_az: input.title.az,
-    title_en: input.title.en,
-    title_ru: input.title.ru,
-    slug_az: slug.az,
-    slug_en: slug.en,
-    slug_ru: slug.ru,
-    description_az: description?.az ?? null,
-    description_en: description?.en ?? null,
-    description_ru: description?.ru ?? null,
+    title,
+    slug,
+    description,
     cover_url: input.coverUrl ?? null,
     category_id: input.categoryId ?? null,
     broadcast_id: input.broadcastId ?? null,
@@ -371,10 +322,14 @@ export async function updateVideo(
 
   const merged: Video = {
     ...existing,
-    title: input.title ?? existing.title,
-    slug: input.slug ?? existing.slug,
+    title: input.title ? mergeLocalized(existing.title, input.title) : existing.title,
+    slug: input.slug ? mergeLocalized(existing.slug, input.slug) : existing.slug,
     description:
-      input.description !== undefined ? input.description : existing.description,
+      input.description !== undefined
+        ? input.description === null
+          ? null
+          : mergeLocalized(existing.description ?? {}, input.description)
+        : existing.description,
     coverUrl:
       input.coverUrl !== undefined ? input.coverUrl : existing.coverUrl,
     categoryId:
@@ -402,24 +357,16 @@ export async function updateVideo(
 
   await updateQuery(
     `UPDATE videos SET
-      title_az = ?, title_en = ?, title_ru = ?,
-      slug_az = ?, slug_en = ?, slug_ru = ?,
-      description_az = ?, description_en = ?, description_ru = ?,
+      title = ?, slug = ?, description = ?,
       cover_url = ?, category_id = ?, broadcast_id = ?,
       type = ?, duration = ?, views = ?, status = ?,
       is_manshet = ?, is_short = ?, is_sidebar = ?, is_top_video = ?,
       published_at = ?, updated_at = ?, metadata = ?
      WHERE id = ?`,
     [
-      merged.title.az,
-      merged.title.en,
-      merged.title.ru,
-      merged.slug.az,
-      merged.slug.en,
-      merged.slug.ru,
-      merged.description?.az ?? null,
-      merged.description?.en ?? null,
-      merged.description?.ru ?? null,
+      JSON.stringify(merged.title),
+      JSON.stringify(merged.slug),
+      toJsonOrNull(merged.description),
       merged.coverUrl ?? null,
       merged.categoryId ?? null,
       merged.broadcastId ?? null,

@@ -222,7 +222,7 @@ export default function PartnerEditPage() {
               onChange={(e) => handleChange("name", e.target.value)}
               placeholder="Mastercard"
               error={!!errors.name}
-              style={{ marginTop: "8px" }}
+             
             />
           </FormField>
 
@@ -232,7 +232,7 @@ export default function PartnerEditPage() {
               value={formData.websiteUrl}
               onChange={(e) => handleChange("websiteUrl", e.target.value)}
               placeholder="https://partner.com"
-              style={{ marginTop: "8px" }}
+             
             />
           </FormField>
         </FormSection>
@@ -245,7 +245,7 @@ export default function PartnerEditPage() {
             error={errors.logo}
             hint="Full URL or /assets/... path"
           >
-            <div className="space-y-2" style={{ marginTop: "8px" }}>
+            <div className="space-y-2">
               <Input
                 id="logo"
                 value={formData.logo}
@@ -288,7 +288,7 @@ export default function PartnerEditPage() {
                   handleChange("status", value as PartnerFormData["status"])
                 }
               >
-                <SelectTrigger style={{ marginTop: "8px" }}>
+                <SelectTrigger>
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
                 <SelectContent className="text-black">

@@ -16,6 +16,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { pickLocalized } from "@/lib/localization";
+import { defaultLocale } from "@/i18n/config";
 import { 
   Upload, 
   Image as ImageIcon, 
@@ -46,11 +48,7 @@ interface MediaFile {
   size: number;
   url: string;
   thumbnailUrl?: string;
-  alt?: {
-    az: string;
-    en: string;
-    ru: string;
-  } | null;
+  alt?: Record<string, string> | null;
   uploadedAt: string;
 }
 
@@ -80,7 +78,8 @@ function getFileType(mimeType: string): string {
 }
 
 function getAltText(file: MediaFile) {
-  return file.alt?.en || file.alt?.az || file.alt?.ru || file.filename;
+  const altText = pickLocalized(file.alt ?? null, defaultLocale, defaultLocale);
+  return altText || file.filename;
 }
 
 export default function MediaPage() {

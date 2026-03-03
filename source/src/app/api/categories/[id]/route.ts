@@ -19,37 +19,40 @@ import {
   getCategoryById,
   updateCategory,
   deleteCategory,
-  categoryHasChildren
+  categoryHasChildren,
+  isCategorySlugTaken
 } from '@/lib/data/categories.data';
 import { CategoryUpdateSchema } from '@/lib/models/category.model';
+import { pickLocalized } from '@/lib/localization';
 import type { Category } from '@/types/category.types';
-import type { LocalizedString } from '@/types/admin.types';
 import { getVideoCountsByCategory } from '@/lib/data/videos.data';
 
-const DEFAULT_LOCALE = 'en';
+const DEFAULT_LOCALE = 'az';
 
-const LOCALES = ["az", "en", "ru"] as const;
-type Locale = (typeof LOCALES)[number];
-
-function isLocale(v: string): v is Locale {
-  return (LOCALES as readonly string[]).includes(v);
-}
-
-function pickLocalized(value: LocalizedString, locale: string = DEFAULT_LOCALE) {
-  const key: Locale = isLocale(locale) ? locale : DEFAULT_LOCALE;
-
-  return value?.[key] || value?.az || value?.en || value?.ru || "";
-}
-
-
-function toAdminCategory(category: Category, locale: string = DEFAULT_LOCALE) {
-  return {
+function toAdminCategory(
+  category: Category,
+  locale: string = DEFAULT_LOCALE,
+  includeTranslations = false,
+) {
+  const base = {
     ...category,
-    name: pickLocalized(category.name, locale),
-    slug: pickLocalized(category.slug, locale),
-    description: category.description ? pickLocalized(category.description, locale) : '',
+    name: pickLocalized(category.name, locale, DEFAULT_LOCALE),
+    slug: category.slug,
+    description: category.description
+      ? pickLocalized(category.description, locale, DEFAULT_LOCALE)
+      : '',
     positions: category.positions || [],
     languageCode: locale
+  };
+
+  if (!includeTranslations) return base;
+
+  return {
+    ...base,
+    translations: {
+      name: category.name,
+      description: category.description ?? {},
+    },
   };
 }
 
@@ -74,9 +77,11 @@ export async function GET(
     }
     
     const locale = request.nextUrl.searchParams.get('lang') || DEFAULT_LOCALE;
+    const includeTranslations =
+      request.nextUrl.searchParams.get('mode') === 'edit';
     const counts = await getVideoCountsByCategory();
     return successResponse({
-      ...toAdminCategory(category, locale),
+      ...toAdminCategory(category, locale, includeTranslations),
       videoCount: counts[category.id] ?? 0,
     });
   });
@@ -105,6 +110,18 @@ export async function PUT(
     
     // Ensure ID matches
     const updateData = { ...validation.data, id };
+
+    if (updateData.slug) {
+      updateData.slug = updateData.slug.trim();
+      const slugTaken = await isCategorySlugTaken(updateData.slug, id);
+      if (slugTaken) {
+        return errorResponse(
+          'SLUG_TAKEN',
+          'Slug must be unique. Another category already uses this slug.',
+          400
+        );
+      }
+    }
     
     // Update category
     const category = await updateCategory(updateData);

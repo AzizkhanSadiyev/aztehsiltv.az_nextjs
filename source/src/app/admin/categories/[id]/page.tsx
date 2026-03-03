@@ -1,6 +1,15 @@
 "use client";
 
-import { useState, useEffect, useCallback, FormEvent } from "react";
+import {
+    useState,
+    useEffect,
+    useCallback,
+    FormEvent,
+    useMemo,
+    ChangeEvent,
+    useRef,
+} from "react";
+import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 import { PageHeader } from "@/components/admin/ui/PageHeader";
 import {
@@ -19,31 +28,71 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/admin/ui/ToastProvider";
 import { Skeleton } from "@/components/ui/skeleton";
+import { locales, defaultLocale } from "@/i18n/config";
+import type { Language } from "@/types/language.types";
+
+type LocalizedValues = Record<string, string>;
 
 interface CategoryFormData {
-    name: string;
+    name: LocalizedValues;
     slug: string;
-    description: string;
+    description: LocalizedValues | null;
+    icon: string | null;
+    cover: string | null;
     parentId: string;
-    languageCode: string;
     positions: number[];
     order: number;
 }
 
-interface Category {
+interface CategoryOption {
     id: string;
     name: string;
 }
 
-function generateSlug(name: string): string {
-    return name
+interface CategoryResponse {
+    id: string;
+    name: string;
+    slug: string;
+    description: string;
+    parentId: string | null;
+    positions: number[];
+    order: number;
+    icon?: string | null;
+    coverUrl?: string | null;
+    languageCode?: string;
+    translations?: {
+        name: LocalizedValues;
+        description: LocalizedValues;
+    };
+}
+
+const fallbackLocaleLabels: Record<string, string> = {
+    az: "Azərbaycan",
+    en: "English",
+    ru: "Русский",
+    tr: "Türkçe",
+};
+
+function generateSlug(value: string): string {
+    return value
+        .normalize("NFKD")
         .toLowerCase()
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/ə/g, "e")
+        .replace(/ı/g, "i")
+        .replace(/ş/g, "s")
+        .replace(/ğ/g, "g")
+        .replace(/ç/g, "c")
+        .replace(/ö/g, "o")
+        .replace(/ü/g, "u")
         .replace(/[^a-z0-9\s-]/g, "")
+        .trim()
         .replace(/\s+/g, "-")
-        .replace(/-+/g, "-")
-        .trim();
+        .replace(/-+/g, "-");
 }
 
 export default function CategoryEditPage() {
@@ -54,38 +103,130 @@ export default function CategoryEditPage() {
     const isNew = params.id === "new";
     const categoryId = isNew ? null : (params.id as string);
 
+    const [languages, setLanguages] = useState<Language[]>([]);
+    const [isLanguagesLoading, setIsLanguagesLoading] = useState(true);
+
+    const baseLocales = useMemo(
+        () => (locales.length ? [...locales] : [defaultLocale]),
+        [],
+    );
+    const fallbackLocale = baseLocales[0] || defaultLocale;
+
+    const [availableLocales, setAvailableLocales] = useState<string[]>(
+        baseLocales,
+    );
+    const [activeLocale, setActiveLocale] = useState<string>(fallbackLocale);
+    const languageLocales = useMemo(() => {
+        if (languages.length) {
+            return Array.from(
+                new Set(languages.map((lang) => lang.code.toLowerCase())),
+            );
+        }
+        return baseLocales.length ? baseLocales : [defaultLocale];
+    }, [languages, baseLocales, defaultLocale]);
+
+    const languageLabelMap = useMemo(() => {
+        const map: Record<string, string> = {};
+        for (const language of languages) {
+            const key = language.code.toLowerCase();
+            map[key] =
+                language.nativeName ||
+                language.name ||
+                key.toUpperCase();
+        }
+        return map;
+    }, [languages]);
+
+    const formatLocaleLabel = useCallback(
+        (code: string) => {
+            const normalized = code.toLowerCase();
+            return (
+                languageLabelMap[normalized] ||
+                fallbackLocaleLabels[normalized] ||
+                normalized.toUpperCase()
+            );
+        },
+        [languageLabelMap],
+    );
+
     const [formData, setFormData] = useState<CategoryFormData>({
-        name: "",
+        name: {},
         slug: "",
-        description: "",
+        description: null,
+        icon: null,
+        cover: null,
         parentId: "",
-        languageCode: "en",
         positions: [1, 2],
         order: 0,
     });
 
     const [isLoading, setIsLoading] = useState(!isNew);
     const [isSaving, setIsSaving] = useState(false);
-    const [categories, setCategories] = useState<Category[]>([]);
+    const [isIconUploading, setIsIconUploading] = useState(false);
+    const [isCoverUploading, setIsCoverUploading] = useState(false);
+    const [categories, setCategories] = useState<CategoryOption[]>([]);
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [autoSlug, setAutoSlug] = useState(true);
+    const [slugLocale, setSlugLocale] = useState<string | null>(null);
+    const iconInputRef = useRef<HTMLInputElement | null>(null);
+    const coverInputRef = useRef<HTMLInputElement | null>(null);
+
+    const fetchLanguages = useCallback(async () => {
+        setIsLanguagesLoading(true);
+        try {
+            const response = await fetch("/api/languages?active=1");
+            const data = await response.json();
+
+            if (data.success) {
+                setLanguages(data.data || []);
+            } else {
+                error("Failed to load languages", data.error);
+            }
+        } catch (err) {
+            console.error("Failed to load languages", err);
+            error("Failed to load languages", "Please try again later");
+        } finally {
+            setIsLanguagesLoading(false);
+        }
+    }, [error]);
 
     const fetchCategory = useCallback(async () => {
         if (!categoryId) return;
 
         setIsLoading(true);
         try {
-            const response = await fetch(`/api/categories/${categoryId}`);
+            const response = await fetch(
+                `/api/categories/${categoryId}?mode=edit`,
+            );
             const data = await response.json();
 
             if (data.success && data.data) {
-                const category = data.data;
+                const category = data.data as CategoryResponse;
+                const translations =
+                    category.translations ??
+                    ({
+                        name: category.name
+                            ? { [fallbackLocale]: category.name }
+                            : {},
+                        description: category.description
+                            ? { [fallbackLocale]: category.description }
+                            : {},
+                    } as CategoryResponse["translations"]);
+
+                const nameMap = translations?.name ?? {};
+                const descMap = translations?.description ?? {};
+                const initialLocale = category.languageCode
+                    ? category.languageCode.toLowerCase()
+                    : fallbackLocale;
+
+                setActiveLocale(initialLocale);
                 setFormData({
-                    name: category.name || "",
+                    name: nameMap,
                     slug: category.slug || "",
-                    description: category.description || "",
+                    description: Object.keys(descMap).length ? descMap : null,
+                    icon: category.icon ?? null,
+                    cover: category.coverUrl ?? null,
                     parentId: category.parentId || "",
-                    languageCode: category.languageCode || "en",
                     positions:
                         category.positions && category.positions.length
                             ? category.positions
@@ -94,6 +235,7 @@ export default function CategoryEditPage() {
                         typeof category.order === "number" ? category.order : 0,
                 });
                 setAutoSlug(false);
+                setSlugLocale(null);
             } else {
                 error("Failed to load category", data.error);
                 router.push("/admin/categories");
@@ -105,7 +247,12 @@ export default function CategoryEditPage() {
         } finally {
             setIsLoading(false);
         }
-    }, [categoryId, error, router]);
+    }, [
+        categoryId,
+        error,
+        router,
+        fallbackLocale,
+    ]);
 
     const fetchCategories = useCallback(async () => {
         try {
@@ -115,7 +262,7 @@ export default function CategoryEditPage() {
             if (data.success) {
                 // Filter out current category to prevent self-reference
                 const filtered = (data.data || []).filter(
-                    (c: Category) => c.id !== categoryId,
+                    (c: CategoryOption) => c.id !== categoryId,
                 );
                 setCategories(filtered);
             }
@@ -126,6 +273,10 @@ export default function CategoryEditPage() {
     }, [categoryId]);
 
     useEffect(() => {
+        fetchLanguages();
+    }, [fetchLanguages]);
+
+    useEffect(() => {
         fetchCategories();
         if (!isNew) {
             fetchCategory();
@@ -133,13 +284,30 @@ export default function CategoryEditPage() {
     }, [isNew, fetchCategory, fetchCategories]);
 
     useEffect(() => {
-        if (autoSlug && formData.name) {
-            setFormData((prev) => ({
-                ...prev,
-                slug: generateSlug(prev.name),
-            }));
+        if (!languageLocales.length) return;
+        setAvailableLocales(languageLocales);
+        setActiveLocale((prev) =>
+            languageLocales.includes(prev)
+                ? prev
+                : languageLocales[0] || fallbackLocale,
+        );
+    }, [languageLocales, fallbackLocale]);
+
+    useEffect(() => {
+        if (!autoSlug) return;
+        const targetLocale = slugLocale ?? activeLocale;
+        if (activeLocale !== targetLocale) return;
+        const nextName = formData.name[targetLocale]?.trim();
+        if (!nextName) return;
+
+        setFormData((prev) => ({
+            ...prev,
+            slug: generateSlug(nextName),
+        }));
+        if (!slugLocale) {
+            setSlugLocale(targetLocale);
         }
-    }, [formData.name, autoSlug]);
+    }, [formData.name, activeLocale, autoSlug, slugLocale]);
 
     const handleChange = (
         field: keyof CategoryFormData,
@@ -160,10 +328,158 @@ export default function CategoryEditPage() {
         }
     };
 
+    const handleLocalizedChange = (
+        field: "name" | "description",
+        value: string,
+    ) => {
+        setFormData((prev) => {
+            const next = { ...prev };
+            const currentMap =
+                field === "name"
+                    ? { ...prev.name }
+                    : { ...(prev.description ?? {}) };
+            const trimmed = value.trim();
+            if (trimmed.length === 0) {
+                delete currentMap[activeLocale];
+            } else {
+                currentMap[activeLocale] = value;
+            }
+
+            if (field === "name") {
+                next.name = currentMap;
+            } else {
+                next.description = Object.keys(currentMap).length
+                    ? currentMap
+                    : null;
+            }
+            return next;
+        });
+
+        if (errors[field]) {
+            setErrors((prev) => {
+                const newErrors = { ...prev };
+                delete newErrors[field];
+                return newErrors;
+            });
+        }
+    };
+
+    const resolveUploadSlug = () => {
+        const trimmed = formData.slug.trim();
+        if (trimmed) return trimmed;
+        const fallback =
+            formData.name[activeLocale]?.trim() ||
+            Object.values(formData.name).find((value) => value.trim().length) ||
+            "category";
+        return generateSlug(fallback) || "category";
+    };
+
+    const uploadCategoryAsset = async (file: File, field: string) => {
+        const payload = new FormData();
+        payload.append("file", file);
+        payload.append("entity", "categories");
+        payload.append("entitySlug", resolveUploadSlug());
+        payload.append("field", field);
+
+        const response = await fetch("/api/uploads", {
+            method: "POST",
+            body: payload,
+        });
+        const data = await response.json();
+
+        if (data.success && data.data?.url) {
+            return data.data.url as string;
+        }
+        throw new Error(data.error?.message || data.error || "Upload failed");
+    };
+
+    const handleIconUpload = async (
+        event: ChangeEvent<HTMLInputElement>,
+    ) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        if (!file.type.startsWith("image/")) {
+            error("Invalid file", "Please upload an image file");
+            event.target.value = "";
+            return;
+        }
+
+        setIsIconUploading(true);
+        try {
+            const url = await uploadCategoryAsset(file, "icon");
+            setFormData((prev) => ({
+                ...prev,
+                icon: url,
+            }));
+            success("Icon uploaded", "Category icon updated");
+        } catch (err) {
+            console.error("Icon upload failed", err);
+            error("Upload failed", "Please try again later");
+        } finally {
+            setIsIconUploading(false);
+            event.target.value = "";
+        }
+    };
+
+    const handleCoverUpload = async (
+        event: ChangeEvent<HTMLInputElement>,
+    ) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        if (!file.type.startsWith("image/")) {
+            error("Invalid file", "Please upload an image file");
+            event.target.value = "";
+            return;
+        }
+
+        setIsCoverUploading(true);
+        try {
+            const url = await uploadCategoryAsset(file, "cover");
+            setFormData((prev) => ({
+                ...prev,
+                cover: url,
+            }));
+            success("Cover uploaded", "Category cover updated");
+        } catch (err) {
+            console.error("Cover upload failed", err);
+            error("Upload failed", "Please try again later");
+        } finally {
+            setIsCoverUploading(false);
+            event.target.value = "";
+        }
+    };
+
+    const handleIconRemove = () => {
+        setFormData((prev) => ({
+            ...prev,
+            icon: null,
+        }));
+    };
+
+    const handleCoverRemove = () => {
+        setFormData((prev) => ({
+            ...prev,
+            cover: null,
+        }));
+    };
+
+    const triggerIconPicker = () => {
+        iconInputRef.current?.click();
+    };
+
+    const triggerCoverPicker = () => {
+        coverInputRef.current?.click();
+    };
+
     const validate = (): boolean => {
         const newErrors: Record<string, string> = {};
 
-        if (!formData.name.trim()) {
+        const hasName = Object.values(formData.name).some((value) =>
+            value.trim().length > 0,
+        );
+        if (!hasName) {
             newErrors.name = "Name is required";
         }
 
@@ -219,7 +535,11 @@ export default function CategoryEditPage() {
             const method = isNew ? "POST" : "PUT";
 
             const payload = {
-                ...formData,
+                name: formData.name,
+                slug: formData.slug.trim(),
+                description: formData.description,
+                icon: formData.icon,
+                coverUrl: formData.cover,
                 positions: Array.from(new Set(formData.positions)).sort(),
                 order: Number(formData.order) || 0,
                 parentId: formData.parentId || null,
@@ -235,11 +555,20 @@ export default function CategoryEditPage() {
             if (data.success) {
                 success(
                     isNew ? "Category created" : "Category updated",
-                    `"${formData.name}" has been ${isNew ? "created" : "updated"}`,
+                    "Category has been saved successfully",
                 );
                 router.push("/admin/categories");
             } else {
-                error("Failed to save category", data.error);
+                if (data.error?.code === "SLUG_TAKEN") {
+                    setErrors((prev) => ({
+                        ...prev,
+                        slug: data.error.message,
+                    }));
+                }
+                error(
+                    "Failed to save category",
+                    data.error?.message || data.error,
+                );
             }
         } catch (err) {
             console.error("Failed to save category", err);
@@ -262,39 +591,94 @@ export default function CategoryEditPage() {
         );
     }
 
+    const activeName = formData.name[activeLocale] || "";
+    const activeDescription = formData.description?.[activeLocale] || "";
+
     return (
-        <div className="space-y-6">
+        <div className="space-y-8">
             <PageHeader
                 title={isNew ? "New Category" : "Edit Category"}
                 description={
                     isNew
                         ? "Create a new category"
-                        : `Editing: ${formData.name}`
+                        : `Editing: ${activeName || formData.slug || "Category"}`
                 }
                 backHref="/admin/categories"
                 backLabel="Back to Categories"
             />
 
-            <FormLayout onSubmit={handleSubmit} className="max-w-2xl">
-                <FormSection title="Category Details">
-                    <FormField
-                        label="Name"
-                        htmlFor="name"
-                        required
-                        error={errors.name}
+            <FormLayout onSubmit={handleSubmit} className="max-w-4xl">
+                <FormSection
+                    title="Translations"
+                    description="Add translations for each language. Switching language shows its own fields."
+                >
+                    <Tabs
+                        value={activeLocale}
+                        onValueChange={(value) => setActiveLocale(value)}
+                        className="admin-tabs"
                     >
-                        <Input
-                            id="name"
-                            value={formData.name}
-                            onChange={(e) =>
-                                handleChange("name", e.target.value)
-                            }
-                            placeholder="Enter category name"
-                            error={!!errors.name}
-                            style={{ marginTop: "8px" }}
-                        />
-                    </FormField>
+                        <div className="admin-tabs-header">
+                            <div className="admin-tabs-meta">
+                                <div className="admin-tabs-label">Language</div>
+                                <TabsList className="admin-tabs-list">
+                                    {availableLocales.map((locale) => (
+                                        <TabsTrigger
+                                            key={locale}
+                                            value={locale}
+                                            className="admin-tabs-trigger"
+                                            disabled={isLanguagesLoading}
+                                        >
+                                            {formatLocaleLabel(locale)}
+                                        </TabsTrigger>
+                                    ))}
+                                </TabsList>
+                            </div>
+                            <Link
+                                href="/admin/languages"
+                                className="admin-tabs-link"
+                            >
+                                Manage languages
+                            </Link>
+                        </div>
 
+                        <div className="admin-tabs-body">
+                            <FormField
+                                label="Name"
+                                htmlFor="name"
+                                required
+                                error={errors.name}
+                            >
+                                <Input
+                                    id="name"
+                                    value={activeName}
+                                    onChange={(e) =>
+                                        handleLocalizedChange("name", e.target.value)
+                                    }
+                                    placeholder="Services"
+                                    error={!!errors.name}
+                                />
+                            </FormField>
+
+                            <FormField
+                                label="Description"
+                                htmlFor="description"
+                                hint="Optional description for the category"
+                            >
+                                <Textarea
+                                    id="description"
+                                    value={activeDescription}
+                                    onChange={(e) =>
+                                        handleLocalizedChange("description", e.target.value)
+                                    }
+                                    placeholder="Services"
+                                    rows={4}
+                                />
+                            </FormField>
+                        </div>
+                    </Tabs>
+                </FormSection>
+
+                <FormSection title="Category Details">
                     <FormField
                         label="Slug"
                         htmlFor="slug"
@@ -305,30 +689,120 @@ export default function CategoryEditPage() {
                         <Input
                             id="slug"
                             value={formData.slug}
-                            onChange={(e) =>
-                                handleChange("slug", e.target.value)
-                            }
-                            placeholder="category-slug"
+                            onChange={(e) => handleChange("slug", e.target.value)}
+                            placeholder="services"
                             error={!!errors.slug}
-                            style={{ marginTop: "8px" }}
                         />
                     </FormField>
 
                     <FormField
-                        label="Description"
-                        htmlFor="description"
-                        hint="Optional description for the category"
+                        label="Icon"
+                        hint="Upload a category icon (PNG, JPG, SVG)"
                     >
-                        <Textarea
-                            id="description"
-                            value={formData.description}
-                            onChange={(e) =>
-                                handleChange("description", e.target.value)
-                            }
-                            placeholder="Enter category description..."
-                            rows={3}
-                            style={{ marginTop: "8px" }}
-                        />
+                        <div className="admin-icon-field">
+                            <div className="admin-icon-preview">
+                                {formData.icon ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img
+                                        src={formData.icon}
+                                        alt="Category icon"
+                                    />
+                                ) : (
+                                    <span className="admin-icon-placeholder">
+                                        No icon
+                                    </span>
+                                )}
+                            </div>
+                            <div className="admin-icon-actions">
+                                <input
+                                    ref={iconInputRef}
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleIconUpload}
+                                    className="hidden"
+                                    disabled={isIconUploading}
+                                />
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={triggerIconPicker}
+                                    disabled={isIconUploading}
+                                >
+                                    {isIconUploading
+                                        ? "Uploading..."
+                                        : formData.icon
+                                            ? "Change Icon"
+                                            : "Upload Icon"}
+                                </Button>
+                                {formData.icon && (
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        className="admin-icon-remove"
+                                        onClick={handleIconRemove}
+                                    >
+                                        Remove
+                                    </Button>
+                                )}
+                            </div>
+                        </div>
+                    </FormField>
+
+                    <FormField
+                        label="Cover"
+                        hint="Upload a category cover image (PNG, JPG, WEBP)"
+                    >
+                        <div className="admin-icon-field admin-cover-field">
+                            <div className="admin-icon-preview admin-cover-preview">
+                                {formData.cover ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img
+                                        src={formData.cover}
+                                        alt="Category cover"
+                                    />
+                                ) : (
+                                    <span className="admin-icon-placeholder">
+                                        No cover
+                                    </span>
+                                )}
+                            </div>
+                            <div className="admin-icon-actions">
+                                <input
+                                    ref={coverInputRef}
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleCoverUpload}
+                                    className="hidden"
+                                    disabled={isCoverUploading}
+                                />
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={triggerCoverPicker}
+                                    disabled={isCoverUploading}
+                                >
+                                    {isCoverUploading
+                                        ? "Uploading..."
+                                        : formData.cover
+                                            ? "Change Cover"
+                                            : "Upload Cover"}
+                                </Button>
+                                {formData.cover && (
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        className="admin-icon-remove"
+                                        onClick={handleCoverRemove}
+                                    >
+                                        Remove
+                                    </Button>
+                                )}
+                            </div>
+                        </div>
                     </FormField>
 
                     <FormField
@@ -345,7 +819,7 @@ export default function CategoryEditPage() {
                             onChange={(e) =>
                                 handleChange("order", Number(e.target.value))
                             }
-                            style={{ marginTop: "8px" }}
+                           
                         />
                     </FormField>
 
@@ -354,32 +828,26 @@ export default function CategoryEditPage() {
                         hint="Header (pos 1), Footer (pos 2). Turn both on to show in both menus."
                         error={errors.positions}
                     >
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
-                            <div
-                                className="flex items-center gap-3"
-                                style={{ marginTop: "8px" }}
-                            >
+                        <div className="admin-toggle-group">
+                            <div className="admin-toggle-option">
                                 <Switch
                                     checked={formData.positions.includes(1)}
                                     onCheckedChange={(checked) =>
                                         setPosition(1, checked)
                                     }
                                 />
-                                <span className="text-sm text-foreground text-black">
+                                <span className="admin-toggle-label">
                                     Header (1)
                                 </span>
                             </div>
-                            <div
-                                className="flex items-center gap-3"
-                                style={{ marginTop: "8px" }}
-                            >
+                            <div className="admin-toggle-option">
                                 <Switch
                                     checked={formData.positions.includes(2)}
                                     onCheckedChange={(checked) =>
                                         setPosition(2, checked)
                                     }
                                 />
-                                <span className="text-sm text-foreground text-black">
+                                <span className="admin-toggle-label">
                                     Footer (2)
                                 </span>
                             </div>
@@ -400,7 +868,7 @@ export default function CategoryEditPage() {
                                 )
                             }
                         >
-                            <SelectTrigger style={{ marginTop: "8px" }}>
+                            <SelectTrigger>
                                 <SelectValue placeholder="Select parent category" />
                             </SelectTrigger>
                             <SelectContent className="text-black">
@@ -410,24 +878,6 @@ export default function CategoryEditPage() {
                                         {cat.name}
                                     </SelectItem>
                                 ))}
-                            </SelectContent>
-                        </Select>
-                    </FormField>
-
-                    <FormField label="Language" htmlFor="language">
-                        <Select
-                            value={formData.languageCode}
-                            onValueChange={(value) =>
-                                handleChange("languageCode", value)
-                            }
-                        >
-                            <SelectTrigger style={{ marginTop: "8px" }}>
-                                <SelectValue placeholder="Select language" />
-                            </SelectTrigger>
-                            <SelectContent className="text-black">
-                                <SelectItem value="az">Azərbaycan</SelectItem>
-                                <SelectItem value="en">English</SelectItem>
-                                <SelectItem value="ru">Русский</SelectItem>
                             </SelectContent>
                         </Select>
                     </FormField>

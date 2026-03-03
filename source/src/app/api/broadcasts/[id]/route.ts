@@ -20,25 +20,18 @@ import {
   deleteBroadcast,
 } from "@/lib/data/broadcasts.data";
 import { BroadcastUpdateSchema } from "@/lib/models/broadcast.model";
+import { pickLocalized } from "@/lib/localization";
 import type { Broadcast } from "@/types/broadcast.types";
-import type { LocalizedString, Locale } from "@/types/admin.types";
 
-const DEFAULT_LOCALE: Locale = "az";
-const isLocale = (value: string): value is Locale =>
-  value === "az" || value === "en" || value === "ru";
-
-function pickLocalized(value: LocalizedString, locale: string = DEFAULT_LOCALE) {
-  const safeLocale = isLocale(locale) ? locale : DEFAULT_LOCALE;
-  return value?.[safeLocale] || value?.az || value?.en || value?.ru || "";
-}
+const DEFAULT_LOCALE = "az";
 
 function toAdminBroadcast(broadcast: Broadcast, locale: string = DEFAULT_LOCALE) {
   return {
     ...broadcast,
-    title: pickLocalized(broadcast.title, locale),
-    slug: pickLocalized(broadcast.slug, locale),
+    title: pickLocalized(broadcast.title, locale, DEFAULT_LOCALE),
+    slug: pickLocalized(broadcast.slug, locale, DEFAULT_LOCALE),
     description: broadcast.description
-      ? pickLocalized(broadcast.description, locale)
+      ? pickLocalized(broadcast.description, locale, DEFAULT_LOCALE)
       : "",
     languageCode: locale,
   };

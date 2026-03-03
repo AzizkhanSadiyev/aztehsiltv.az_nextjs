@@ -3,13 +3,9 @@
  * User, Role, and Permission types for the admin panel
  */
 
-export type Locale = 'az' | 'en' | 'ru';
+export type Locale = string;
 
-export interface LocalizedString {
-  az: string;
-  en: string;
-  ru: string;
-}
+export type LocalizedString = Record<string, string>;
 
 export type UserRole = 'admin' | 'editor' | 'author';
 

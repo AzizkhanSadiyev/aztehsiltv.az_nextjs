@@ -2,15 +2,15 @@
  * Media Model with Zod Validation
  */
 
-import { z } from 'zod';
+import { z } from "zod";
 import type { Media, MediaUpdateInput } from '@/types/media.types';
 
 // Localized string schema
-const LocalizedStringSchema = z.object({
-  az: z.string(),
-  en: z.string(),
-  ru: z.string()
-});
+const LocalizedStringSchema = z
+  .record(z.string())
+  .refine((value) => Object.keys(value).length > 0, {
+    message: "At least one locale is required",
+  });
 
 // Media metadata schema
 const MediaMetadataSchema = z.object({

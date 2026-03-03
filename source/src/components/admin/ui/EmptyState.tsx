@@ -203,6 +203,17 @@ export function PartnersEmptyState({ onCreateNew }: { onCreateNew?: () => void }
   );
 }
 
+export function LanguagesEmptyState({ onCreateNew }: { onCreateNew?: () => void }) {
+  return (
+    <EmptyState
+      icon={Languages}
+      title="No languages yet"
+      description="Add languages so translation tabs stay in sync."
+      action={onCreateNew ? { label: "Add Language", onClick: onCreateNew } : undefined}
+    />
+  );
+}
+
 export function BroadcastsEmptyState({ onCreateNew }: { onCreateNew?: () => void }) {
   return (
     <EmptyState

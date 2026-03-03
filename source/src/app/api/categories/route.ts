@@ -9,29 +9,26 @@ export const runtime = 'nodejs';
 import { NextRequest } from 'next/server';
 import {
   successResponse,
+  errorResponse,
   validateRequestBody,
   withErrorHandling
 } from '@/lib/api-helpers';
-import { getAllCategories, createCategory } from '@/lib/data/categories.data';
+import { getAllCategories, createCategory, isCategorySlugTaken, resolveCategorySlug } from '@/lib/data/categories.data';
 import { getVideoCountsByCategory } from '@/lib/data/videos.data';
 import { CategoryCreateSchema } from '@/lib/models/category.model';
+import { pickLocalized } from '@/lib/localization';
 import type { Category } from '@/types/category.types';
-import type { LocalizedString, Locale } from '@/types/admin.types';
 
-const DEFAULT_LOCALE: Locale = 'az';
-const isLocale = (value: string): value is Locale => value === 'az' || value === 'en' || value === 'ru';
-
-function pickLocalized(value: LocalizedString, locale: string = DEFAULT_LOCALE) {
-  const safeLocale = isLocale(locale) ? locale : DEFAULT_LOCALE;
-  return value?.[safeLocale] || value?.az || value?.en || value?.ru || '';
-}
+const DEFAULT_LOCALE = 'az';
 
 function toAdminCategory(category: Category, locale: string = DEFAULT_LOCALE) {
   return {
     ...category,
-    name: pickLocalized(category.name, locale),
-    slug: pickLocalized(category.slug, locale),
-    description: category.description ? pickLocalized(category.description, locale) : '',
+    name: pickLocalized(category.name, locale, DEFAULT_LOCALE),
+    slug: category.slug,
+    description: category.description
+      ? pickLocalized(category.description, locale, DEFAULT_LOCALE)
+      : '',
     positions: category.positions || [],
     languageCode: locale
   };
@@ -67,9 +64,25 @@ export async function POST(request: NextRequest) {
     if (!validation.success) {
       return validation.error;
     }
-    
+
+    const slugValue = resolveCategorySlug(
+      validation.data.name,
+      validation.data.slug,
+    );
+    const slugTaken = await isCategorySlugTaken(slugValue);
+    if (slugTaken) {
+      return errorResponse(
+        'SLUG_TAKEN',
+        'Slug must be unique. Another category already uses this slug.',
+        400
+      );
+    }
+
     // Create category
-    const category = await createCategory(validation.data);
+    const category = await createCategory({
+      ...validation.data,
+      slug: slugValue,
+    });
     
     return successResponse(toAdminCategory(category), 201);
   });

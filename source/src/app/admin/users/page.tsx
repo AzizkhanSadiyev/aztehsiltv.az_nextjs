@@ -234,11 +234,11 @@ export default function UsersPage() {
                 const user = row.original;
 
                 return (
-                    <div className="flex justify-end gap-2">
+                    <div className="admin-row-actions">
                         <Button
                             variant="outline"
                             size="sm"
-                            className="h-8 px-3 gap-1 text-xs"
+                            className="admin-row-action"
                             onClick={() =>
                                 router.push(`/admin/users/${user.id}`)
                             }
@@ -249,7 +249,7 @@ export default function UsersPage() {
                         <Button
                             variant="outline"
                             size="sm"
-                            className="h-8 px-3 gap-1 text-xs text-destructive border-destructive/40 hover:text-destructive"
+                            className="admin-row-action admin-row-action--danger"
                             onClick={() => {
                                 setUserToDelete(user);
                                 setDeleteDialogOpen(true);
