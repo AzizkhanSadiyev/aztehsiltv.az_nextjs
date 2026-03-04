@@ -320,10 +320,7 @@ export default function Header({
     );
     const langClass = cx(styles.lang_sect, isLangOpen && styles.clicked);
 
-    const currentLocale =
-        locale && locales.includes(locale as (typeof locales)[number])
-            ? locale
-            : "az";
+    const currentLocale = (locale || "az").toLowerCase();
     const languageItems = (() => {
         const base = languages.length
             ? languages
@@ -575,11 +572,12 @@ export default function Header({
           )
         : [];
 
+    const localeCodesForPath = languageItems.map((lang) => lang.code);
     const pathWithoutLocale = (() => {
         const rawPath = pathname ?? "/";
         const segments = rawPath.split("/").filter(Boolean);
         if (segments.length === 0) return "";
-        if (locales.includes(segments[0] as (typeof locales)[number])) {
+        if (localeCodesForPath.includes(segments[0])) {
             segments.shift();
         }
         return segments.length ? `/${segments.join("/")}` : "";
