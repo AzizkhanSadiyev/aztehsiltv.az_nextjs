@@ -1,4 +1,4 @@
-import type { Locale } from './config';
+import { locales, defaultLocale, type Locale } from './config';
 
 const dictionaries = {
   az: () => import('./dictionaries/az.json').then((module) => module.default),
@@ -7,5 +7,9 @@ const dictionaries = {
 };
 
 export const getDictionary = async (locale: Locale) => {
-  return dictionaries[locale]();
+  const normalized = (locale || defaultLocale).toLowerCase();
+  const key = locales.includes(normalized as (typeof locales)[number])
+    ? (normalized as (typeof locales)[number])
+    : defaultLocale;
+  return dictionaries[key]();
 };

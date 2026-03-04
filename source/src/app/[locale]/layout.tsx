@@ -11,6 +11,7 @@ import Footer from "@/layouts/Footer/Footer";
 import ScrollToTop from "@/components/ScrollToTop/ScrollToTop";
 import { getSiteSettings } from "@/lib/data/settings.data";
 import { pickLocalized } from "@/lib/localization";
+import { getAllLanguages } from "@/lib/data/languages.data";
 
 export async function generateStaticParams() {
     return locales.map((locale) => ({ locale }));
@@ -57,26 +58,38 @@ export default async function LocaleLayout({
     params: Promise<{ locale: string }>;
 }) {
     const { locale } = await params;
+    const resolvedLocale = (locale || defaultLocale).toLowerCase();
+    const settings = await getSiteSettings();
+    const activeLanguages = await getAllLanguages(true);
+    const isActiveLocale = activeLanguages.some(
+        (lang) => lang.code === resolvedLocale
+    );
+    const isStaticLocale = locales.includes(
+        resolvedLocale as (typeof locales)[number]
+    );
 
-    // Validate locale
-    if (!locales.includes(locale as Locale)) {
+    // Validate locale against active languages (fallback to static list)
+    if (!isActiveLocale && !isStaticLocale) {
         notFound();
     }
 
-    const dict = await getDictionary(locale as Locale);
-    const settings = await getSiteSettings();
+    const dictionaryLocale =
+        isStaticLocale
+            ? resolvedLocale
+            : settings.localization?.defaultLocale || defaultLocale;
+    const dict = await getDictionary(dictionaryLocale as Locale);
 
     return (
         <div className="page">
             <ScrollToTop />
-            <Header locale={locale} dict={dict} settings={settings} />
+            <Header locale={resolvedLocale} dict={dict} settings={settings} />
 
             {/* ===== MAIN CONTENT ===== */}
             <main className="main" id="main">
                 <div className="section_wrap wrap_container">{children}</div>
             </main>
 
-            <Footer locale={locale} dict={dict} settings={settings} />
+            <Footer locale={resolvedLocale} dict={dict} settings={settings} />
         </div>
     );
 }
