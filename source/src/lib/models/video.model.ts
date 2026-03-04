@@ -40,12 +40,21 @@ const LocalizedStringOptionalInputSchema = z
     return value;
   });
 
+const UrlLikeSchema = z
+  .string()
+  .min(1)
+  .refine(
+    (value) => value.startsWith("/") || /^https?:\/\//i.test(value),
+    "Invalid URL",
+  );
+
 export const VideoSchema = z.object({
   id: z.string().uuid(),
   title: LocalizedStringSchema,
   slug: LocalizedStringSchema,
   description: LocalizedStringSchema.nullable(),
   coverUrl: z.string().nullable(),
+  sourceUrl: UrlLikeSchema.nullable(),
   categoryId: z.string().uuid().nullable(),
   broadcastId: z.string().uuid().nullable(),
   type: z.enum(["video", "list"]),
@@ -67,6 +76,7 @@ export const VideoCreateSchema = z.object({
   slug: LocalizedStringInputSchema.optional(),
   description: LocalizedStringOptionalInputSchema.optional(),
   coverUrl: z.string().nullable().optional(),
+  sourceUrl: UrlLikeSchema.nullable().optional(),
   categoryId: z.string().uuid().nullable().optional(),
   broadcastId: z.string().uuid().nullable().optional(),
   type: z.enum(["video", "list"]).optional().default("video"),
@@ -87,6 +97,7 @@ export const VideoUpdateSchema = z.object({
   slug: LocalizedStringInputSchema.optional(),
   description: LocalizedStringOptionalInputSchema.optional(),
   coverUrl: z.string().nullable().optional(),
+  sourceUrl: UrlLikeSchema.nullable().optional(),
   categoryId: z.string().uuid().nullable().optional(),
   broadcastId: z.string().uuid().nullable().optional(),
   type: z.enum(["video", "list"]).optional(),

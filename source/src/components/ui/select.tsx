@@ -123,9 +123,9 @@ const SelectItem = React.forwardRef<
       )}
     {...props}
   >
-    <span className="admin-select-indicator flex items-center justify-center">
-      <SelectPrimitive.ItemIndicator>
-        <Check className="h-4 w-4" />
+    <span className="admin-select-indicator flex items-center justify-center h-6 w-6" style={{marginRight: "12px"}}>
+      <SelectPrimitive.ItemIndicator className="admin-select-indicator flex items-center justify-center">
+        <Check style={{width: "16px", height: "16px"}}/>
       </SelectPrimitive.ItemIndicator>
     </span>
 

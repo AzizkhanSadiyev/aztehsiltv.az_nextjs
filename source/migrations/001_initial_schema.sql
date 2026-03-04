@@ -106,6 +106,7 @@ CREATE TABLE IF NOT EXISTS videos (
     slug JSON NOT NULL,
     description JSON NULL,
     cover_url VARCHAR(500) NULL,
+    source_url VARCHAR(500) NULL,
     category_id CHAR(36) NULL,
     broadcast_id CHAR(36) NULL,
     type ENUM('video', 'list') NOT NULL DEFAULT 'video',

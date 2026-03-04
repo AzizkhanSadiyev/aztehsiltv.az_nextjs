@@ -41,6 +41,8 @@ interface VideoItem {
   slug: string;
   description?: string;
   categoryId: string | null;
+  coverUrl?: string | null;
+  sourceUrl?: string | null;
   status: "published" | "draft";
   views: number;
   isManshet: boolean;
@@ -96,6 +98,19 @@ function FlagBadges({
     </div>
   );
 }
+
+const getSourceMeta = (sourceUrl?: string | null) => {
+  if (!sourceUrl) {
+    return { label: "No source", variant: "secondary" as const };
+  }
+  if (/youtu\.be|youtube\.com/i.test(sourceUrl)) {
+    return { label: "YouTube", variant: "outline" as const };
+  }
+  if (sourceUrl.startsWith("/uploads/")) {
+    return { label: "Upload", variant: "secondary" as const };
+  }
+  return { label: "External", variant: "outline" as const };
+};
 
 export default function VideosPage() {
   const router = useRouter();
@@ -214,6 +229,22 @@ export default function VideosPage() {
 
   const columns: ColumnDef<VideoItem>[] = [
     {
+      id: "cover",
+      header: "Cover",
+      cell: ({ row }) => {
+        const coverUrl = row.original.coverUrl;
+        return (
+          <div className="admin-video-thumb">
+            {coverUrl ? (
+              <img src={coverUrl} alt="" loading="lazy" />
+            ) : (
+              <div className="admin-video-thumb__empty">No image</div>
+            )}
+          </div>
+        );
+      },
+    },
+    {
       accessorKey: "title",
       header: "Title",
       cell: ({ row }) => (
@@ -236,6 +267,29 @@ export default function VideosPage() {
           <span className="text-sm text-muted-foreground">
             {name || "Uncategorized"}
           </span>
+        );
+      },
+    },
+    {
+      id: "source",
+      header: "Source",
+      cell: ({ row }) => {
+        const sourceUrl = row.original.sourceUrl;
+        const meta = getSourceMeta(sourceUrl);
+        return (
+          <div className="flex items-center gap-2">
+            <Badge variant={meta.variant}>{meta.label}</Badge>
+            {sourceUrl ? (
+              <a
+                href={sourceUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="text-xs text-blue-600 hover:underline"
+              >
+                Open
+              </a>
+            ) : null}
+          </div>
         );
       },
     },
@@ -365,6 +419,7 @@ export default function VideosPage() {
       <DataTable
         columns={columns}
         data={filteredVideos}
+        minTableWidth={900}
         toolbar={
           <div className="admin-toolbar">
             <div className="admin-toolbar-search">

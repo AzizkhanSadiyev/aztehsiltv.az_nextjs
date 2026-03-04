@@ -262,7 +262,7 @@ export default function LanguagesPage() {
                             )}
                         </div>
 
-                        <div className="admin-toolbar-actions">
+                        {/* <div className="admin-toolbar-actions">
                             <Button
                                 variant="outline"
                                 size="sm"
@@ -273,7 +273,7 @@ export default function LanguagesPage() {
                                     Export
                                 </span>
                             </Button>
-                        </div>
+                        </div> */}
                     </div>
                 }
                 emptyState={

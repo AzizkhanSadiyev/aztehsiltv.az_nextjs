@@ -12,7 +12,6 @@ import {
   FormField,
   FormActions,
   Input,
-  Textarea,
   Switch,
 } from "@/components/admin/ui/FormLayout";
 import {
@@ -26,6 +25,7 @@ import { useToast } from "@/components/admin/ui/ToastProvider";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Image as ImageIcon, X } from "lucide-react";
+import { RichTextEditor } from "@/components/admin/RichTextEditor";
 
 interface VideoFormData {
   title: string;
@@ -37,6 +37,7 @@ interface VideoFormData {
   duration: string;
   views: number;
   coverUrl: string;
+  sourceUrl: string;
   isManshet: boolean;
   isShort: boolean;
   isSidebar: boolean;
@@ -90,6 +91,7 @@ export default function VideoEditPage() {
     duration: "",
     views: 0,
     coverUrl: "",
+    sourceUrl: "",
     isManshet: false,
     isShort: false,
     isSidebar: false,
@@ -102,8 +104,10 @@ export default function VideoEditPage() {
   const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [autoSlug, setAutoSlug] = useState(true);
-  const [isUploading, setIsUploading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [isCoverUploading, setIsCoverUploading] = useState(false);
+  const [isVideoUploading, setIsVideoUploading] = useState(false);
+  const coverInputRef = useRef<HTMLInputElement | null>(null);
+  const videoInputRef = useRef<HTMLInputElement | null>(null);
 
   const fetchVideo = useCallback(async () => {
     if (!videoId) return;
@@ -124,6 +128,7 @@ export default function VideoEditPage() {
           duration: video.duration || "",
           views: typeof video.views === "number" ? video.views : 0,
           coverUrl: video.coverUrl || "",
+          sourceUrl: video.sourceUrl || "",
           isManshet: Boolean(video.isManshet),
           isShort: Boolean(video.isShort),
           isSidebar: Boolean(video.isSidebar),
@@ -200,36 +205,87 @@ export default function VideoEditPage() {
     return Object.keys(nextErrors).length === 0;
   };
 
-  const handleUploadClick = () => {
-    fileInputRef.current?.click();
+  const resolveUploadSlug = () => {
+    const trimmed = formData.slug.trim();
+    if (trimmed) return trimmed;
+    const fallback = formData.title.trim() || "video";
+    return generateSlug(fallback) || "video";
   };
 
-  const handleFileChange = async (
+  const uploadVideoAsset = async (file: File, field: "cover" | "video") => {
+    const payload = new FormData();
+    payload.append("file", file);
+    payload.append("entity", "videos");
+    payload.append("entitySlug", resolveUploadSlug());
+    payload.append("field", field);
+
+    const response = await fetch("/api/uploads", {
+      method: "POST",
+      body: payload,
+    });
+    const data = await response.json();
+
+    if (data.success && data.data?.url) {
+      return data.data.url as string;
+    }
+    throw new Error(data.error?.message || data.error || "Upload failed");
+  };
+
+  const triggerCoverPicker = () => {
+    coverInputRef.current?.click();
+  };
+
+  const triggerVideoPicker = () => {
+    videoInputRef.current?.click();
+  };
+
+  const handleCoverUpload = async (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    setIsUploading(true);
+
+    if (!file.type.startsWith("image/")) {
+      error("Invalid file", "Please upload an image file");
+      event.target.value = "";
+      return;
+    }
+
+    setIsCoverUploading(true);
     try {
-      const formDataUpload = new FormData();
-      formDataUpload.append("file", file);
-      formDataUpload.append("uploadedBy", "admin");
-      const res = await fetch("/api/media", {
-        method: "POST",
-        body: formDataUpload,
-      });
-      const data = await res.json();
-      if (data.success && data.data?.url) {
-        setFormData((prev) => ({ ...prev, coverUrl: data.data.url }));
-        success("Image uploaded", "Cover image URL set from upload");
-      } else {
-        error("Upload failed", data.error || "Please try again");
-      }
+      const url = await uploadVideoAsset(file, "cover");
+      setFormData((prev) => ({ ...prev, coverUrl: url }));
+      success("Image uploaded", "Cover image updated");
     } catch (err) {
       error("Upload failed", "Please try again");
     } finally {
-      setIsUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
+      setIsCoverUploading(false);
+      event.target.value = "";
+    }
+  };
+
+  const handleVideoUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("video/")) {
+      error("Invalid file", "Please upload a video file");
+      event.target.value = "";
+      return;
+    }
+
+    setIsVideoUploading(true);
+    try {
+      const url = await uploadVideoAsset(file, "video");
+      setFormData((prev) => ({ ...prev, sourceUrl: url }));
+      success("Video uploaded", "Video link updated");
+    } catch (err) {
+      error("Upload failed", "Please try again");
+    } finally {
+      setIsVideoUploading(false);
+      event.target.value = "";
     }
   };
 
@@ -251,6 +307,7 @@ export default function VideoEditPage() {
         duration: formData.duration || null,
         views: Number(formData.views) || 0,
         coverUrl: formData.coverUrl || null,
+        sourceUrl: formData.sourceUrl.trim() || null,
         isManshet: formData.isManshet,
         isShort: formData.isShort,
         isSidebar: formData.isSidebar,
@@ -314,10 +371,10 @@ export default function VideoEditPage() {
         backLabel="Back to Videos"
       />
 
-      <FormLayout onSubmit={handleSubmit}>
+      <FormLayout onSubmit={handleSubmit}> 
         <FormGrid>
           <FormMain>
-            <FormSection title="Details">
+            <FormSection title="Details"  className="margin_bottom_18">
               <FormField
                 label="Title"
                 htmlFor="title"
@@ -350,12 +407,10 @@ export default function VideoEditPage() {
               </FormField>
 
               <FormField label="Description" htmlFor="description">
-                <Textarea
-                  id="description"
+                <RichTextEditor
                   value={formData.description}
-                  onChange={(e) => handleChange("description", e.target.value)}
-                  placeholder="Short description..."
-                  rows={6}
+                  onChange={(value) => handleChange("description", value)}
+                  placeholder="Write a short description..."
                 />
               </FormField>
             </FormSection>
@@ -382,6 +437,7 @@ export default function VideoEditPage() {
                 <FormField label="Duration" htmlFor="duration">
                   <Input
                     id="duration"
+                    type="time"
                     value={formData.duration}
                     onChange={(e) => handleChange("duration", e.target.value)}
                     placeholder="00:45"
@@ -411,7 +467,7 @@ export default function VideoEditPage() {
           </FormMain>
 
           <FormSidebar>
-            <FormSection title="Publishing">
+            <FormSection title="Publishing" className="margin_bottom_18">
               <FormField label="Status" htmlFor="status">
                 <Select
                   value={formData.status}
@@ -451,7 +507,62 @@ export default function VideoEditPage() {
               </FormField>
             </FormSection>
 
-            <FormSection title="Cover Image">
+            <FormSection
+              title="Source"
+              description="Paste a YouTube link or upload a video file"  className="margin_bottom_18" 
+            >
+              <FormField label="Video Link" htmlFor="sourceUrl">
+                <Input
+                  id="sourceUrl"
+                  value={formData.sourceUrl}
+                  onChange={(e) => handleChange("sourceUrl", e.target.value)}
+                  placeholder="https://youtube.com/watch?v=..."
+                />
+              </FormField>
+
+              <div className="mt-3 space-y-2">
+                <div className="flex items-center gap-3">
+                  <input
+                    ref={videoInputRef}
+                    type="file"
+                    accept="video/*"
+                    className="hidden"
+                    onChange={handleVideoUpload}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={triggerVideoPicker}
+                    disabled={isVideoUploading}
+                  >
+                    {isVideoUploading ? "Uploading..." : "Upload video"}
+                  </Button>
+                  {formData.sourceUrl && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleChange("sourceUrl", "")}
+                    >
+                      Clear
+                    </Button>
+                  )}
+                </div>
+                {formData.sourceUrl && (
+                  <a
+                    href={formData.sourceUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs text-blue-600 hover:underline"
+                  >
+                    Open current link
+                  </a>
+                )}
+              </div>
+            </FormSection>
+
+            <FormSection title="Cover Image"  className="margin_bottom_18">
               {formData.coverUrl ? (
                 <div className="relative">
                   <img
@@ -475,7 +586,13 @@ export default function VideoEditPage() {
                   <p className="text-sm text-muted-foreground mb-2">
                     No image selected
                   </p>
-                  <Button type="button" variant="outline" size="sm" onClick={handleUploadClick}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={triggerCoverPicker}
+                    disabled={isCoverUploading}
+                  >
                     Select Image
                   </Button>
                 </div>
@@ -489,21 +606,21 @@ export default function VideoEditPage() {
                 />
                 <div className="flex items-center gap-3">
                   <input
-                    ref={fileInputRef}
+                    ref={coverInputRef}
                     type="file"
                     accept="image/*"
                     className="hidden"
-                    onChange={handleFileChange}
+                    onChange={handleCoverUpload}
                   />
                   <button
                     type="button"
-                    onClick={handleUploadClick}
+                    onClick={triggerCoverPicker}
                     className="inline-flex items-center rounded-md border border-input px-3 py-2 text-sm text-black font-medium text-foreground hover:bg-muted disabled:opacity-100"
-                    disabled={isUploading}
+                    disabled={isCoverUploading}
                   >
-                    {isUploading ? "Uploading..." : "Upload image"}
+                    {isCoverUploading ? "Uploading..." : "Upload image"}
                   </button>
-                  {isUploading && (
+                  {isCoverUploading && (
                     <span className="text-xs text-muted-foreground">
                       Uploading...
                     </span>

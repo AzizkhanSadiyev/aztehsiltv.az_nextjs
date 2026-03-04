@@ -247,12 +247,12 @@ export default function PartnersPage() {
               )}
             </div>
 
-            <div className="admin-toolbar-actions">
+            {/* <div className="admin-toolbar-actions">
               <Button variant="outline" size="sm" className="h-9 gap-1 px-3">
                 <Download className="h-4 w-4" />
                 <span className="hidden sm:inline">Export</span>
               </Button>
-            </div>
+            </div> */}
           </div>
         }
         emptyState={

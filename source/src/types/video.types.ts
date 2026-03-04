@@ -14,6 +14,7 @@ export interface Video {
   slug: LocalizedString;
   description: LocalizedString | null;
   coverUrl: string | null;
+  sourceUrl: string | null;
   categoryId: string | null;
   broadcastId: string | null;
   type: VideoType;
@@ -35,6 +36,7 @@ export interface VideoCreateInput {
   slug?: LocalizedString;
   description?: LocalizedString | null;
   coverUrl?: string | null;
+  sourceUrl?: string | null;
   categoryId?: string | null;
   broadcastId?: string | null;
   type?: VideoType;

@@ -24,6 +24,7 @@ type VideoRow = {
   slug: any;
   description: any;
   cover_url: string | null;
+  source_url: string | null;
   category_id: string | null;
   broadcast_id: string | null;
   type: "video" | "list";
@@ -75,6 +76,7 @@ function mapRow(row: VideoRow): Video {
     slug: normalizeLocalized(row.slug),
     description: normalizeLocalizedNullable(row.description),
     coverUrl: row.cover_url,
+    sourceUrl: row.source_url,
     categoryId: row.category_id,
     broadcastId: row.broadcast_id,
     type: row.type,
@@ -95,7 +97,7 @@ function mapRow(row: VideoRow): Video {
 export async function getAllVideos(limit = 500): Promise<Video[]> {
   const rows = await query<VideoRow>(
     `SELECT id, title, slug, description,
-            cover_url, category_id, broadcast_id,
+            cover_url, source_url, category_id, broadcast_id,
             type, duration, views, status,
             is_manshet, is_short, is_sidebar, is_top_video,
             published_at, created_at, updated_at, metadata
@@ -153,7 +155,7 @@ export async function getVideosList(options?: {
 
   const rows = await query<VideoRow>(
     `SELECT id, title, slug, description,
-            cover_url, category_id, broadcast_id,
+            cover_url, source_url, category_id, broadcast_id,
             type, duration, views, status,
             is_manshet, is_short, is_sidebar, is_top_video,
             published_at, created_at, updated_at, metadata
@@ -173,7 +175,7 @@ export async function getVideosList(options?: {
 export async function getVideoById(id: string): Promise<Video | null> {
   const row = await queryOne<VideoRow>(
     `SELECT id, title, slug, description,
-            cover_url, category_id, broadcast_id,
+            cover_url, source_url, category_id, broadcast_id,
             type, duration, views, status,
             is_manshet, is_short, is_sidebar, is_top_video,
             published_at, created_at, updated_at, metadata
@@ -222,7 +224,7 @@ export async function getPublishedVideos(options?: {
 
   const rows = await query<VideoRow>(
     `SELECT id, title, slug, description,
-            cover_url, category_id, broadcast_id,
+            cover_url, source_url, category_id, broadcast_id,
             type, duration, views, status,
             is_manshet, is_short, is_sidebar, is_top_video,
             published_at, created_at, updated_at, metadata
@@ -261,17 +263,18 @@ export async function createVideo(input: VideoCreateInput): Promise<Video> {
   await insert(
     `INSERT INTO videos
      (id, title, slug, description,
-      cover_url, category_id, broadcast_id,
+      cover_url, source_url, category_id, broadcast_id,
       type, duration, views, status,
       is_manshet, is_short, is_sidebar, is_top_video,
       published_at, created_at, updated_at, metadata)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       JSON.stringify(title),
       JSON.stringify(slug),
       toJsonOrNull(description),
       input.coverUrl ?? null,
+      input.sourceUrl ?? null,
       input.categoryId ?? null,
       input.broadcastId ?? null,
       input.type ?? "video",
@@ -295,6 +298,7 @@ export async function createVideo(input: VideoCreateInput): Promise<Video> {
     slug,
     description,
     cover_url: input.coverUrl ?? null,
+    source_url: input.sourceUrl ?? null,
     category_id: input.categoryId ?? null,
     broadcast_id: input.broadcastId ?? null,
     type: input.type ?? "video",
@@ -332,6 +336,8 @@ export async function updateVideo(
         : existing.description,
     coverUrl:
       input.coverUrl !== undefined ? input.coverUrl : existing.coverUrl,
+    sourceUrl:
+      input.sourceUrl !== undefined ? input.sourceUrl : existing.sourceUrl,
     categoryId:
       input.categoryId !== undefined ? input.categoryId : existing.categoryId,
     broadcastId:
@@ -358,7 +364,7 @@ export async function updateVideo(
   await updateQuery(
     `UPDATE videos SET
       title = ?, slug = ?, description = ?,
-      cover_url = ?, category_id = ?, broadcast_id = ?,
+      cover_url = ?, source_url = ?, category_id = ?, broadcast_id = ?,
       type = ?, duration = ?, views = ?, status = ?,
       is_manshet = ?, is_short = ?, is_sidebar = ?, is_top_video = ?,
       published_at = ?, updated_at = ?, metadata = ?
@@ -368,6 +374,7 @@ export async function updateVideo(
       JSON.stringify(merged.slug),
       toJsonOrNull(merged.description),
       merged.coverUrl ?? null,
+      merged.sourceUrl ?? null,
       merged.categoryId ?? null,
       merged.broadcastId ?? null,
       merged.type,

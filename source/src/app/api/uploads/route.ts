@@ -20,7 +20,11 @@ import { createMedia } from "@/lib/data/media.data";
 import { queryOne } from "@/lib/db";
 import { getMediaType } from "@/types/media.types";
 
-const MAX_UPLOAD_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_UPLOAD_SIZE = (() => {
+    const raw = Number(process.env.MAX_UPLOAD_SIZE);
+    if (Number.isFinite(raw) && raw > 0) return raw;
+    return 50 * 1024 * 1024; // 50MB default
+})();
 
 const sanitizeFilename = (value: string) =>
     value
@@ -81,8 +85,14 @@ export async function POST(request: NextRequest) {
             return errorResponse("NO_FILE", "No file provided", 400);
         }
 
-        if (!file.type.startsWith("image/")) {
-            return errorResponse("INVALID_FILE", "Only image files are allowed", 400);
+        const isImage = file.type.startsWith("image/");
+        const isVideo = file.type.startsWith("video/");
+        if (!isImage && !isVideo) {
+            return errorResponse(
+                "INVALID_FILE",
+                "Only image or video files are allowed",
+                400,
+            );
         }
 
         if (file.size > MAX_UPLOAD_SIZE) {
