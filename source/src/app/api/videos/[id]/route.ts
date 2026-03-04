@@ -10,6 +10,7 @@ export const runtime = "nodejs";
 import { NextRequest } from "next/server";
 import {
   successResponse,
+  errorResponse,
   notFoundResponse,
   validateRequestBody,
   withErrorHandling,
@@ -34,6 +35,12 @@ function toAdminVideo(video: Video, locale: string = DEFAULT_LOCALE) {
       ? pickLocalized(video.description, locale, DEFAULT_LOCALE)
       : "",
     languageCode: locale,
+    i18n: {
+      title: video.title,
+      slug: video.slug,
+      description: video.description,
+      tagsByLocale: video.metadata?.tagsByLocale ?? null,
+    },
   };
 }
 
@@ -71,7 +78,33 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       return validation.error;
     }
 
+    const existing = await getVideoById(id);
+    if (!existing) {
+      return notFoundResponse("Video");
+    }
+
     const updateData = { ...validation.data, id };
+    const nextStatus = updateData.status ?? existing.status;
+    const nextCategoryIds = Array.isArray(updateData.categoryIds)
+      ? updateData.categoryIds.filter(Boolean)
+      : updateData.categoryId !== undefined
+        ? updateData.categoryId
+          ? [updateData.categoryId]
+          : []
+        : Array.isArray(existing.categoryIds) && existing.categoryIds.length
+          ? existing.categoryIds
+          : existing.categoryId
+            ? [existing.categoryId]
+            : [];
+
+    if (nextStatus === "published" && nextCategoryIds.length === 0) {
+      return errorResponse(
+        "VALIDATION_ERROR",
+        "Select at least one category before publishing",
+        400,
+      );
+    }
+
     const video = await updateVideo(updateData);
 
     if (!video) {

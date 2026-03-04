@@ -13,7 +13,9 @@ import Link from "next/link";
 import Image from "next/image";
 
 import styles from "./header.module.css";
-import { locales } from "@/i18n/config";
+import { locales, defaultLocale } from "@/i18n/config";
+import { pickLocalized } from "@/lib/localization";
+import type { SiteSettings, SettingsLink } from "@/types/settings.types";
 
 interface Dictionary {
     navigation: {
@@ -35,15 +37,18 @@ interface Dictionary {
 interface HeaderProps {
     locale: string;
     dict: Dictionary;
+    settings?: SiteSettings;
 }
 
 const cx = (...classes: Array<string | false | null | undefined>) =>
     classes.filter(Boolean).join(" ");
 
-const localeLabelMap: Record<string, string> = {
-    az: "Az",
-    en: "En",
-    ru: "Ru",
+const formatLocaleLabel = (value: string) => {
+    if (!value) return "";
+    if (value.length <= 2) {
+        return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
+    }
+    return value.toUpperCase();
 };
 
 type ThemeMode = "light" | "dark";
@@ -63,6 +68,38 @@ type CategoryNavItem = {
     isActive?: boolean;
     order?: number;
 };
+
+type LanguageOption = {
+    id: string;
+    code: string;
+    name: string;
+    nativeName?: string | null;
+    isActive?: boolean;
+    sortOrder?: number;
+};
+
+const fallbackMenuLinks: SettingsLink[] = [
+    {
+        id: "about",
+        label: { az: "Haqqimizda", en: "About", ru: "About" },
+        url: "#",
+    },
+    {
+        id: "press",
+        label: { az: "Press-relizler", en: "Press releases", ru: "Press" },
+        url: "#",
+    },
+    {
+        id: "ads",
+        label: { az: "Saytda reklam", en: "Advertising", ru: "Advertising" },
+        url: "#",
+    },
+    {
+        id: "contact",
+        label: { az: "Elaqe", en: "Contact", ru: "Contact" },
+        url: "#",
+    },
+];
 
 
 const THEME_STORAGE_KEY = "theme";
@@ -125,7 +162,11 @@ if (typeof window !== "undefined") {
     applyTheme(currentTheme);
 }
 
-export default function Header({ locale, dict: _dict }: HeaderProps) {
+export default function Header({
+    locale,
+    dict: _dict,
+    settings,
+}: HeaderProps) {
     const pathname = usePathname();
     const pathKey = pathname ?? "";
     const [menuState, setMenuState] = useState<MenuState>(() => ({
@@ -166,6 +207,7 @@ export default function Header({ locale, dict: _dict }: HeaderProps) {
     const langRef = useRef<HTMLDivElement | null>(null);
     const [categories, setCategories] = useState<CategoryNavItem[]>([]);
     const [isCategoriesLoading, setIsCategoriesLoading] = useState(false);
+    const [languages, setLanguages] = useState<LanguageOption[]>([]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -282,9 +324,98 @@ export default function Header({ locale, dict: _dict }: HeaderProps) {
         locale && locales.includes(locale as (typeof locales)[number])
             ? locale
             : "az";
-    const localeLabel = localeLabelMap[currentLocale] || currentLocale;
+    const languageItems = (() => {
+        const base = languages.length
+            ? languages
+            : locales.map((code, index) => ({
+                  id: code,
+                  code,
+                  name: code.toUpperCase(),
+                  sortOrder: index,
+                  isActive: true,
+              }));
+        if (!base.some((lang) => lang.code === currentLocale)) {
+            return [
+                { id: currentLocale, code: currentLocale, name: currentLocale },
+                ...base,
+            ];
+        }
+        return base;
+    })();
+    const localeLabel = formatLocaleLabel(currentLocale);
     const categoryBasePath = `/${currentLocale}/categories`;
     const broadcastBasePath = `/${currentLocale}/broadcasts`;
+    const settingsLocaleFallback =
+        settings?.localization?.defaultLocale || defaultLocale;
+    const menuLinks =
+        settings?.menuLinks && settings.menuLinks.length > 0
+            ? settings.menuLinks
+            : fallbackMenuLinks;
+    const resolveMenuLabel = (link: SettingsLink) =>
+        pickLocalized(link.label, currentLocale, settingsLocaleFallback) ||
+        link.url ||
+        "Link";
+    const renderMenuLinks = (className: string) => (
+        <ul className={className}>
+            {menuLinks.map((link) => {
+                const href = link.url?.trim() || "#";
+                const isExternal = /^https?:\/\//i.test(href);
+                return (
+                    <li key={link.id}>
+                        <Link
+                            href={href}
+                            target={isExternal ? "_blank" : undefined}
+                            rel={isExternal ? "noreferrer" : undefined}
+                        >
+                            {resolveMenuLabel(link)}
+                        </Link>
+                    </li>
+                );
+            })}
+        </ul>
+    );
+    const socialLinks = [
+        {
+            id: "facebook",
+            label: "Facebook",
+            url: settings?.social?.facebook,
+            light: "/assets/icons/icon_facebook_light.svg",
+            dark: "/assets/icons/icon_facebook.svg",
+        },
+        {
+            id: "instagram",
+            label: "Instagram",
+            url: settings?.social?.instagram,
+            light: "/assets/icons/icon_instagram_light.svg",
+            dark: "/assets/icons/icon_instagram.svg",
+        },
+        {
+            id: "youtube",
+            label: "Youtube",
+            url: settings?.social?.youtube,
+            light: "/assets/icons/icon_ytb_light.svg",
+            dark: "/assets/icons/icon_ytb.svg",
+        },
+        {
+            id: "telegram",
+            label: "Telegram",
+            url: settings?.social?.telegram,
+            light: "/assets/icons/icon_telegram_light.svg",
+            dark: "/assets/icons/icon_telegram.svg",
+        },
+        {
+            id: "tiktok",
+            label: "Tiktok",
+            url: settings?.social?.tiktok,
+            light: "/assets/icons/icon_tiktok_light.svg",
+            dark: "/assets/icons/icon_tiktok.svg",
+        },
+    ]
+        .filter((item) => item.url && item.url.trim().length > 0)
+        .map((item) => ({
+            ...item,
+            url: item.url!.trim(),
+        }));
 
     useEffect(() => {
         let isMounted = true;
@@ -328,6 +459,50 @@ export default function Header({ locale, dict: _dict }: HeaderProps) {
         };
     }, [currentLocale]);
 
+    useEffect(() => {
+        let isMounted = true;
+        const controller = new AbortController();
+
+        const loadLanguages = async () => {
+            try {
+                const response = await fetch("/api/languages?active=1", {
+                    signal: controller.signal,
+                });
+                const payload = await response.json();
+                if (!response.ok || !payload?.success) {
+                    throw new Error(
+                        payload?.error?.message || "Failed to load languages"
+                    );
+                }
+                const data: LanguageOption[] = Array.isArray(payload.data)
+                    ? payload.data
+                    : [];
+                const sorted = data
+                    .filter((lang) => Boolean(lang?.code))
+                    .sort(
+                        (a, b) =>
+                            (a.sortOrder ?? 0) - (b.sortOrder ?? 0)
+                    );
+                if (isMounted) {
+                    setLanguages(sorted);
+                }
+            } catch (error) {
+                if ((error as Error)?.name !== "AbortError" && isMounted) {
+                    setLanguages([]);
+                }
+            } finally {
+                // no-op
+            }
+        };
+
+        loadLanguages();
+
+        return () => {
+            isMounted = false;
+            controller.abort();
+        };
+    }, []);
+
 
     const normalizeKey = (value: string) =>
         value
@@ -368,6 +543,18 @@ export default function Header({ locale, dict: _dict }: HeaderProps) {
         ["kesf-et", "keshf-et", "kashf-et", "explore", "discover"],
         ["Kəşf et", "Kesf et", "Kashf et", "Explore", "Discover"]
     );
+    const liveCategory = findParent(
+        ["canli", "canlı", "live"],
+        ["Canlı", "Canli", "Live"]
+    );
+    const pressCategory = findParent(
+        ["press-relizler", "press-relizler", "press-relizlər", "press-reliz"],
+        ["Press-relizlər", "Press-relizler", "Press reliz"]
+    );
+    const shortsCategory = findParent(
+        ["shorts", "short"],
+        ["Shorts", "Short"]
+    );
     const broadcastParent = findParent(
         ["verilisler", "verilislar", "broadcasts", "broadcast"],
         ["Verilişlər", "Verilisler", "Broadcasts"]
@@ -400,6 +587,8 @@ export default function Header({ locale, dict: _dict }: HeaderProps) {
 
     const buildLocaleHref = (nextLocale: string) =>
         `/${nextLocale}${pathWithoutLocale}`;
+    const buildCategoryFilterHref = (slug?: string | null) =>
+        slug ? `${categoryBasePath}?category=${encodeURIComponent(slug)}` : categoryBasePath;
 
     return (
         <header className={styles.header} id="header">
@@ -416,20 +605,7 @@ export default function Header({ locale, dict: _dict }: HeaderProps) {
                         aria-controls="main-navigation"
                         onClick={toggleMobileMenu}
                     />
-                    <ul className={styles.desk_little_menu}>
-                        <li>
-                            <a href="#">Haqqımızda </a>
-                        </li>
-                        <li>
-                            <a href="#">Press-relizlər </a>
-                        </li>
-                        <li>
-                            <a href="#">Saytda reklam </a>
-                        </li>
-                        <li>
-                            <a href="#">Əlaqə </a>
-                        </li>
-                    </ul>
+                    {renderMenuLinks(styles.desk_little_menu)}
                 </div>
                 <div className={styles.logo_sect}>
                     <Link href="/" className={styles.logo}>
@@ -494,57 +670,27 @@ export default function Header({ locale, dict: _dict }: HeaderProps) {
                                 {localeLabel}
                             </button>
                             <ul className={styles.langs} id="header-lang-menu">
-                                <li
-                                    className={cx(
-                                        currentLocale === "en" && styles.active
-                                    )}
-                                >
-                                    <Link
-                                        href={buildLocaleHref("en")}
-                                        onClick={() =>
-                                            updateMenuState((prev) => ({
-                                                ...prev,
-                                                isLangOpen: false,
-                                            }))
-                                        }
+                                {languageItems.map((lang) => (
+                                    <li
+                                        key={lang.code}
+                                        className={cx(
+                                            currentLocale === lang.code &&
+                                                styles.active
+                                        )}
                                     >
-                                        En
-                                    </Link>
-                                </li>
-                                <li
-                                    className={cx(
-                                        currentLocale === "ru" && styles.active
-                                    )}
-                                >
-                                    <Link
-                                        href={buildLocaleHref("ru")}
-                                        onClick={() =>
-                                            updateMenuState((prev) => ({
-                                                ...prev,
-                                                isLangOpen: false,
-                                            }))
-                                        }
-                                    >
-                                        Ru
-                                    </Link>
-                                </li>
-                                <li
-                                    className={cx(
-                                        currentLocale === "az" && styles.active
-                                    )}
-                                >
-                                    <Link
-                                        href={buildLocaleHref("az")}
-                                        onClick={() =>
-                                            updateMenuState((prev) => ({
-                                                ...prev,
-                                                isLangOpen: false,
-                                            }))
-                                        }
-                                    >
-                                        Az
-                                    </Link>
-                                </li>
+                                        <Link
+                                            href={buildLocaleHref(lang.code)}
+                                            onClick={() =>
+                                                updateMenuState((prev) => ({
+                                                    ...prev,
+                                                    isLangOpen: false,
+                                                }))
+                                            }
+                                        >
+                                            {formatLocaleLabel(lang.code)}
+                                        </Link>
+                                    </li>
+                                ))}
                             </ul>
                         </div>
                         <div
@@ -578,7 +724,7 @@ export default function Header({ locale, dict: _dict }: HeaderProps) {
                 </div>
             </div>
             <div className={searchClass} ref={searchRef} id="header-search">
-                <form action="" method="get">
+                <form action={`/${currentLocale}/search`} method="get">
                     <div className={styles.search_row}>
                         <input
                             type="text"
@@ -614,7 +760,7 @@ export default function Header({ locale, dict: _dict }: HeaderProps) {
                 <div className={styles.mob_body}>
                     <ul className={styles.hdr_menu}>
                         <li className={styles.active}>
-                            <Link href="#">
+                            <Link href={buildCategoryFilterHref(liveCategory?.slug)}>
                                 <span
                                     className={cx(
                                         styles.menu_icon,
@@ -625,7 +771,7 @@ export default function Header({ locale, dict: _dict }: HeaderProps) {
                             </Link>
                         </li>
                         <li>
-                            <Link href="#">
+                            <Link href={buildCategoryFilterHref(pressCategory?.slug)}>
                                 <span
                                     className={cx(
                                         styles.menu_icon,
@@ -636,7 +782,7 @@ export default function Header({ locale, dict: _dict }: HeaderProps) {
                             </Link>
                         </li>
                         <li>
-                            <Link href="#">
+                            <Link href={buildCategoryFilterHref(shortsCategory?.slug)}>
                                 <span
                                     className={cx(
                                         styles.menu_icon,
@@ -647,7 +793,7 @@ export default function Header({ locale, dict: _dict }: HeaderProps) {
                             </Link>
                         </li>
                         <li className={styles.has_sub}>
-                            <Link href="#">
+                            <Link href={categoryBasePath}>
                                 <span
                                     className={cx(
                                         styles.menu_icon,
@@ -675,7 +821,7 @@ export default function Header({ locale, dict: _dict }: HeaderProps) {
                                         .map((item) => (
                                         <li key={item.id}>
                                             <Link
-                                                href={`${categoryBasePath}/${item.slug}`}
+                                                href={buildCategoryFilterHref(item.slug)}
                                             >
                                                 {item.name}
                                             </Link>
@@ -689,7 +835,7 @@ export default function Header({ locale, dict: _dict }: HeaderProps) {
                             </ul>
                         </li>
                         <li className={styles.has_sub}>
-                            <Link href="#">
+                            <Link href={broadcastBasePath}>
                                 <span
                                     className={cx(
                                         styles.menu_icon,
@@ -717,7 +863,7 @@ export default function Header({ locale, dict: _dict }: HeaderProps) {
                                         .map((item) => (
                                             <li key={item.id}>
                                                 <Link
-                                                    href={`${categoryBasePath}/${item.slug}`}
+                                                    href={buildCategoryFilterHref(item.slug)}
                                                 >
                                                     {item.name}
                                                 </Link>
@@ -772,153 +918,39 @@ export default function Header({ locale, dict: _dict }: HeaderProps) {
                                 izləyin:
                             </div>
                             <ul className={styles.socials}>
-                                <li>
-                                    <Link
-                                        href=""
-                                        className={styles.social_icon}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                    >
-                                        <span className={styles.scl_icn}>
-                                            <Image
-                                                className={styles["logo--light"]}
-                                                src="/assets/icons/icon_facebook_light.svg"
-                                                alt="facebook"
-                                                width={16}
-                                                height={16}
-                                            />
-                                            <Image
-                                                className={styles["logo--dark"]}
-                                                src="/assets/icons/icon_facebook.svg"
-                                                alt="facebook"
-                                                width={16}
-                                                height={16}
-                                            />
-                                        </span>
-                                        <span className={styles.scl_name}>
-                                            Facebook
-                                        </span>
-                                    </Link>
-                                </li>
-                                <li>
-                                    <Link
-                                        href=""
-                                        className={styles.social_icon}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                    >
-                                        <span className={styles.scl_icn}>
-                                            <Image
-                                                className={styles["logo--light"]}
-                                                src="/assets/icons/icon_instagram_light.svg"
-                                                alt="instagram"
-                                                width={16}
-                                                height={16}
-                                            />
-                                            <Image
-                                                className={styles["logo--dark"]}
-                                                src="/assets/icons/icon_instagram.svg"
-                                                alt="instagram"
-                                                width={16}
-                                                height={16}
-                                            />
-                                        </span>
-                                        <span className={styles.scl_name}>
-                                            Instagram
-                                        </span>
-                                    </Link>
-                                </li>
-                                <li>
-                                    <Link
-                                        href=""
-                                        className={styles.social_icon}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                    >
-                                        <span className={styles.scl_icn}>
-                                            <Image
-                                                className={styles["logo--light"]}
-                                                src="/assets/icons/icon_ytb_light.svg"
-                                                alt="youtube"
-                                                width={16}
-                                                height={16}
-                                            />
-                                            <Image
-                                                className={styles["logo--dark"]}
-                                                src="/assets/icons/icon_ytb.svg"
-                                                alt="youtube"
-                                                width={16}
-                                                height={16}
-                                            />
-                                        </span>
-                                        <span className={styles.scl_name}>Youtube</span>
-                                    </Link>
-                                </li>
-                                <li>
-                                    <Link
-                                        href=""
-                                        className={styles.social_icon}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                    >
-                                        <span className={styles.scl_icn}>
-                                            <Image
-                                                className={styles["logo--light"]}
-                                                src="/assets/icons/icon_telegram_light.svg"
-                                                alt="telegram"
-                                                width={16}
-                                                height={16}
-                                            />
-                                            <Image
-                                                className={styles["logo--dark"]}
-                                                src="/assets/icons/icon_telegram.svg"
-                                                alt="telegram"
-                                                width={16}
-                                                height={16}
-                                            />
-                                        </span>
-                                        <span className={styles.scl_name}>Telegram</span>
-                                    </Link>
-                                </li>
-                                <li>
-                                    <Link
-                                        href=""
-                                        className={styles.social_icon}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                    >
-                                        <span className={styles.scl_icn}>
-                                            <Image
-                                                className={styles["logo--light"]}
-                                                src="/assets/icons/icon_tiktok_light.svg"
-                                                alt="tiktok"
-                                                width={16}
-                                                height={16}
-                                            />
-                                            <Image
-                                                className={styles["logo--dark"]}
-                                                src="/assets/icons/icon_tiktok.svg"
-                                                alt="tiktok"
-                                                width={16}
-                                                height={16}
-                                            />
-                                        </span>
-                                        <span className={styles.scl_name}>Tiktok</span>
-                                    </Link>
-                                </li>
+                                {socialLinks.map((item) => (
+                                    <li key={item.id}>
+                                        <Link
+                                            href={item.url as string}
+                                            className={styles.social_icon}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                        >
+                                            <span className={styles.scl_icn}>
+                                                <Image
+                                                    className={styles["logo--light"]}
+                                                    src={item.light}
+                                                    alt={item.label}
+                                                    width={16}
+                                                    height={16}
+                                                />
+                                                <Image
+                                                    className={styles["logo--dark"]}
+                                                    src={item.dark}
+                                                    alt={item.label}
+                                                    width={16}
+                                                    height={16}
+                                                />
+                                            </span>
+                                            <span className={styles.scl_name}>
+                                                {item.label}
+                                            </span>
+                                        </Link>
+                                    </li>
+                                ))}
                             </ul>
                         </div>
-                        <ul className={styles.desk_little_menu}>
-                            <li>
-                                <Link href="#">Haqqımızda </Link>
-                            </li>
-                            <li>
-                                <Link href="#">Saytda reklam </Link>
-                            </li>
-                            <li>
-                                <Link href="#">Əlaqə </Link>
-                            </li>
-                        </ul>
+                        {renderMenuLinks(styles.desk_little_menu)}
                     </div>
                 </div>
             </nav>

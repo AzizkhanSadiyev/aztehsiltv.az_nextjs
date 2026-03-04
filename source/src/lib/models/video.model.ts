@@ -56,6 +56,7 @@ export const VideoSchema = z.object({
   coverUrl: z.string().nullable(),
   sourceUrl: UrlLikeSchema.nullable(),
   categoryId: z.string().uuid().nullable(),
+  categoryIds: z.array(z.string().uuid()).nullable().optional(),
   broadcastId: z.string().uuid().nullable(),
   type: z.enum(["video", "list"]),
   duration: z.string().nullable(),
@@ -68,6 +69,7 @@ export const VideoSchema = z.object({
   publishedAt: z.string().datetime().nullable(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
+  tags: z.array(z.string().min(1)).nullable().optional(),
   metadata: z.record(z.any()).nullable().optional(),
 });
 
@@ -78,6 +80,7 @@ export const VideoCreateSchema = z.object({
   coverUrl: z.string().nullable().optional(),
   sourceUrl: UrlLikeSchema.nullable().optional(),
   categoryId: z.string().uuid().nullable().optional(),
+  categoryIds: z.array(z.string().uuid()).optional(),
   broadcastId: z.string().uuid().nullable().optional(),
   type: z.enum(["video", "list"]).optional().default("video"),
   duration: z.string().nullable().optional(),
@@ -88,17 +91,19 @@ export const VideoCreateSchema = z.object({
   isSidebar: z.boolean().optional().default(false),
   isTopVideo: z.boolean().optional().default(false),
   publishedAt: z.string().datetime().nullable().optional(),
+  tags: z.array(z.string().min(1)).optional(),
   metadata: z.record(z.any()).nullable().optional(),
 });
 
 export const VideoUpdateSchema = z.object({
-  id: z.string().uuid(),
+  id: z.string().uuid().optional(),
   title: LocalizedStringInputSchema.optional(),
   slug: LocalizedStringInputSchema.optional(),
   description: LocalizedStringOptionalInputSchema.optional(),
   coverUrl: z.string().nullable().optional(),
   sourceUrl: UrlLikeSchema.nullable().optional(),
   categoryId: z.string().uuid().nullable().optional(),
+  categoryIds: z.array(z.string().uuid()).optional(),
   broadcastId: z.string().uuid().nullable().optional(),
   type: z.enum(["video", "list"]).optional(),
   duration: z.string().nullable().optional(),
@@ -109,6 +114,7 @@ export const VideoUpdateSchema = z.object({
   isSidebar: z.boolean().optional(),
   isTopVideo: z.boolean().optional(),
   publishedAt: z.string().datetime().nullable().optional(),
+  tags: z.array(z.string().min(1)).optional(),
   metadata: z.record(z.any()).nullable().optional(),
 });
 

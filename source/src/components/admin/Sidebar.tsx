@@ -13,6 +13,7 @@ import {
   Handshake,
   Video,
   Radio,
+  Settings,
   ChevronLeft,
   X,
 } from "lucide-react";
@@ -33,6 +34,7 @@ const navItems = [
   { href: "/admin/media", label: "Media", icon: Image },
   { href: "/admin/partners", label: "Partners", icon: Handshake },
   { href: "/admin/users", label: "Users", icon: Users },
+  { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
 export function Sidebar({ collapsed, open, onToggleCollapse, onNavigate }: SidebarProps) {

@@ -8,6 +8,16 @@
     display: flex;
     width: calc(50% - 8px);
 }
+
+.emptyState {
+    width: 100%;
+    padding: 24px;
+    text-align: center;
+    color: var(--color-text-81818a);
+    font-family: var(--font-secondary);
+    font-size: 14px;
+    font-weight: 500;
+}
 /* Responsive tweaks */
 @media only screen and (max-width: 1200px) {
     .trainings_list {

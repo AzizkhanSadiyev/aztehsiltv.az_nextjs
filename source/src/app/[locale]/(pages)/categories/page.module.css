@@ -8,6 +8,50 @@
     display: flex;
     width: calc(50% - 8px);
 }
+
+.categoryFilters {
+    margin: 12px 0 20px;
+    gap: 12px;
+}
+
+.categoryFilter {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--color-border-e1e1eb);
+    background: var(--color-bg-ffffff);
+    color: var(--color-text-141a29);
+    font-family: var(--font-secondary);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.3;
+    text-decoration: none;
+    transition:
+        background var(--transition-fast),
+        color var(--transition-fast),
+        border-color var(--transition-fast),
+        transform var(--transition-fast);
+}
+
+.categoryFilter:hover,
+.categoryFilterActive {
+    background: var(--color-text-2d1595);
+    border-color: var(--color-text-2d1595);
+    color: #ffffff;
+}
+
+.emptyState {
+    width: 100%;
+    padding: 24px;
+    text-align: center;
+    color: var(--color-text-81818a);
+    font-family: var(--font-secondary);
+    font-size: 14px;
+    font-weight: 500;
+}
+
 /* Responsive tweaks */
 @media only screen and (max-width: 1200px) {
     .trainings_list {
@@ -24,5 +68,12 @@
     }
     .trainings_list_item {
         width: 100%;
+    }
+    .categoryFilters {
+        gap: 8px;
+    }
+    .categoryFilter {
+        padding: 6px 12px;
+        font-size: 13px;
     }
 }

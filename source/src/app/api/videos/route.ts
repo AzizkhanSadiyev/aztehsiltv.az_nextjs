@@ -9,6 +9,7 @@ export const runtime = "nodejs";
 import { NextRequest } from "next/server";
 import {
   successResponse,
+  errorResponse,
   paginatedResponse,
   parsePaginationParams,
   validateRequestBody,
@@ -30,6 +31,12 @@ function toAdminVideo(video: Video, locale: string = DEFAULT_LOCALE) {
       ? pickLocalized(video.description, locale, DEFAULT_LOCALE)
       : "",
     languageCode: locale,
+    i18n: {
+      title: video.title,
+      slug: video.slug,
+      description: video.description,
+      tagsByLocale: video.metadata?.tagsByLocale ?? null,
+    },
   };
 }
 
@@ -76,6 +83,19 @@ export async function POST(request: NextRequest) {
 
     if (!validation.success) {
       return validation.error;
+    }
+
+    const categoryIds = Array.isArray(validation.data.categoryIds)
+      ? validation.data.categoryIds.filter(Boolean)
+      : [];
+    const hasCategory =
+      Boolean(validation.data.categoryId) || categoryIds.length > 0;
+    if (validation.data.status === "published" && !hasCategory) {
+      return errorResponse(
+        "VALIDATION_ERROR",
+        "Select at least one category before publishing",
+        400,
+      );
     }
 
     const video = await createVideo(validation.data);

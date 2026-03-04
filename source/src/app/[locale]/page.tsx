@@ -1,9 +1,6 @@
-import { type Locale } from "@/i18n/config";
-import { getDictionary } from "@/i18n/getDictionary";
+import { type Locale, defaultLocale } from "@/i18n/config";
 import Link from "next/link";
 import Image from "next/image";
-
-import styles from "./page.module.css";
 
 import NewsCard from "@/components/NewsCard/Card";
 import SliderShort, { type ShortItem } from "@/components/SliderShort/slider";
@@ -20,6 +17,14 @@ import SliderExplore, {
     type ExploreItem,
 } from "@/components/SliderExplore/slider";
 import TopVideo from "@/components/TopVideo/TopVideo";
+import { getPublishedPartners } from "@/lib/data/partners.data";
+import { getActiveCategories } from "@/lib/data/categories.data";
+import { pickLocalized } from "@/lib/localization";
+import {
+    getPublishedVideos,
+    getPublishedVideoCountsByCategory,
+} from "@/lib/data/videos.data";
+import type { Video } from "@/types/video.types";
 
 export default async function HomePage({
     params,
@@ -27,376 +32,291 @@ export default async function HomePage({
     params: Promise<{ locale: string }>;
 }) {
     const { locale } = await params;
-    const dict = await getDictionary(locale as Locale);
-    const categoryBasePath = `/${locale}/categories`;
+    const resolvedLocale = (locale || defaultLocale) as Locale;
+    const categoryBasePath = `/${resolvedLocale}/categories`;
 
-    const manshetItems: ManshetItem[] = [
-        {
-            id: 1,
-            title: "Konqres kend mektebleri ucun Fondu yeniden berpa etdi",
-            image: "/assets/images/card_3.png",
-            views: "1.2 M baxis",
-            date: "28 Dek 2026",
-            category: "Imtahan",
-            duration: "00:35",
-            slug: "konqres-kend-mektebleri-fond",
-            type: "video",
-        },
-        {
-            id: 2,
-            title: "STEAM laboratoriyalari ucun yeni tecrube setleri paylandi",
-            image: "/assets/images/card_4.png",
-            views: "540 K baxis",
-            date: "25 Dek 2026",
-            category: "Tehsil",
-            duration: "00:42",
-            slug: "steam-laboratoriyalari-tecrube-setleri",
-            type: "video",
-        },
-        {
-            id: 3,
-            title: '"Silikon Sehrasi"nda bir mekteb sagirdleri yarimkecirici buna qosulmaga hazirlayir',
-            image: "/assets/images/card_1.png",
-            views: "1.2 M baxis",
-            date: "28 Dek 2026",
-            category: "Verilis",
-            duration: "00:35",
-            slug: "silikon-sehrasi-mekteb-sagirdleri",
-            type: "video",
-        },
-        {
-            id: 4,
-            title: "Tramp mekteb naharlarina tam sud qaytaran qanun imzaladi",
-            image: "/assets/images/card_2.png",
-            views: "960 K baxis",
-            date: "27 Dek 2026",
-            category: "Verilis",
-            duration: "00:35",
-            slug: "tramp-mekteb-naharlari-sud-qanun",
-            type: "video",
-        },
+    const categories = await getActiveCategories();
+    const partners = await getPublishedPartners();
+    const counts = await getPublishedVideoCountsByCategory();
+
+    const fallbackImages = [
+        "/assets/images/card_1.png",
+        "/assets/images/card_2.png",
+        "/assets/images/card_3.png",
+        "/assets/images/card_4.png",
     ];
-    const newsItems: NewsItem[] = [
-        {
-            id: 1,
-            title: "Konqres kend mektebleri ucun Fondu yeniden berpa etdi",
-            image: "/assets/images/card_3.png",
-            views: "1.2 M baxis",
-            date: "28 Dek 2026",
-            category: "Imtahan",
-            duration: "00:35",
-            slug: "konqres-kend-mektebleri-fond",
-            type: "video",
-        },
-        {
-            id: 2,
-            title: "STEAM laboratoriyalari ucun yeni tecrube setleri paylandi",
-            image: "/assets/images/card_4.png",
-            views: "540 K baxis",
-            date: "25 Dek 2026",
-            category: "Tehsil",
-            duration: "00:42",
-            slug: "steam-laboratoriyalari-tecrube-setleri",
-            type: "video",
-        },
-        {
-            id: 3,
-            title: '"Silikon Sehrasi"nda bir mekteb sagirdleri yarimkecirici buna qosulmaga hazirlayir',
-            image: "/assets/images/card_1.png",
-            views: "1.2 M baxis",
-            date: "28 Dek 2026",
-            category: "Verilis",
-            duration: "00:35",
-            slug: "silikon-sehrasi-mekteb-sagirdleri",
-            type: "video",
-        },
-        {
-            id: 4,
-            title: "Tramp mekteb naharlarina tam sud qaytaran qanun imzaladi",
-            image: "/assets/images/card_2.png",
-            views: "960 K baxis",
-            date: "27 Dek 2026",
-            category: "Verilis",
-            duration: "00:35",
-            slug: "tramp-mekteb-naharlari-sud-qanun",
-            type: "video",
-        },
-        {
-            id: 5,
-            title: "Konqres kend mektebleri ucun Fondu yeniden berpa etdi",
-            image: "/assets/images/card_3.png",
-            views: "1.2 M baxis",
-            date: "28 Dek 2026",
-            category: "Imtahan",
-            duration: "00:35",
-            slug: "konqres-kend-mektebleri-fond-2",
-            type: "video",
-        },
-        {
-            id: 6,
-            title: "STEAM laboratoriyalari ucun yeni tecrube setleri paylandi",
-            image: "/assets/images/card_4.png",
-            views: "540 K baxis",
-            date: "25 Dek 2026",
-            category: "Tehsil",
-            duration: "00:42",
-            slug: "steam-laboratoriyalari-tecrube-setleri-2",
-            type: "video",
-        },
-        {
-            id: 7,
-            title: '"Silikon Sehrasi"nda bir mekteb sagirdleri yarimkecirici buna qosulmaga hazirlayir',
-            image: "/assets/images/card_1.png",
-            views: "1.2 M baxis",
-            date: "28 Dek 2026",
-            category: "Verilis",
-            duration: "00:35",
-            slug: "silikon-sehrasi-mekteb-sagirdleri-2",
-            type: "video",
-        },
-        {
-            id: 8,
-            title: "Tramp mekteb naharlarina tam sud qaytaran qanun imzaladi",
-            image: "/assets/images/card_2.png",
-            views: "960 K baxis",
-            date: "27 Dek 2026",
-            category: "Verilis",
-            duration: "00:35",
-            slug: "tramp-mekteb-naharlari-sud-qanun-2",
-            type: "video",
-        },
-    ];
-    const shortsItems: ShortItem[] = [
-        {
-            id: 1,
-            title: "Niya Rayonlar immiqrasiya ile bagli protokollar tesis edirler",
-            image: "/assets/images/short_1.png",
-            views: "1.2 M baxis",
-            date: "28 Dek 2026",
-            category: "Verilis",
-            duration: "00:35",
-            slug: "konqres-kend-mektebleri-fond",
-            type: "video",
-        },
-        {
-            id: 2,
-            title: "ABS her usaq ucun tovsiye edilen peyvendin sayi",
-            image: "/assets/images/short_2.png",
-            views: "1.2 M baxis",
-            date: "28 Dek 2026",
-            category: "Verilis",
-            duration: "00:35",
-            slug: "steam-laboratoriyalari-tecrube-setleri",
-            type: "video",
-        },
-        {
-            id: 3,
-            title: "Mekteb liderlerini ilhamlandirmaq ucun 14 yeni Qerari",
-            image: "/assets/images/short_3.png",
-            views: "1.2 M baxis",
-            date: "28 Dek 2026",
-            category: "Tehsil",
-            duration: "00:35",
-            slug: "silikon-sehrasi-mekteb-sagirdleri",
-            type: "video",
-        },
-        {
-            id: 4,
-            title: "Bunlar direktorlarin oyrənmək istediyi yeni bacariqlardir",
-            image: "/assets/images/short_4.png",
-            views: "1.2 M baxis",
-            date: "28 Dek 2026",
-            category: "Tehsil",
-            duration: "00:35",
-            slug: "tramp-mekteb-naharlari-sud-qanun",
-            type: "video",
-        },
-        {
-            id: 5,
-            title: "Zohran Mamdani Manhetten mektebinin mudirini Nyu-York",
-            image: "/assets/images/short_5.png",
-            views: "1.2 M baxis",
-            date: "28 Dek 2026",
-            category: "Verilis",
-            duration: "00:35",
-            slug: "konqres-kend-mektebleri-fond-2",
-            type: "video",
-        },
-        {
-            id: 6,
-            title: "Mekteb liderlerini ilhamlandirmaq ucun 14 yeni Qerari",
-            image: "/assets/images/short_3.png",
-            views: "1.2 M baxis",
-            date: "28 Dek 2026",
-            category: "Tehsil",
-            duration: "00:35",
-            slug: "silikon-sehrasi-mekteb-sagirdleri-2",
-            type: "video",
-        },
-        {
-            id: 7,
-            title: "Bunlar direktorlarin oyrənmək istediyi yeni bacariqlardir",
-            image: "/assets/images/short_4.png",
-            views: "1.2 M baxis",
-            date: "28 Dek 2026",
-            category: "Tehsil",
-            duration: "00:35",
-            slug: "tramp-mekteb-naharlari-sud-qanun-2",
-            type: "video",
-        },
-    ];
+
+    const formatViews = (value: number) => {
+        const compact = new Intl.NumberFormat(resolvedLocale, {
+            notation: "compact",
+            maximumFractionDigits: 1,
+        }).format(Math.max(0, value || 0));
+        const suffix =
+            resolvedLocale === "en"
+                ? "views"
+                : resolvedLocale === "ru"
+                  ? "views"
+                  : "baxış";
+        return `${compact} ${suffix}`;
+    };
+
+    const formatDate = (value: string | null | undefined) => {
+        if (!value) return "";
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return "";
+        return new Intl.DateTimeFormat(resolvedLocale, {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+        }).format(date);
+    };
+
+    const normalizeKey = (value: string) =>
+        value
+            .normalize("NFKD")
+            .toLowerCase()
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/ə/g, "e")
+            .replace(/ı/g, "i")
+            .replace(/ş/g, "s")
+            .replace(/ğ/g, "g")
+            .replace(/ç/g, "c")
+            .replace(/ö/g, "o")
+            .replace(/ü/g, "u")
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/^-+|-+$/g, "");
+
+    const activeCategories = categories.filter(
+        (category) => category.isActive !== false,
+    );
+    const categoryById = new Map(
+        activeCategories.map((category) => [category.id, category]),
+    );
+
+    const getCategoryLabel = (id?: string | null) => {
+        if (!id) return "";
+        const category = categoryById.get(id);
+        if (!category) return "";
+        return (
+            pickLocalized(category.name, resolvedLocale, defaultLocale) ||
+            category.slug
+        );
+    };
+
+    const getVideoTitle = (video: Video) => {
+        const title = pickLocalized(video.title, resolvedLocale, defaultLocale);
+        if (title) return title;
+        return (
+            pickLocalized(video.slug, resolvedLocale, defaultLocale) ||
+            "Video"
+        );
+    };
+
+    const getVideoSlug = (video: Video) =>
+        pickLocalized(video.slug, resolvedLocale, defaultLocale);
+
+    const getVideoCategoryId = (video: Video) =>
+        video.categoryId ?? video.categoryIds?.[0] ?? null;
+
+    const findCategory = (slugCandidates: string[], nameCandidates: string[]) =>
+        activeCategories.find((category) => {
+            if (slugCandidates.includes(category.slug)) return true;
+            const label = pickLocalized(
+                category.name,
+                resolvedLocale,
+                defaultLocale,
+            );
+            return nameCandidates.some(
+                (name) => normalizeKey(label) === normalizeKey(name),
+            );
+        });
+
+    const exploreParent = findCategory(
+        ["kesf-et", "keshf-et", "kashf-et", "explore", "discover"],
+        ["Kəşf et", "Kesf et", "Kashf et", "Explore", "Discover"],
+    );
+    const broadcastParent = findCategory(
+        ["verilisler", "verilislar", "broadcasts", "broadcast"],
+        ["Verilişlər", "Verilisler", "Broadcasts"],
+    );
+
+    const exploreChildren = exploreParent
+        ? activeCategories.filter(
+              (category) => category.parentId === exploreParent.id,
+          )
+        : [];
+    const broadcastChildren = broadcastParent
+        ? activeCategories.filter(
+              (category) => category.parentId === broadcastParent.id,
+          )
+        : [];
+
+    const exploreAllLabel =
+        resolvedLocale === "az"
+            ? "Bütün bölmələr"
+            : resolvedLocale === "ru"
+              ? "Все разделы"
+              : "All categories";
 
     const exploreItems: ExploreItem[] = [
-        { id: 1, title: "Butun bolmeler", slug: "#" },
-        { id: 2, title: "Tehsil", slug: "#" },
-        { id: 3, title: "Ugur hekayeleri", slug: "#" },
-        { id: 4, title: "Reportajlar", slug: "#" },
-        { id: 5, title: "Layiheler", slug: "#" },
-        { id: 6, title: "Xaricde tehsil", slug: "#" },
-        { id: 7, title: "Ugur hekayeleri", slug: "#" },
-        { id: 8, title: "Reportajlar", slug: "#" },
+        {
+            id: 0,
+            title: exploreAllLabel,
+            slug: categoryBasePath,
+        },
+        ...exploreChildren
+            .filter((item) => item.slug !== "butun-bolmeler")
+            .slice()
+            .sort((a, b) => {
+                const orderDiff = (a.order ?? 0) - (b.order ?? 0);
+                if (orderDiff !== 0) return orderDiff;
+                const nameA = pickLocalized(a.name, resolvedLocale, defaultLocale);
+                const nameB = pickLocalized(b.name, resolvedLocale, defaultLocale);
+                return nameA.localeCompare(nameB);
+            })
+            .map((item, index) => ({
+                id: index + 1,
+                title:
+                    pickLocalized(item.name, resolvedLocale, defaultLocale) ||
+                    item.slug,
+                slug: `${categoryBasePath}?category=${encodeURIComponent(
+                    item.slug,
+                )}`,
+            })),
     ];
-    const broadcastItems: BroadcastItem[] = [
-        {
-            id: 1,
-            title: "Metodik korpu",
-            count: "364 video",
-            image: "/assets/images/board_1.png",
-            slug: "konqres-kend-mektebleri-fond",
-        },
-        {
-            id: 2,
-            title: "Usaqlar ve biz",
-            count: "128 video",
-            image: "/assets/images/board_2.png",
-            slug: "steam-laboratoriyalari-tecrube-setleri",
-        },
-        {
-            id: 3,
-            title: "Podkast",
-            count: "92 video",
-            image: "/assets/images/board_3.png",
-            slug: "silikon-sehrasi-mekteb-sagirdleri",
-        },
-        {
-            id: 4,
-            title: "Tehsil saati",
-            count: "56 video",
-            image: "/assets/images/board_4.png",
-            slug: "tramp-mekteb-naharlari-sud-qanun",
-        },
-        {
-            id: 5,
-            title: "Tehsil saati",
-            count: "56 video",
-            image: "/assets/images/board_5.png",
-            slug: "konqres-kend-mektebleri-fond-2",
-        },
-        {
-            id: 6,
-            title: "Podkast",
-            count: "92 video",
-            image: "/assets/images/board_3.png",
-            slug: "silikon-sehrasi-mekteb-sagirdleri-2",
-        },
-        {
-            id: 7,
-            title: "Tehsil saati",
-            count: "56 video",
-            image: "/assets/images/board_4.png",
-            slug: "tramp-mekteb-naharlari-sud-qanun-2",
-        },
-    ];
-    const sidebarItems: NewsItem[] = [
-        {
-            id: 1,
-            title: "Konqres kend mektebleri ucun Fondu yeniden berpa etdi",
-            image: "/assets/images/card_3.png",
-            views: "1.2 M baxis",
-            date: "28 Dek 2026",
-            category: "Imtahan",
-            duration: "00:35",
-            slug: "konqres-kend-mektebleri-fond",
-            type: "video",
-        },
-        {
-            id: 2,
-            title: "STEAM laboratoriyalari ucun yeni tecrube setleri paylandi",
-            image: "/assets/images/card_4.png",
-            views: "540 K baxis",
-            date: "25 Dek 2026",
-            category: "Tehsil",
-            duration: "00:42",
-            slug: "steam-laboratoriyalari-tecrube-setleri",
-            type: "video",
-        },
-        {
-            id: 3,
-            title: '"Silikon Sehrasi"nda bir mekteb sagirdleri yarimkecirici buna qosulmaga hazirlayir',
-            image: "/assets/images/card_1.png",
-            views: "1.2 M baxis",
-            date: "28 Dek 2026",
-            category: "Verilis",
-            duration: "00:35",
-            slug: "silikon-sehrasi-mekteb-sagirdleri",
-            type: "video",
-        },
-        {
-            id: 4,
-            title: "Tramp mekteb naharlarina tam sud qaytaran qanun imzaladi",
-            image: "/assets/images/card_2.png",
-            views: "960 K baxis",
-            date: "27 Dek 2026",
-            category: "Verilis",
-            duration: "00:35",
-            slug: "tramp-mekteb-naharlari-sud-qanun",
-            type: "video",
-        },
-        {
-            id: 5,
-            title: "Konqres kend mektebleri ucun Fondu yeniden berpa etdi",
-            image: "/assets/images/card_3.png",
-            views: "1.2 M baxis",
-            date: "28 Dek 2026",
-            category: "Imtahan",
-            duration: "00:35",
-            slug: "konqres-kend-mektebleri-fond-2",
-            type: "video",
-        },
-        {
-            id: 6,
-            title: "STEAM laboratoriyalari ucun yeni tecrube setleri paylandi",
-            image: "/assets/images/card_4.png",
-            views: "540 K baxis",
-            date: "25 Dek 2026",
-            category: "Tehsil",
-            duration: "00:42",
-            slug: "steam-laboratoriyalari-tecrube-setleri-2",
-            type: "video",
-        },
-        {
-            id: 7,
-            title: '"Silikon Sehrasi"nda bir mekteb sagirdleri yarimkecirici buna qosulmaga hazirlayir',
-            image: "/assets/images/card_1.png",
-            views: "1.2 M baxis",
-            date: "28 Dek 2026",
-            category: "Verilis",
-            duration: "00:35",
-            slug: "silikon-sehrasi-mekteb-sagirdleri-2",
-            type: "video",
-        },
-        {
-            id: 8,
-            title: "Tramp mekteb naharlarina tam sud qaytaran qanun imzaladi",
-            image: "/assets/images/card_2.png",
-            views: "960 K baxis",
-            date: "27 Dek 2026",
-            category: "Verilis",
-            duration: "00:35",
-            slug: "tramp-mekteb-naharlari-sud-qanun-2",
-            type: "video",
-        },
-    ];
+
+    const videoCountLabel = resolvedLocale === "ru" ? "видео" : "video";
+    const broadcastItems: BroadcastItem[] = broadcastChildren
+        .slice()
+        .sort((a, b) => {
+            const orderDiff = (a.order ?? 0) - (b.order ?? 0);
+            if (orderDiff !== 0) return orderDiff;
+            const nameA = pickLocalized(a.name, resolvedLocale, defaultLocale);
+            const nameB = pickLocalized(b.name, resolvedLocale, defaultLocale);
+            return nameA.localeCompare(nameB);
+        })
+        .map((item, index) => ({
+            id: index + 1,
+            title:
+                pickLocalized(item.name, resolvedLocale, defaultLocale) || item.slug,
+            count: `${counts[item.id] ?? 0} ${videoCountLabel}`,
+            image:
+                item.coverUrl ||
+                item.icon ||
+                fallbackImages[index % fallbackImages.length],
+            slug: item.slug,
+        }));
+
+    const overseasCategory = findCategory(
+        ["xaricde-tehsil"],
+        ["Xaricdə təhsil", "Xaricde tehsil"],
+    );
+    const researchCategory = findCategory(
+        ["arasdirma"],
+        ["Araşdırma", "Arasdirma"],
+    );
+    const successCategory = findCategory(
+        ["ugur-hekayeleri"],
+        ["Uğur hekayələri", "Ugur hekayeleri"],
+    );
+    const educationCategory = findCategory(
+        ["tehsil-saati"],
+        ["Təhsil saatı", "Tehsil saati"],
+    );
+    const podcastCategory = findCategory(
+        ["podkast", "podcast"],
+        ["Podkast", "Podcast"],
+    );
+    const shortCategory = findCategory(
+        ["shorts", "short"],
+        ["Shorts", "Short videolar", "Short videos"],
+    );
+
+    const [
+        manshetVideosRaw,
+        shortVideosRaw,
+        sidebarVideosRaw,
+        topVideosRaw,
+        latestVideosRaw,
+        overseasVideosRaw,
+        researchVideosRaw,
+        successVideosRaw,
+        educationVideosRaw,
+        podcastVideosRaw,
+    ] = await Promise.all([
+        getPublishedVideos({ flags: { isManshet: true }, limit: 200 }),
+        shortCategory
+            ? getPublishedVideos({ categoryId: shortCategory.id, limit: 12 })
+            : getPublishedVideos({ flags: { isShort: true }, limit: 12 }),
+        getPublishedVideos({ flags: { isSidebar: true }, limit: 6 }),
+        getPublishedVideos({ flags: { isTopVideo: true }, limit: 12 }),
+        getPublishedVideos({ limit: 16 }),
+        overseasCategory
+            ? getPublishedVideos({ categoryId: overseasCategory.id, limit: 12 })
+            : Promise.resolve([] as Video[]),
+        researchCategory
+            ? getPublishedVideos({ categoryId: researchCategory.id, limit: 12 })
+            : Promise.resolve([] as Video[]),
+        successCategory
+            ? getPublishedVideos({ categoryId: successCategory.id, limit: 12 })
+            : Promise.resolve([] as Video[]),
+        educationCategory
+            ? getPublishedVideos({ categoryId: educationCategory.id, limit: 12 })
+            : Promise.resolve([] as Video[]),
+        podcastCategory
+            ? getPublishedVideos({ categoryId: podcastCategory.id, limit: 12 })
+            : Promise.resolve([] as Video[]),
+    ]);
+
+    const latestVideos = latestVideosRaw ?? [];
+    const manshetVideos = manshetVideosRaw;
+    const shortVideos = shortVideosRaw;
+    const sidebarVideos = sidebarVideosRaw.length
+        ? sidebarVideosRaw
+        : latestVideos.slice(0, 6);
+    const topVideo = topVideosRaw.length
+        ? topVideosRaw
+              .slice()
+              .sort((a, b) => {
+                  const dateA = new Date(
+                      a.updatedAt || a.publishedAt || a.createdAt,
+                  ).getTime();
+                  const dateB = new Date(
+                      b.updatedAt || b.publishedAt || b.createdAt,
+                  ).getTime();
+                  return dateB - dateA;
+              })[0]
+        : null;
+
+    const mapVideoToItem = (video: Video, index: number): NewsItem => {
+        const categoryId = getVideoCategoryId(video);
+        const slug = getVideoSlug(video);
+        return {
+            id: index + 1,
+            title: getVideoTitle(video),
+            image:
+                video.coverUrl || fallbackImages[index % fallbackImages.length],
+            views: formatViews(video.views),
+            date: formatDate(
+                video.publishedAt || video.updatedAt || video.createdAt,
+            ),
+            category: categoryId ? getCategoryLabel(categoryId) : "",
+            duration: video.duration || undefined,
+            slug: slug || "#",
+            type: video.type,
+        };
+    };
+
+    const manshetItems: ManshetItem[] = manshetVideos.map(mapVideoToItem);
+    const shortsItems: ShortItem[] = shortVideos.map(mapVideoToItem);
+    const latestItems: NewsItem[] = latestVideos.map(mapVideoToItem);
+    const sidebarItems: NewsItem[] = sidebarVideos.map(mapVideoToItem);
+
+    const overseasItems: NewsItem[] = overseasVideosRaw.map(mapVideoToItem);
+    const researchItems: NewsItem[] = researchVideosRaw.map(mapVideoToItem);
+    const successItems: NewsItem[] = successVideosRaw.map(mapVideoToItem);
+    const educationItems: NewsItem[] = educationVideosRaw.map(mapVideoToItem);
+    const podcastItems: NewsItem[] = podcastVideosRaw.map(mapVideoToItem);
 
     const resolveSlug = (slug?: string) => {
         if (!slug || slug === "#") return "#";
@@ -410,6 +330,20 @@ export default async function HomePage({
         }
         return `${categoryBasePath}/${slug}`;
     };
+
+    const topVideoProps = topVideo
+        ? {
+              slug: resolveSlug(getVideoSlug(topVideo)),
+              cover: topVideo.coverUrl || fallbackImages[0],
+              title: getVideoTitle(topVideo),
+              category: getCategoryLabel(getVideoCategoryId(topVideo)),
+              views: formatViews(topVideo.views),
+              date: formatDate(
+                  topVideo.publishedAt || topVideo.updatedAt || topVideo.createdAt,
+              ),
+          }
+        : {};
+
     return (
         <>
             {/* Page top items */}
@@ -426,10 +360,7 @@ export default async function HomePage({
                 <div className="main_center">
                     <div className="row_item_manshet same_h_block">
                         <div className="wrap_left">
-                            <SliderManhet
-                                items={manshetItems}
-                                slidesPerView={1}
-                            />
+                            <SliderManhet items={manshetItems} slidesPerView={1} />
                         </div>
                         <div className="wrap_right">
                             <section className="card video-card">
@@ -438,10 +369,7 @@ export default async function HomePage({
                                         <span className="">Son</span>
                                         <span className="accent">Videolar</span>
                                     </div>
-                                    <Link
-                                        className="link-more"
-                                        href={categoryBasePath}
-                                    >
+                                    <Link className="link-more" href={categoryBasePath}>
                                         {"Daha çox"}
                                         <span className="link-arrow">
                                             <Image
@@ -472,9 +400,11 @@ export default async function HomePage({
                                                     width={153}
                                                     height={86}
                                                 />
-                                                <span className="duration">
-                                                    {item.duration}
-                                                </span>
+                                                {item.duration ? (
+                                                    <span className="duration">
+                                                        {item.duration}
+                                                    </span>
+                                                ) : null}
                                             </div>
                                             <div className="video-copy">
                                                 <h4 className="video-title">
@@ -516,13 +446,13 @@ export default async function HomePage({
                 <section className="section_wrap pad_top_20 pad_bottom_20">
                     <div className="main_center">
                         <div className="sect_header">
-                            <Link href="#" className="sect_title">
+                            <Link href={categoryBasePath} className="sect_title">
                                 Son videolar
                             </Link>
                         </div>
                         <div className="sect_body">
                             <div className="row_item gap_20">
-                                {newsItems.slice(0, 12).map((item) => (
+                                {latestItems.slice(0, 12).map((item) => (
                                     <NewsCard
                                         key={item.id}
                                         title={item.title}
@@ -539,7 +469,7 @@ export default async function HomePage({
                         </div>
                         <div className="sect_footer">
                             <Link
-                                href="#"
+                                href={categoryBasePath}
                                 title="AztehsilTv"
                                 className="more load_more_btn"
                             >
@@ -552,15 +482,17 @@ export default async function HomePage({
             {/* section Last video  */}
 
             {/* Xaricdə təhsil */}
-            <div className="desktop">
-                <div className="main_center">
-                    <SliderNews
-                        title="Xaricdə təhsil"
-                        items={newsItems}
-                        slidesPerView={4}
-                    />
+            {overseasItems.length ? (
+                <div className="desktop">
+                    <div className="main_center">
+                        <SliderNews
+                            title="Xaricdə təhsil"
+                            items={overseasItems}
+                            slidesPerView={4}
+                        />
+                    </div>
                 </div>
-            </div>
+            ) : null}
             {/* Xaricdə təhsil */}
 
             {/* Kəşf et */}
@@ -576,74 +508,93 @@ export default async function HomePage({
             {/* Kəşf et */}
 
             {/* Araşdırma */}
-            <div className="desktop">
-                <div className="main_center">
-                    <SliderNews
-                        title="Araşdırma"
-                        items={newsItems}
-                        slidesPerView={3}
-                    />
+            {researchItems.length ? (
+                <div className="desktop">
+                    <div className="main_center">
+                        <SliderNews
+                            title="Araşdırma"
+                            items={researchItems}
+                            slidesPerView={3}
+                        />
+                    </div>
                 </div>
-            </div>
+            ) : null}
             {/* Araşdırma */}
 
             {/* Verilişlər */}
-            <div className="desktop">
-                <div className="main_center">
-                    <SliderBroadcast
-                        title="Verilişlər"
-                        items={broadcastItems}
-                        slidesPerView={5}
-                    />
+            {broadcastItems.length ? (
+                <div className="desktop">
+                    <div className="main_center">
+                        <SliderBroadcast
+                            title="Verilişlər"
+                            items={broadcastItems}
+                            slidesPerView={5}
+                        />
+                    </div>
                 </div>
-            </div>
+            ) : null}
             {/* Verilişlər */}
 
             {/* Uğur hekayələri */}
-            <div className="desktop">
-                <div className="main_center">
-                    <SliderNews
-                        title="Uğur hekayələri"
-                        items={newsItems}
-                        slidesPerView={4}
-                    />
+            {successItems.length ? (
+                <div className="desktop">
+                    <div className="main_center">
+                        <SliderNews
+                            title="Uğur hekayələri"
+                            items={successItems}
+                            slidesPerView={4}
+                        />
+                    </div>
                 </div>
-            </div>
+            ) : null}
             {/* Uğur hekayələri */}
 
             {/* TopVideo */}
-            <div className="main_center">
-                <TopVideo />
-            </div>
+            {topVideo ? (
+                <div className="main_center">
+                    <TopVideo {...topVideoProps} />
+                </div>
+            ) : null}
             {/* TopVideo */}
 
             {/* Təhsil saatı */}
-            <div className="desktop">
-                <div className="main_center">
-                    <SliderNews
-                        title="Təhsil saatı"
-                        items={newsItems}
-                        slidesPerView={3}
-                    />
+            {educationItems.length ? (
+                <div className="desktop">
+                    <div className="main_center">
+                        <SliderNews
+                            title="Təhsil saatı"
+                            items={educationItems}
+                            slidesPerView={3}
+                        />
+                    </div>
                 </div>
-            </div>
+            ) : null}
             {/* Təhsil saatı */}
 
             {/* Podkast */}
-            <div className="desktop">
-                <div className="main_center">
-                    <SliderNews
-                        title="Podkast"
-                        items={newsItems}
-                        slidesPerView={4}
-                    />
+            {podcastItems.length ? (
+                <div className="desktop">
+                    <div className="main_center">
+                        <SliderNews
+                            title="Podkast"
+                            items={podcastItems}
+                            slidesPerView={4}
+                        />
+                    </div>
                 </div>
-            </div>
+            ) : null}
             {/* Podkast */}
 
             {/* Partners */}
             <div className="main_center">
-                <SliderPartner />
+                <SliderPartner
+                    partners={partners.map((partner) => ({
+                        id: partner.id,
+                        name: partner.name,
+                        slug: partner.websiteUrl || "#",
+                        image: partner.logo,
+                    }))}
+                />
             </div>
             {/* Partners */}
         </>

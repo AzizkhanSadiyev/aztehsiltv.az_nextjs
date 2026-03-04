@@ -83,7 +83,7 @@ export default async function BroadcastsPage({
                 slug: item.slug,
             };
         });
-    const itemsPerPage = 8;
+    const itemsPerPage = 16;
     const totalItems = broadcastItems.length;
     const pageParam = Array.isArray(resolvedSearchParams?.page)
         ? resolvedSearchParams?.page[0]

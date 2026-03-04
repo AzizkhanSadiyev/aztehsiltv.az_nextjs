@@ -110,6 +110,17 @@ export default function PartnerEditPage() {
     fileInputRef.current?.click();
   };
 
+  const resolveUploadSlug = () => {
+    const trimmed = formData.name.trim();
+    if (!trimmed) return "partner";
+    return trimmed
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
+      .trim();
+  };
+
   const handleFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
@@ -119,8 +130,10 @@ export default function PartnerEditPage() {
     try {
       const formDataUpload = new FormData();
       formDataUpload.append("file", file);
-      formDataUpload.append("uploadedBy", "admin");
-      const res = await fetch("/api/media", {
+      formDataUpload.append("entity", "partners");
+      formDataUpload.append("entitySlug", resolveUploadSlug());
+      formDataUpload.append("field", "logo");
+      const res = await fetch("/api/uploads", {
         method: "POST",
         body: formDataUpload,
       });

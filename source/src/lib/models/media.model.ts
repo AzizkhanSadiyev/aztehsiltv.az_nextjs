@@ -17,6 +17,10 @@ const MediaMetadataSchema = z.object({
   dimensions: z.string().optional(),
   format: z.string().optional(),
   folder: z.string().optional(),
+  entity: z.string().optional(),
+  entitySlug: z.string().optional(),
+  field: z.string().optional(),
+  originalName: z.string().optional(),
   tags: z.array(z.string()).optional()
 });
 

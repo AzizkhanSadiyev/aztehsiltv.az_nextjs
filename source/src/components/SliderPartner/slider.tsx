@@ -13,75 +13,24 @@ import Link from "next/link";
 /* ================= TYPES ================= */
 
 type Partner = {
-    id: number;
+    id: string;
     slug: string;
     name: string;
     image: string;
 };
 
-/* ================= DATA ================= */
-
-const partners: Partner[] = [
-    {
-        id: 1,
-        slug: "#",
-        name: "Partner 1",
-        image: "/assets/images/partner_1.png",
-    },
-    {
-        id: 2,
-        slug: "#",
-        name: "Partner 2",
-        image: "/assets/images/partner_2.png",
-    },
-    {
-        id: 3,
-        slug: "#",
-        name: "Partner 3",
-        image: "/assets/images/partner_3.png",
-    },
-    {
-        id: 4,
-        slug: "#",
-        name: "Partner 4",
-        image: "/assets/images/partner_4.png",
-    },
-    {
-        id: 5,
-        slug: "#",
-        name: "Partner 5",
-        image: "/assets/images/partner_5.png",
-    },
-    {
-        id: 6,
-        slug: "#",
-        name: "Partner 6",
-        image: "/assets/images/partner_6.png",
-    },
-    {
-        id: 7,
-        slug: "#",
-        name: "Partner 7",
-        image: "/assets/images/partner_4.png",
-    },
-    {
-        id: 8,
-        slug: "#",
-        name: "Partner 8",
-        image: "/assets/images/partner_5.png",
-    },
-    {
-        id: 9,
-        slug: "#",
-        name: "Partner 9",
-        image: "/assets/images/partner_6.png",
-    },
-];
+interface SliderPartnerProps {
+    partners: Partner[];
+}
 
 /* ================= COMPONENT ================= */
 
-export default function SliderPartner() {
+export default function SliderPartner({ partners }: SliderPartnerProps) {
     const swiperRef = useRef<SwiperType | null>(null);
+
+    if (!partners.length) {
+        return null;
+    }
 
     return (
         <section

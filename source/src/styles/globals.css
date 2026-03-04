@@ -1756,6 +1756,10 @@ main {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    border: none;
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
 }
 
 .share-icon {

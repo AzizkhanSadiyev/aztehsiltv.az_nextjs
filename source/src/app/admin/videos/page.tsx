@@ -6,24 +6,7 @@ import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/admin/DataTable";
 import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
-import {
-  MoreHorizontal,
-  Edit,
-  Trash2,
-  Globe,
-  GlobeLock,
-  Search,
-  Download,
-  X,
-} from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Edit, Search, X } from "lucide-react";
 import {
   PageHeader,
   CreateButton,
@@ -46,11 +29,12 @@ interface VideoItem {
   status: "published" | "draft";
   views: number;
   isManshet: boolean;
-  isShort: boolean;
   isSidebar: boolean;
   isTopVideo: boolean;
+  publishedAt?: string | null;
   createdAt: string;
   updatedAt: string;
+  categoryIds?: string[] | null;
 }
 
 interface CategoryOption {
@@ -74,13 +58,11 @@ function StatusBadge({ status }: { status: string }) {
 
 function FlagBadges({
   isManshet,
-  isShort,
   isSidebar,
   isTopVideo,
-}: Pick<VideoItem, "isManshet" | "isShort" | "isSidebar" | "isTopVideo">) {
+}: Pick<VideoItem, "isManshet" | "isSidebar" | "isTopVideo">) {
   const flags: string[] = [];
   if (isManshet) flags.push("Manshet");
-  if (isShort) flags.push("Short");
   if (isSidebar) flags.push("Sidebar");
   if (isTopVideo) flags.push("Top");
 
@@ -123,9 +105,11 @@ export default function VideosPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [flagFilter, setFlagFilter] = useState<string>("all");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [videoToDelete, setVideoToDelete] = useState<VideoItem | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null);
 
   const fetchVideos = useCallback(async (showRefreshIndicator = false) => {
     showRefreshIndicator ? setIsRefreshing(true) : setIsLoading(true);
@@ -186,31 +170,48 @@ export default function VideosPage() {
     }
   };
 
-  const handleTogglePublish = async (video: VideoItem) => {
-    const newStatus = video.status === "published" ? "draft" : "published";
+  const handleToggleStatus = async (video: VideoItem) => {
+    const nextStatus = video.status === "published" ? "draft" : "published";
+    const hasCategory =
+      (video.categoryIds && video.categoryIds.length > 0) ||
+      Boolean(video.categoryId);
+    if (nextStatus === "published" && !hasCategory) {
+      error(
+        "Category required",
+        "Select at least one category before publishing",
+      );
+      return;
+    }
+    const nextPublishedAt =
+      nextStatus === "published" ? new Date().toISOString() : null;
+    setStatusUpdatingId(video.id);
     try {
       const response = await fetch(`/api/videos/${video.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify({
+          status: nextStatus,
+          publishedAt: nextPublishedAt,
+        }),
       });
       const data = await response.json();
-
       if (data.success) {
         success(
-          newStatus === "published" ? "Video published" : "Video unpublished",
-          `"${video.title}" is now ${newStatus}`,
+          "Status updated",
+          `"${video.title}" is now ${nextStatus}`,
         );
         setVideos((prev) =>
-          prev.map((v) =>
-            v.id === video.id ? { ...v, status: newStatus } : v,
+          prev.map((item) =>
+            item.id === video.id ? { ...item, ...data.data } : item,
           ),
         );
       } else {
-        error("Failed to update video", data.error);
+        error("Failed to update status", data.error);
       }
-    } catch (err) {
-      error("Failed to update video", "Please try again later");
+    } catch {
+      error("Failed to update status", "Please try again later");
+    } finally {
+      setStatusUpdatingId(null);
     }
   };
 
@@ -222,9 +223,18 @@ export default function VideosPage() {
       video.slug.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus =
       statusFilter === "all" || video.status === statusFilter;
+    const categoryIds =
+      video.categoryIds ??
+      (video.categoryId ? [video.categoryId] : []);
     const matchesCategory =
-      categoryFilter === "all" || video.categoryId === categoryFilter;
-    return matchesSearch && matchesStatus && matchesCategory;
+      categoryFilter === "all" ||
+      categoryIds.includes(categoryFilter);
+    const matchesFlag =
+      flagFilter === "all" ||
+      (flagFilter === "manshet" && video.isManshet) ||
+      (flagFilter === "sidebar" && video.isSidebar) ||
+      (flagFilter === "top" && video.isTopVideo);
+    return matchesSearch && matchesStatus && matchesCategory && matchesFlag;
   });
 
   const columns: ColumnDef<VideoItem>[] = [
@@ -260,12 +270,19 @@ export default function VideosPage() {
       accessorKey: "categoryId",
       header: "Category",
       cell: ({ row }) => {
-        const name = row.original.categoryId
-          ? categoryMap.get(row.original.categoryId)
-          : null;
+        const categoryIds =
+          row.original.categoryIds ??
+          (row.original.categoryId ? [row.original.categoryId] : []);
+        const primaryId =
+          row.original.categoryId ??
+          categoryIds[0] ??
+          null;
+        const name = primaryId ? categoryMap.get(primaryId) : null;
+        const extraCount = categoryIds.filter((id) => id !== primaryId).length;
         return (
           <span className="text-sm text-muted-foreground">
             {name || "Uncategorized"}
+            {extraCount > 0 ? ` +${extraCount}` : ""}
           </span>
         );
       },
@@ -296,7 +313,30 @@ export default function VideosPage() {
     {
       accessorKey: "status",
       header: "Status",
-      cell: ({ row }) => <StatusBadge status={row.getValue("status")} />,
+      cell: ({ row }) => {
+        const video = row.original;
+        const isUpdating = statusUpdatingId === video.id;
+        return (
+          <button
+            type="button"
+            className="inline-flex items-center gap-2"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              if (!isUpdating) {
+                handleToggleStatus(video);
+              }
+            }}
+            disabled={isUpdating}
+            title="Click to toggle status"
+          >
+            <StatusBadge status={video.status} />
+            {isUpdating ? (
+              <span className="text-xs text-muted-foreground">...</span>
+            ) : null}
+          </button>
+        );
+      },
     },
     {
       id: "flags",
@@ -304,7 +344,6 @@ export default function VideosPage() {
       cell: ({ row }) => (
         <FlagBadges
           isManshet={row.original.isManshet}
-          isShort={row.original.isShort}
           isSidebar={row.original.isSidebar}
           isTopVideo={row.original.isTopVideo}
         />
@@ -330,51 +369,40 @@ export default function VideosPage() {
     },
     {
       id: "actions",
+      header: () => <div className="text-right pr-2">Actions</div>,
       cell: ({ row }) => {
         const video = row.original;
         return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only">Open menu</span>
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem
-                onClick={() => router.push(`/admin/videos/${video.id}`)}
-              >
-                <Edit className="mr-2 h-4 w-4" />
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => handleTogglePublish(video)}>
-                {video.status === "published" ? (
-                  <>
-                    <GlobeLock className="mr-2 h-4 w-4" />
-                    Unpublish
-                  </>
-                ) : (
-                  <>
-                    <Globe className="mr-2 h-4 w-4" />
-                    Publish
-                  </>
-                )}
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className="text-destructive focus:text-destructive"
-                onClick={() => {
-                  setVideoToDelete(video);
-                  setDeleteDialogOpen(true);
-                }}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <div className="admin-row-actions">
+            <Button
+              variant="outline"
+              size="sm"
+              className="admin-row-action"
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                router.push(`/admin/videos/${video.id}`);
+              }}
+            >
+              <Edit className="h-3.5 w-3.5" />
+              Edit
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="admin-row-action admin-row-action--danger"
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setVideoToDelete(video);
+                setDeleteDialogOpen(true);
+              }}
+            >
+              Delete
+            </Button>
+          </div>
         );
       },
     },
@@ -468,14 +496,25 @@ export default function VideosPage() {
                   </option>
                 ))}
               </select>
+              <select
+                value={flagFilter}
+                onChange={(e) => setFlagFilter(e.target.value)}
+                className="admin-select"
+                aria-label="Filter by flags"
+              >
+                <option value="all">All Flags</option>
+                <option value="manshet">Manshet</option>
+                <option value="sidebar">Sidebar</option>
+                <option value="top">Top</option>
+              </select>
             </div>
 
-            <div className="admin-toolbar-actions">
+            {/* <div className="admin-toolbar-actions">
               <Button variant="outline" size="sm" className="h-9 gap-1 px-3">
                 <Download className="h-4 w-4" />
                 <span className="hidden sm:inline">Export</span>
               </Button>
-            </div>
+            </div> */}
           </div>
         }
         emptyState={

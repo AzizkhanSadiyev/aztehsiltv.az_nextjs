@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { FolderTree, Users, Check, Video } from "lucide-react";
+import { FolderTree, Users, Check, Video, Image } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/admin/ui/PageHeader";
 import { StatCard, SectionCard } from "@/components/admin/ui";
@@ -11,6 +11,7 @@ interface DashboardStats {
   videos: { total: number; published: number };
   categories: number;
   users: number;
+  media: number;
 }
 
 interface RecentVideo {
@@ -46,17 +47,20 @@ export default function AdminDashboard() {
           videosPublishedRes,
           categoriesRes,
           usersRes,
+          mediaRes,
         ] = await Promise.all([
           fetch("/api/videos?limit=5"),
           fetch("/api/videos?status=published&limit=1"),
           fetch("/api/categories"),
           fetch("/api/users"),
+          fetch("/api/media?limit=1"),
         ]);
 
         const videos = await videosRes.json();
         const publishedVideos = await videosPublishedRes.json();
         const categories = await categoriesRes.json();
         const users = await usersRes.json();
+        const media = await mediaRes.json();
 
         const videosList = videos.data || [];
         const publishedCount =
@@ -71,6 +75,7 @@ export default function AdminDashboard() {
           },
           categories: (categories.data || []).length,
           users: (users.data || []).length,
+          media: media.pagination?.total ?? (media.data ? 1 : 0),
         });
 
         setRecentVideos(videosList.slice(0, 5));
@@ -125,6 +130,15 @@ export default function AdminDashboard() {
             delta="+4%"
             deltaLabel="from last month"
             icon={Users}
+          />
+        </Link>
+        <Link href="/admin/media" className="block">
+          <StatCard
+            label="Media"
+            value={loading ? "-" : stats?.media || 0}
+            delta="+6%"
+            deltaLabel="from last month"
+            icon={Image}
           />
         </Link>
       </div>

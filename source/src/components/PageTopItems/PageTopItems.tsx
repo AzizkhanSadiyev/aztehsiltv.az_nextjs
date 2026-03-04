@@ -1,11 +1,55 @@
 import Link from "next/link";
 import Image from "next/image";
 import styles from "./PageTopItems.module.css";
+import { getSiteSettings } from "@/lib/data/settings.data";
 
 const cx = (...classes: Array<string | false | null | undefined>) =>
     classes.filter(Boolean).join(" ");
 
-export default function PageTopItems() {
+export default async function PageTopItems() {
+    const settings = await getSiteSettings();
+    const socialLinks = [
+        {
+            id: "facebook",
+            label: "Facebook",
+            url: settings.social?.facebook,
+            light: "/assets/icons/icon_facebook_light.svg",
+            dark: "/assets/icons/icon_facebook.svg",
+        },
+        {
+            id: "instagram",
+            label: "Instagram",
+            url: settings.social?.instagram,
+            light: "/assets/icons/icon_instagram_light.svg",
+            dark: "/assets/icons/icon_instagram.svg",
+        },
+        {
+            id: "youtube",
+            label: "Youtube",
+            url: settings.social?.youtube,
+            light: "/assets/icons/icon_ytb_light.svg",
+            dark: "/assets/icons/icon_ytb.svg",
+        },
+        {
+            id: "telegram",
+            label: "Telegram",
+            url: settings.social?.telegram,
+            light: "/assets/icons/icon_telegram_light.svg",
+            dark: "/assets/icons/icon_telegram.svg",
+        },
+        {
+            id: "tiktok",
+            label: "Tiktok",
+            url: settings.social?.tiktok,
+            light: "/assets/icons/icon_tiktok_light.svg",
+            dark: "/assets/icons/icon_tiktok.svg",
+        },
+    ]
+        .filter((item) => item.url && item.url.trim().length > 0)
+        .map((item) => ({
+            ...item,
+            url: item.url!.trim(),
+        }));
     return (
         <div className={styles.topItems}>
             <div className="desktop">
@@ -20,140 +64,36 @@ export default function PageTopItems() {
                         Bizi <span>sosial şəbəkələrdən</span> izləyin:
                     </div>
                     <ul className={styles.socials}>
-                        <li>
-                            <Link
-                                href=""
-                                className={styles.socialIcon}
-                                target="_blank"
-                                rel="noreferrer"
-                            >
-                                <span className={styles.sclIcon}>
-                                    <Image
-                                        className={styles.logoLight}
-                                        src="/assets/icons/icon_facebook_light.svg"
-                                        width={16}
-                                        height={16}
-                                        alt="facebook"
-                                    />
-                                    <Image
-                                        className={styles.logoDark}
-                                        src="/assets/icons/icon_facebook.svg"
-                                        width={16}
-                                        height={16}
-                                        alt="facebook"
-                                    />
-                                </span>
-                                <span className={styles.sclName}>
-                                    Facebook
-                                </span>
-                            </Link>
-                        </li>
-                        <li>
-                            <Link
-                                href=""
-                                className={styles.socialIcon}
-                                target="_blank"
-                                rel="noreferrer"
-                            >
-                                <span className={styles.sclIcon}>
-                                    <Image
-                                        className={styles.logoLight}
-                                        src="/assets/icons/icon_instagram_light.svg"
-                                        width={16}
-                                        height={16}
-                                        alt="instagram"
-                                    />
-                                    <Image
-                                        className={styles.logoDark}
-                                        src="/assets/icons/icon_instagram.svg"
-                                        width={16}
-                                        height={16}
-                                        alt="instagram"
-                                    />
-                                </span>
-                                <span className={styles.sclName}>
-                                    Instagram
-                                </span>
-                            </Link>
-                        </li>
-                        <li>
-                            <Link
-                                href=""
-                                className={styles.socialIcon}
-                                target="_blank"
-                                rel="noreferrer"
-                            >
-                                <span className={styles.sclIcon}>
-                                    <Image
-                                        className={styles.logoLight}
-                                        src="/assets/icons/icon_ytb_light.svg"
-                                        width={16}
-                                        height={16}
-                                        alt="youtube"
-                                    />
-                                    <Image
-                                        className={styles.logoDark}
-                                        src="/assets/icons/icon_ytb.svg"
-                                        width={16}
-                                        height={16}
-                                        alt="youtube"
-                                    />
-                                </span>
-                                <span className={styles.sclName}>Youtube</span>
-                            </Link>
-                        </li>
-                        <li>
-                            <Link
-                                href=""
-                                className={styles.socialIcon}
-                                target="_blank"
-                                rel="noreferrer"
-                            >
-                                <span className={styles.sclIcon}>
-                                    <Image
-                                        className={styles.logoLight}
-                                        src="/assets/icons/icon_telegram_light.svg"
-                                        width={16}
-                                        height={16}
-                                        alt="telegram"
-                                    />
-                                    <Image
-                                        className={styles.logoDark}
-                                        src="/assets/icons/icon_telegram.svg"
-                                        width={16}
-                                        height={16}
-                                        alt="telegram"
-                                    />
-                                </span>
-                                <span className={styles.sclName}>Telegram</span>
-                            </Link>
-                        </li>
-                        <li>
-                            <Link
-                                href=""
-                                className={styles.socialIcon}
-                                target="_blank"
-                                rel="noreferrer"
-                            >
-                                <span className={styles.sclIcon}>
-                                    <Image
-                                        className={styles.logoLight}
-                                        src="/assets/icons/icon_tiktok_light.svg"
-                                        width={16}
-                                        height={16}
-                                        alt="tiktok"
-                                    />
-                                    <Image
-                                        className={styles.logoDark}
-                                        src="/assets/icons/icon_tiktok.svg"
-                                        width={16}
-                                        height={16}
-                                        alt="tiktok"
-                                    />
-                                </span>
-                                <span className={styles.sclName}>Tiktok</span>
-                            </Link>
-                        </li>
+                        {socialLinks.map((item) => (
+                            <li key={item.id}>
+                                <Link
+                                    href={item.url as string}
+                                    className={styles.socialIcon}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                >
+                                    <span className={styles.sclIcon}>
+                                        <Image
+                                            className={styles.logoLight}
+                                            src={item.light}
+                                            width={16}
+                                            height={16}
+                                            alt={item.label}
+                                        />
+                                        <Image
+                                            className={styles.logoDark}
+                                            src={item.dark}
+                                            width={16}
+                                            height={16}
+                                            alt={item.label}
+                                        />
+                                    </span>
+                                    <span className={styles.sclName}>
+                                        {item.label}
+                                    </span>
+                                </Link>
+                            </li>
+                        ))}
                     </ul>
                 </div>
             </div>

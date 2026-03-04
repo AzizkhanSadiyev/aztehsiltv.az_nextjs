@@ -25,6 +25,10 @@ export interface Media {
     dimensions?: string;
     format?: string;
     folder?: string;
+    entity?: string;
+    entitySlug?: string;
+    field?: string;
+    originalName?: string;
     tags?: string[];
   };
 }

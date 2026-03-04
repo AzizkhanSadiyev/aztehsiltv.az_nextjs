@@ -4,6 +4,7 @@
 
 import { v4 as uuidv4 } from "uuid";
 import { query, queryOne, insert, update as updateQuery } from "@/lib/db";
+import { defaultLocale, locales } from "@/i18n/config";
 import type {
   Video,
   VideoCreateInput,
@@ -12,6 +13,7 @@ import type {
 } from "@/types/video.types";
 import {
   buildSlugMap,
+  jsonPathForLocale,
   mergeLocalized,
   normalizeLocalized,
   normalizeLocalizedNullable,
@@ -60,6 +62,37 @@ const parseMetadata = (value: any) => {
   return value;
 };
 
+const normalizeTags = (value?: string[] | null): string[] => {
+  if (!Array.isArray(value)) return [];
+  const cleaned = value
+    .map((tag) => (typeof tag === "string" ? tag.trim() : ""))
+    .filter((tag) => tag.length > 0);
+  return Array.from(new Set(cleaned));
+};
+
+const normalizeCategoryIds = (value?: (string | null | undefined)[] | null) => {
+  if (!Array.isArray(value)) return [];
+  const cleaned = value
+    .map((id) => (typeof id === "string" ? id.trim() : ""))
+    .filter((id) => id.length > 0);
+  return Array.from(new Set(cleaned));
+};
+
+const mergeTagsIntoMetadata = (
+  metadata: Record<string, any> | null | undefined,
+  tags?: string[] | null,
+) => {
+  if (tags === undefined) return metadata ?? null;
+  const cleaned = normalizeTags(tags);
+  const next = { ...(metadata ?? {}) } as Record<string, any>;
+  if (cleaned.length > 0) {
+    next.tags = cleaned;
+  } else if ("tags" in next) {
+    delete next.tags;
+  }
+  return Object.keys(next).length > 0 ? next : null;
+};
+
 const generateSlug = (value: string): string => {
   return value
     .toLowerCase()
@@ -69,7 +102,68 @@ const generateSlug = (value: string): string => {
     .trim();
 };
 
-function mapRow(row: VideoRow): Video {
+async function getVideoCategoryMap(
+  videoIds: string[],
+): Promise<Map<string, string[]>> {
+  if (!videoIds.length) return new Map();
+  const placeholders = videoIds.map(() => "?").join(", ");
+  const rows = await query<{
+    video_id: string;
+    category_id: string;
+    is_primary: number | boolean;
+  }>(
+    `SELECT video_id, category_id, is_primary
+     FROM video_categories
+     WHERE video_id IN (${placeholders})
+     ORDER BY is_primary DESC, created_at ASC`,
+    videoIds,
+  );
+  const map = new Map<string, string[]>();
+  rows.forEach((row) => {
+    const list = map.get(row.video_id) ?? [];
+    if (!list.includes(row.category_id)) {
+      list.push(row.category_id);
+    }
+    map.set(row.video_id, list);
+  });
+  return map;
+}
+
+async function syncVideoCategories(
+  videoId: string,
+  categoryIds: string[],
+  primaryId?: string | null,
+) {
+  const normalized = normalizeCategoryIds(categoryIds);
+  let primary = primaryId ?? null;
+  if (primary && !normalized.includes(primary)) {
+    normalized.unshift(primary);
+  }
+  primary = primary && normalized.includes(primary) ? primary : normalized[0] ?? null;
+
+  await updateQuery(`DELETE FROM video_categories WHERE video_id = ?`, [videoId]);
+
+  if (normalized.length) {
+    const placeholders = normalized.map(() => "(?, ?, ?)").join(", ");
+    const params: any[] = [];
+    normalized.forEach((id) => {
+      params.push(videoId, id, id === primary ? 1 : 0);
+    });
+    await insert(
+      `INSERT INTO video_categories (video_id, category_id, is_primary) VALUES ${placeholders}`,
+      params,
+    );
+  }
+
+  return { categoryIds: normalized, primaryId: primary };
+}
+
+function mapRow(row: VideoRow, categoryIds?: string[]): Video {
+  const metadata = parseMetadata(row.metadata);
+  const tags = normalizeTags(metadata?.tags);
+  const resolvedCategoryIds = normalizeCategoryIds(
+    categoryIds ?? (row.category_id ? [row.category_id] : []),
+  );
   return {
     id: row.id,
     title: normalizeLocalized(row.title),
@@ -78,6 +172,7 @@ function mapRow(row: VideoRow): Video {
     coverUrl: row.cover_url,
     sourceUrl: row.source_url,
     categoryId: row.category_id,
+    categoryIds: resolvedCategoryIds.length ? resolvedCategoryIds : null,
     broadcastId: row.broadcast_id,
     type: row.type,
     duration: row.duration,
@@ -90,7 +185,8 @@ function mapRow(row: VideoRow): Video {
     publishedAt: row.published_at ? row.published_at.toISOString() : null,
     createdAt: row.created_at.toISOString(),
     updatedAt: row.updated_at.toISOString(),
-    metadata: parseMetadata(row.metadata),
+    tags: tags.length ? tags : null,
+    metadata,
   };
 }
 
@@ -106,7 +202,8 @@ export async function getAllVideos(limit = 500): Promise<Video[]> {
      LIMIT ?`,
     [limit],
   );
-  return rows.map(mapRow);
+  const categoryMap = await getVideoCategoryMap(rows.map((row) => row.id));
+  return rows.map((row) => mapRow(row, categoryMap.get(row.id)));
 }
 
 function buildFilters(filters?: VideoFilters) {
@@ -118,8 +215,10 @@ function buildFilters(filters?: VideoFilters) {
     params.push(filters.status);
   }
   if (filters?.categoryId) {
-    where.push("category_id = ?");
-    params.push(filters.categoryId);
+    where.push(
+      "(category_id = ? OR EXISTS (SELECT 1 FROM video_categories vc WHERE vc.video_id = videos.id AND vc.category_id = ?))",
+    );
+    params.push(filters.categoryId, filters.categoryId);
   }
   if (filters?.broadcastId) {
     where.push("broadcast_id = ?");
@@ -166,8 +265,9 @@ export async function getVideosList(options?: {
     [...params, limit, offset],
   );
 
+  const categoryMap = await getVideoCategoryMap(rows.map((row) => row.id));
   return {
-    videos: rows.map(mapRow),
+    videos: rows.map((row) => mapRow(row, categoryMap.get(row.id))),
     total: totalRow?.count ?? 0,
   };
 }
@@ -183,7 +283,41 @@ export async function getVideoById(id: string): Promise<Video | null> {
      WHERE id = ?`,
     [id],
   );
-  return row ? mapRow(row) : null;
+  if (!row) return null;
+  const categoryMap = await getVideoCategoryMap([row.id]);
+  return mapRow(row, categoryMap.get(row.id));
+}
+
+export async function getPublishedVideoBySlug(
+  slug: string,
+  locale: string,
+  fallbackLocale: string = defaultLocale,
+): Promise<Video | null> {
+  const localeCandidates = Array.from(
+    new Set([locale, fallbackLocale, ...locales]),
+  );
+  const conditions = localeCandidates
+    .map(() => "JSON_UNQUOTE(JSON_EXTRACT(slug, ?)) = ?")
+    .join(" OR ");
+  const params: any[] = [];
+  localeCandidates.forEach((candidate) => {
+    params.push(jsonPathForLocale(candidate, fallbackLocale), slug);
+  });
+  const row = await queryOne<VideoRow>(
+    `SELECT id, title, slug, description,
+            cover_url, source_url, category_id, broadcast_id,
+            type, duration, views, status,
+            is_manshet, is_short, is_sidebar, is_top_video,
+            published_at, created_at, updated_at, metadata
+     FROM videos
+     WHERE status = 'published'
+       AND (${conditions})
+     LIMIT 1`,
+    params,
+  );
+  if (!row) return null;
+  const categoryMap = await getVideoCategoryMap([row.id]);
+  return mapRow(row, categoryMap.get(row.id));
 }
 
 export async function getPublishedVideos(options?: {
@@ -197,8 +331,10 @@ export async function getPublishedVideos(options?: {
   const params: any[] = [];
 
   if (options?.categoryId) {
-    where.push("category_id = ?");
-    params.push(options.categoryId);
+    where.push(
+      "(category_id = ? OR EXISTS (SELECT 1 FROM video_categories vc WHERE vc.video_id = videos.id AND vc.category_id = ?))",
+    );
+    params.push(options.categoryId, options.categoryId);
   }
   if (options?.broadcastId) {
     where.push("broadcast_id = ?");
@@ -234,7 +370,8 @@ export async function getPublishedVideos(options?: {
      LIMIT ?`,
     [...params, limit],
   );
-  return rows.map(mapRow);
+  const categoryMap = await getVideoCategoryMap(rows.map((row) => row.id));
+  return rows.map((row) => mapRow(row, categoryMap.get(row.id)));
 }
 
 export async function getVideosByCategorySlug(
@@ -259,6 +396,14 @@ export async function createVideo(input: VideoCreateInput): Promise<Video> {
 
   const description = input.description ?? null;
   const publishedAt = input.publishedAt ? new Date(input.publishedAt) : null;
+  const metadata = mergeTagsIntoMetadata(input.metadata ?? null, input.tags);
+  const normalizedCategoryIds = normalizeCategoryIds(
+    input.categoryIds ?? (input.categoryId ? [input.categoryId] : []),
+  );
+  const primaryCategoryId =
+    input.categoryId && normalizedCategoryIds.includes(input.categoryId)
+      ? input.categoryId
+      : normalizedCategoryIds[0] ?? null;
 
   await insert(
     `INSERT INTO videos
@@ -275,7 +420,7 @@ export async function createVideo(input: VideoCreateInput): Promise<Video> {
       toJsonOrNull(description),
       input.coverUrl ?? null,
       input.sourceUrl ?? null,
-      input.categoryId ?? null,
+      primaryCategoryId,
       input.broadcastId ?? null,
       input.type ?? "video",
       input.duration ?? null,
@@ -288,8 +433,14 @@ export async function createVideo(input: VideoCreateInput): Promise<Video> {
       publishedAt,
       now,
       now,
-      JSON.stringify(input.metadata ?? null),
+      JSON.stringify(metadata ?? null),
     ],
+  );
+
+  const synced = await syncVideoCategories(
+    id,
+    normalizedCategoryIds,
+    primaryCategoryId,
   );
 
   const row: VideoRow = {
@@ -299,7 +450,7 @@ export async function createVideo(input: VideoCreateInput): Promise<Video> {
     description,
     cover_url: input.coverUrl ?? null,
     source_url: input.sourceUrl ?? null,
-    category_id: input.categoryId ?? null,
+    category_id: primaryCategoryId,
     broadcast_id: input.broadcastId ?? null,
     type: input.type ?? "video",
     duration: input.duration ?? null,
@@ -312,10 +463,10 @@ export async function createVideo(input: VideoCreateInput): Promise<Video> {
     published_at: publishedAt,
     created_at: now,
     updated_at: now,
-    metadata: input.metadata ?? null,
+    metadata: metadata ?? null,
   };
 
-  return mapRow(row);
+  return mapRow(row, synced.categoryIds);
 }
 
 export async function updateVideo(
@@ -340,6 +491,8 @@ export async function updateVideo(
       input.sourceUrl !== undefined ? input.sourceUrl : existing.sourceUrl,
     categoryId:
       input.categoryId !== undefined ? input.categoryId : existing.categoryId,
+    categoryIds:
+      input.categoryIds !== undefined ? input.categoryIds : existing.categoryIds,
     broadcastId:
       input.broadcastId !== undefined ? input.broadcastId : existing.broadcastId,
     type: input.type ?? existing.type,
@@ -361,6 +514,16 @@ export async function updateVideo(
     updatedAt: new Date().toISOString(),
   };
 
+  const mergedMetadata = mergeTagsIntoMetadata(merged.metadata, input.tags);
+  const normalizedCategoryIds = normalizeCategoryIds(
+    merged.categoryIds ??
+      (merged.categoryId ? [merged.categoryId] : []),
+  );
+  const primaryCategoryId =
+    merged.categoryId && normalizedCategoryIds.includes(merged.categoryId)
+      ? merged.categoryId
+      : normalizedCategoryIds[0] ?? null;
+
   await updateQuery(
     `UPDATE videos SET
       title = ?, slug = ?, description = ?,
@@ -375,7 +538,7 @@ export async function updateVideo(
       toJsonOrNull(merged.description),
       merged.coverUrl ?? null,
       merged.sourceUrl ?? null,
-      merged.categoryId ?? null,
+      primaryCategoryId,
       merged.broadcastId ?? null,
       merged.type,
       merged.duration ?? null,
@@ -387,12 +550,24 @@ export async function updateVideo(
       merged.isTopVideo ? 1 : 0,
       merged.publishedAt ? new Date(merged.publishedAt) : null,
       new Date(),
-      JSON.stringify(merged.metadata ?? null),
+      JSON.stringify(mergedMetadata ?? null),
       merged.id,
     ],
   );
 
-  return merged;
+  const synced = await syncVideoCategories(
+    merged.id,
+    normalizedCategoryIds,
+    primaryCategoryId,
+  );
+  const resolvedTags = normalizeTags(mergedMetadata?.tags);
+  return {
+    ...merged,
+    categoryId: primaryCategoryId,
+    categoryIds: synced.categoryIds.length ? synced.categoryIds : null,
+    metadata: mergedMetadata,
+    tags: resolvedTags.length ? resolvedTags : null,
+  };
 }
 
 export async function deleteVideo(id: string): Promise<boolean> {
@@ -433,10 +608,9 @@ export async function getSidebarVideos(limit = 10): Promise<Video[]> {
 
 export async function getVideoCountsByCategory(): Promise<Record<string, number>> {
   const rows = await query<{ category_id: string | null; count: number }>(
-    `SELECT category_id, COUNT(*) AS count
-     FROM videos
-     WHERE category_id IS NOT NULL
-     GROUP BY category_id`,
+    `SELECT vc.category_id AS category_id, COUNT(DISTINCT vc.video_id) AS count
+     FROM video_categories vc
+     GROUP BY vc.category_id`,
   );
   const result: Record<string, number> = {};
   rows.forEach((row) => {
@@ -466,11 +640,11 @@ export async function getVideoCountsByBroadcast(): Promise<Record<string, number
 
 export async function getPublishedVideoCountsByCategory(): Promise<Record<string, number>> {
   const rows = await query<{ category_id: string | null; count: number }>(
-    `SELECT category_id, COUNT(*) AS count
-     FROM videos
-     WHERE category_id IS NOT NULL
-       AND status = 'published'
-     GROUP BY category_id`,
+    `SELECT vc.category_id AS category_id, COUNT(DISTINCT vc.video_id) AS count
+     FROM video_categories vc
+     INNER JOIN videos v ON v.id = vc.video_id
+     WHERE v.status = 'published'
+     GROUP BY vc.category_id`,
   );
   const result: Record<string, number> = {};
   rows.forEach((row) => {

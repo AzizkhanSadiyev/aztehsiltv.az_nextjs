@@ -16,6 +16,7 @@ export interface Video {
   coverUrl: string | null;
   sourceUrl: string | null;
   categoryId: string | null;
+  categoryIds?: string[] | null;
   broadcastId: string | null;
   type: VideoType;
   duration: string | null;
@@ -28,6 +29,7 @@ export interface Video {
   publishedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  tags?: string[] | null;
   metadata?: Record<string, any> | null;
 }
 
@@ -38,6 +40,7 @@ export interface VideoCreateInput {
   coverUrl?: string | null;
   sourceUrl?: string | null;
   categoryId?: string | null;
+  categoryIds?: string[] | null;
   broadcastId?: string | null;
   type?: VideoType;
   duration?: string | null;
@@ -48,6 +51,7 @@ export interface VideoCreateInput {
   isSidebar?: boolean;
   isTopVideo?: boolean;
   publishedAt?: string | null;
+  tags?: string[] | null;
   metadata?: Record<string, any> | null;
 }
 

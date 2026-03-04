@@ -9,11 +9,12 @@ interface FormLayoutProps {
   children: ReactNode;
   onSubmit: (e: FormEvent) => void | Promise<void>;
   className?: string;
+  id?: string;
 }
 
-export function FormLayout({ children, onSubmit, className }: FormLayoutProps) {
+export function FormLayout({ children, onSubmit, className, id }: FormLayoutProps) {
   return (
-    <form onSubmit={onSubmit} className={cn("admin-form", className)}>
+    <form id={id} onSubmit={onSubmit} className={cn("admin-form", className)}>
       {children}
     </form>
   );

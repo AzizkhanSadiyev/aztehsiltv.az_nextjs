@@ -34,8 +34,7 @@
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    border: 1px solid var(--color-border-e1e1eb);
-    background: var(--color-bg-f1f0f7);
+    background-color: var(--color-bg-e1e1eb);
     cursor: pointer;
     transition: all var(--transition-fast);
 }
