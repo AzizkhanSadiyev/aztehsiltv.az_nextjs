@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { FolderTree, Users, Check, Video, Radio } from "lucide-react";
+import { FolderTree, Users, Check, Video } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/admin/ui/PageHeader";
 import { StatCard, SectionCard } from "@/components/admin/ui";
@@ -10,7 +10,6 @@ import { StatCard, SectionCard } from "@/components/admin/ui";
 interface DashboardStats {
   videos: { total: number; published: number };
   categories: number;
-  broadcasts: number;
   users: number;
 }
 
@@ -46,20 +45,17 @@ export default function AdminDashboard() {
           videosRes,
           videosPublishedRes,
           categoriesRes,
-          broadcastsRes,
           usersRes,
         ] = await Promise.all([
           fetch("/api/videos?limit=5"),
           fetch("/api/videos?status=published&limit=1"),
           fetch("/api/categories"),
-          fetch("/api/broadcasts"),
           fetch("/api/users"),
         ]);
 
         const videos = await videosRes.json();
         const publishedVideos = await videosPublishedRes.json();
         const categories = await categoriesRes.json();
-        const broadcasts = await broadcastsRes.json();
         const users = await usersRes.json();
 
         const videosList = videos.data || [];
@@ -74,7 +70,6 @@ export default function AdminDashboard() {
             published: publishedCount,
           },
           categories: (categories.data || []).length,
-          broadcasts: (broadcasts.data || []).length,
           users: (users.data || []).length,
         });
 
@@ -112,15 +107,6 @@ export default function AdminDashboard() {
             delta="+12%"
             deltaLabel="from last month"
             icon={Video}
-          />
-        </Link>
-        <Link href="/admin/broadcasts" className="block">
-          <StatCard
-            label="Broadcasts"
-            value={loading ? "-" : stats?.broadcasts || 0}
-            delta="+6%"
-            deltaLabel="from last month"
-            icon={Radio}
           />
         </Link>
         <Link href="/admin/categories" className="block">

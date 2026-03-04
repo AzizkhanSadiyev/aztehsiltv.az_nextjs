@@ -439,3 +439,37 @@ export async function getVideoCountsByCategory(): Promise<Record<string, number>
   });
   return result;
 }
+
+export async function getVideoCountsByBroadcast(): Promise<Record<string, number>> {
+  const rows = await query<{ broadcast_id: string | null; count: number }>(
+    `SELECT broadcast_id, COUNT(*) AS count
+     FROM videos
+     WHERE broadcast_id IS NOT NULL
+       AND status = 'published'
+     GROUP BY broadcast_id`,
+  );
+  const result: Record<string, number> = {};
+  rows.forEach((row) => {
+    if (row.broadcast_id) {
+      result[row.broadcast_id] = Number(row.count || 0);
+    }
+  });
+  return result;
+}
+
+export async function getPublishedVideoCountsByCategory(): Promise<Record<string, number>> {
+  const rows = await query<{ category_id: string | null; count: number }>(
+    `SELECT category_id, COUNT(*) AS count
+     FROM videos
+     WHERE category_id IS NOT NULL
+       AND status = 'published'
+     GROUP BY category_id`,
+  );
+  const result: Record<string, number> = {};
+  rows.forEach((row) => {
+    if (row.category_id) {
+      result[row.category_id] = Number(row.count || 0);
+    }
+  });
+  return result;
+}

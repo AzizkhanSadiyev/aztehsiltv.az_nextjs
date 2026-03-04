@@ -3,11 +3,7 @@
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { Mail, Lock, Loader2, AlertCircle, Eye, EyeOff } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { loginAction, type LoginState } from "./actions";
-import { cn } from "@/lib/utils";
 
 interface LoginFormProps {
   callbackUrl: string;
@@ -18,9 +14,9 @@ function SubmitButton() {
   const { pending } = useFormStatus();
 
   return (
-    <Button
+    <button
       type="submit"
-      className="h-11 w-full rounded-xl bg-[var(--admin-primary-dark)] text-white hover:bg-[var(--admin-primary-hover)]"
+      className="admin-auth-submit"
       disabled={pending}
     >
       {pending ? (
@@ -31,7 +27,7 @@ function SubmitButton() {
       ) : (
         "Sign in"
       )}
-    </Button>
+    </button>
   );
 }
 
@@ -44,49 +40,47 @@ export default function LoginForm({
   const [showPassword, setShowPassword] = useState(false);
 
   return (
-    <form action={formAction} className="mt-6 space-y-6 px-4">
+    <form action={formAction} className="admin-auth-form">
       <input type="hidden" name="callbackUrl" value={callbackUrl} />
 
-      <div className="space-y-3">
-        <Label htmlFor="email" className="text-sm font-medium">
+      <div className="admin-auth-field">
+        <label htmlFor="email" className="admin-auth-label">
           Email
-        </Label>
-        <div className="relative">
-          <Mail className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
-          <Input
+        </label>
+        <div className="admin-auth-input-wrapper">
+          <Mail className="admin-auth-input-icon" />
+          <input
             id="email"
             name="email"
             type="email"
             placeholder="admin@aztehsiltv.az"
             autoComplete="email"
             required
-            className={cn("h-11 rounded-xl pl-10")}
+            className="admin-auth-input"
           />
         </div>
       </div>
 
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <Label htmlFor="password" className="text-sm font-medium">
-            Password
-          </Label>
-        </div>
-        <div className="relative">
-          <Lock className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
-          <Input
+      <div className="admin-auth-field">
+        <label htmlFor="password" className="admin-auth-label">
+          Password
+        </label>
+        <div className="admin-auth-input-wrapper">
+          <Lock className="admin-auth-input-icon" />
+          <input
             id="password"
             name="password"
             type={showPassword ? "text" : "password"}
             placeholder="********"
             autoComplete="current-password"
             required
-            className={cn("h-11 rounded-xl pl-10 pr-10")}
+            className="admin-auth-input admin-auth-input--with-action"
           />
           <button
             type="button"
             onClick={() => setShowPassword((prev) => !prev)}
             aria-label={showPassword ? "Hide password" : "Show password"}
-            className="absolute right-3 top-3 text-slate-400 hover:text-slate-600"
+            className="admin-auth-icon-button"
           >
             {showPassword ? (
               <EyeOff className="h-5 w-5" />
@@ -97,18 +91,15 @@ export default function LoginForm({
         </div>
       </div>
 
-      <div className="flex items-center justify-between pt-1 text-xs text-slate-500">
-        <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            className="h-4 w-4 rounded border-slate-300 text-[var(--admin-primary-dark)] focus:ring-[var(--admin-primary-hover)]"
-          />
+      <div className="admin-auth-meta">
+        <label className="admin-auth-remember">
+          <input type="checkbox" />
           Remember me
         </label>
       </div>
 
       {state.error ? (
-        <div className="flex items-center gap-2 rounded-xl border border-destructive/50 bg-destructive/10 p-3 text-destructive">
+        <div className="admin-auth-error">
           <AlertCircle className="h-4 w-4" />
           <p className="text-sm">{state.error}</p>
         </div>

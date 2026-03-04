@@ -10,11 +10,15 @@ import { mkdir, writeFile } from "fs/promises";
 import { existsSync } from "fs";
 import path from "path";
 import { randomUUID } from "crypto";
+import { auth } from "@/auth";
 import {
     successResponse,
     errorResponse,
     withErrorHandling,
 } from "@/lib/api-helpers";
+import { createMedia } from "@/lib/data/media.data";
+import { queryOne } from "@/lib/db";
+import { getMediaType } from "@/types/media.types";
 
 const MAX_UPLOAD_SIZE = 5 * 1024 * 1024; // 5MB
 
@@ -41,6 +45,31 @@ const resolvePublicDir = () => {
     const sourcePublic = path.join(process.cwd(), "source", "public");
     if (existsSync(sourcePublic)) return sourcePublic;
     return cwdPublic;
+};
+
+const uuidRegex =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+const resolveUploadedBy = async (formData: FormData) => {
+    const uploadedByRaw = formData.get("uploadedBy") as string;
+    if (uploadedByRaw && uuidRegex.test(uploadedByRaw)) {
+        return uploadedByRaw;
+    }
+
+    try {
+        const session = await auth();
+        if (session?.user?.id && uuidRegex.test(session.user.id)) {
+            return session.user.id;
+        }
+    } catch (error) {
+        console.error("Upload auth error:", error);
+    }
+
+    const admin = await queryOne<{ id: string }>(
+        "SELECT id FROM users WHERE role = ? AND is_active = 1 ORDER BY created_at ASC LIMIT 1",
+        ["admin"],
+    );
+    return admin?.id ?? "";
 };
 
 export async function POST(request: NextRequest) {
@@ -95,13 +124,51 @@ export async function POST(request: NextRequest) {
         await mkdir(uploadsDir, { recursive: true });
         await writeFile(filepath, buffer);
 
+        const uploadedBy = await resolveUploadedBy(formData);
+        if (!uploadedBy) {
+            return errorResponse(
+                "MISSING_USER",
+                "Uploaded by user ID is required",
+                400,
+            );
+        }
+
+        const storedPath = path.posix.join(relativeDir, filename);
+        const url = `/${storedPath}`;
+        const type = getMediaType(file.type || "application/octet-stream");
+        const folder = [entity, entitySlug, field].filter(Boolean).join("/") || entity;
+
+        const media = await createMedia({
+            filename,
+            url,
+            path: storedPath,
+            mimeType: file.type || "application/octet-stream",
+            type,
+            size: file.size,
+            width: null,
+            height: null,
+            alt: null,
+            title: null,
+            uploadedBy,
+            metadata: {
+                folder,
+                entity,
+                entitySlug,
+                field,
+                originalName: file.name,
+                format: file.type || "application/octet-stream",
+                tags: [],
+            },
+        });
+
         return successResponse(
             {
-                url: `/${relativeDir}/${filename}`,
+                url,
                 filename,
-                path: `${relativeDir}/${filename}`,
+                path: storedPath,
                 size: file.size,
                 type: file.type,
+                media,
             },
             201,
         );

@@ -1,85 +1,93 @@
 
-import Link from "next/link";
-import Image from "next/image";
-import { type Locale } from "@/i18n/config";
+import { type Locale, defaultLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/getDictionary";
 import BroadcastCard from "@/components/BroadcastCard/Card";
 import PageTopItems from "@/components/PageTopItems/PageTopItems";
 import Pagination from "@/components/Pagination/Pagination";
 import styles from "./page.module.css";
+import { getActiveCategories } from "@/lib/data/categories.data";
+import { getPublishedVideoCountsByCategory } from "@/lib/data/videos.data";
+import { pickLocalized } from "@/lib/localization";
 
-const broadcastItems = [
-    {
-        id: 1,
-        title: "Metodik korpu",
-        count: "364 video",
-        image: "/assets/images/board_1.png",
-        slug: "silikon-sehrasi-mekteb-sagirdleri",
-    },
-    {
-        id: 2,
-        title: "Usaqlar ve biz",
-        count: "128 video",
-        image: "/assets/images/board_2.png",
-        slug: "konqres-kend-mektebleri-fond",
-    },
-    {
-        id: 3,
-        title: "Podkast",
-        count: "92 video",
-        image: "/assets/images/board_3.png",
-        slug: "tramp-mekteb-naharlari-sud-qanun",
-    },
-    {
-        id: 4,
-        title: "Tehsil saati",
-        count: "56 video",
-        image: "/assets/images/board_4.png",
-        slug: "steam-laboratoriyalari-tecrube-setleri",
-    },
-    {
-        id: 5,
-        title: "Tehsil saati",
-        count: "56 video",
-        image: "/assets/images/board_5.png",
-        slug: "silikon-sehrasi-mekteb-sagirdleri-2",
-    },
-    {
-        id: 6,
-        title: "Podkast",
-        count: "92 video",
-        image: "/assets/images/board_3.png",
-        slug: "konqres-kend-mektebleri-fond-2",
-    },
-    {
-        id: 7,
-        title: "Tehsil saati",
-        count: "56 video",
-        image: "/assets/images/board_4.png",
-        slug: "tramp-mekteb-naharlari-sud-qanun-2",
-    },
-    {
-        id: 8,
-        title: "Tehsil saati",
-        count: "56 video",
-        image: "/assets/images/board_5.png",
-        slug: "steam-laboratoriyalari-tecrube-setleri-2",
-    },
-];
+export const dynamic = "force-dynamic";
+
 export default async function BroadcastsPage({
     params,
     searchParams,
 }: {
     params: Promise<{ locale: string }>;
-    searchParams?: { page?: string | string[] };
+    searchParams?: Promise<{ page?: string | string[] }>;
 }) {
     const { locale } = await params;
-    const dict = await getDictionary(locale as Locale);
+    const _dict = await getDictionary(locale as Locale);
+    const resolvedSearchParams = await searchParams;
+    const resolvedLocale = locale as Locale;
+    const categories = await getActiveCategories();
+    const counts = await getPublishedVideoCountsByCategory();
+
+    const normalizeKey = (value: string) =>
+        value
+            .normalize("NFKD")
+            .toLowerCase()
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/ə/g, "e")
+            .replace(/ı/g, "i")
+            .replace(/ş/g, "s")
+            .replace(/ğ/g, "g")
+            .replace(/ç/g, "c")
+            .replace(/ö/g, "o")
+            .replace(/ü/g, "u")
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/^-+|-+$/g, "");
+
+    const findParent = () =>
+        categories.find((category) => {
+            const slug = category.slug;
+            const name = pickLocalized(category.name, resolvedLocale, defaultLocale);
+            const normalized = normalizeKey(name);
+            return (
+                slug === "verilisler" ||
+                slug === "verilislar" ||
+                slug === "broadcasts" ||
+                normalized === "verilisler" ||
+                normalized === "broadcasts"
+            );
+        });
+
+    const parent = findParent();
+    const children = parent
+        ? categories.filter((category) => category.parentId === parent.id)
+        : [];
+
+    const broadcastItems = children
+        .slice()
+        .sort((a, b) => {
+            const orderDiff = (a.order ?? 0) - (b.order ?? 0);
+            if (orderDiff !== 0) return orderDiff;
+            const nameA = pickLocalized(a.name, resolvedLocale, defaultLocale);
+            const nameB = pickLocalized(b.name, resolvedLocale, defaultLocale);
+            return nameA.localeCompare(nameB);
+        })
+        .map((item, index) => {
+            const title = pickLocalized(item.name, resolvedLocale, defaultLocale);
+            const count = counts[item.id] ?? 0;
+            const image =
+                item.coverUrl ||
+                item.icon ||
+                `/assets/images/board_${(index % 5) + 1}.png`;
+            return {
+                id: item.id,
+                title,
+                count: `${count} video`,
+                image,
+                slug: item.slug,
+            };
+        });
     const itemsPerPage = 8;
     const totalItems = broadcastItems.length;
-    const pageParam = Array.isArray(searchParams?.page)
-        ? searchParams?.page[0]
-        : searchParams?.page;
+    const pageParam = Array.isArray(resolvedSearchParams?.page)
+        ? resolvedSearchParams?.page[0]
+        : resolvedSearchParams?.page;
     const parsedPage = Number.parseInt(pageParam ?? "1", 10);
     const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
     const currentPage = Number.isNaN(parsedPage)

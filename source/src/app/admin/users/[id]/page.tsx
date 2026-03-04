@@ -93,14 +93,14 @@ function PasswordField({
                     onChange={(e) => onChange(e.target.value)}
                     placeholder={placeholder}
                     error={!!error}
-                    className="pr-12"
+                    className="admin-input--icon"
                    
                 />
                 <button
                     type="button"
                     onClick={onToggle}
                     aria-label={show ? "Hide password" : "Show password"}
-                    className="absolute right-3 top-[calc(50%+4px)] -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    className="admin-password-toggle"
                 >
                     {show ? (
                         <EyeOff className="h-4 w-4" />
@@ -491,7 +491,10 @@ export default function UserEditPage() {
                     </FormSection>
                 )}
                 
-                <FormSection title="Access">
+                <FormSection
+                    title="Access"
+                    description="Manage role, permissions, and access status"
+                >
                     <FormField
                         label="Role"
                         htmlFor="role"
@@ -521,32 +524,34 @@ export default function UserEditPage() {
                                 ? "Admin users always have full access."
                                 : "Select the permissions for this user."
                         }
+                        
                     >
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="admin-permissions-grid">
                             {PERMISSION_OPTIONS.map((permission) => {
                                 const checked = formData.permissions.includes(permission.value);
                                 return (
                                     <label
                                         key={permission.value}
                                         className={cn(
-                                            "flex items-start gap-3 rounded-lg border p-3 text-sm transition-colors",
+                                            "admin-permission-card",
+                                            checked && "is-checked",
                                             formData.role === "admin"
-                                                ? "opacity-60"
-                                                : "hover:border-primary/50",
+                                                ? "is-disabled"
+                                                : "is-editable",
                                         )}
                                     >
                                         <input
                                             type="checkbox"
-                                            className="mt-1 h-4 w-4"
+                                            className="admin-permission-checkbox"
                                             checked={checked}
                                             onChange={() => togglePermission(permission.value)}
-                                            disabled={formData.role === "admin"}
+                                            disabled={formData.role === "admin"} 
                                         />
                                         <div>
-                                            <p className="font-medium text-black">
+                                            <p className="admin-permission-title">
                                                 {permission.label}
                                             </p>
-                                            <p className="text-xs text-muted-foreground">
+                                            <p className="admin-permission-desc">
                                                 {permission.description}
                                             </p>
                                         </div>
@@ -556,15 +561,14 @@ export default function UserEditPage() {
                         </div>
                     </FormField>
 
-                    <div className="flex items-center justify-between rounded-lg border p-4 text-black">
+                    <div className="admin-toggle-card">
                         <div>
-                            <p className="font-medium">Active User</p>
-                            <p className="text-sm text-muted-foreground">
+                            <p className="admin-toggle-card__title">Active User</p>
+                            <p className="admin-toggle-card__desc">
                                 Allow this user to access the admin panel
                             </p>
                         </div>
                         <Switch
-                            className="text-black"
                             checked={formData.isActive}
                             onCheckedChange={(checked) =>
                                 handleChange("isActive", checked)

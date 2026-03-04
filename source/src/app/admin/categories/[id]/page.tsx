@@ -34,6 +34,7 @@ import { useToast } from "@/components/admin/ui/ToastProvider";
 import { Skeleton } from "@/components/ui/skeleton";
 import { locales, defaultLocale } from "@/i18n/config";
 import type { Language } from "@/types/language.types";
+import { DeleteConfirmDialog } from "@/components/admin/ui/ConfirmDialog";
 
 type LocalizedValues = Record<string, string>;
 
@@ -162,6 +163,8 @@ export default function CategoryEditPage() {
 
     const [isLoading, setIsLoading] = useState(!isNew);
     const [isSaving, setIsSaving] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [isIconUploading, setIsIconUploading] = useState(false);
     const [isCoverUploading, setIsCoverUploading] = useState(false);
     const [categories, setCategories] = useState<CategoryOption[]>([]);
@@ -578,6 +581,34 @@ export default function CategoryEditPage() {
         }
     };
 
+    const handleDelete = async () => {
+        if (!categoryId) return;
+        setIsDeleting(true);
+        try {
+            const response = await fetch(`/api/categories/${categoryId}`, {
+                method: "DELETE",
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                success("Category deleted", "Category has been removed.");
+                router.push("/admin/categories");
+            } else {
+                const message =
+                    typeof data.error === "string"
+                        ? data.error
+                        : data.error?.message || "Please try again later";
+                error("Failed to delete category", message);
+            }
+        } catch (err) {
+            console.error("Failed to delete category", err);
+            error("Failed to delete category", "Please try again later");
+        } finally {
+            setIsDeleting(false);
+            setDeleteDialogOpen(false);
+        }
+    };
+
     if (isLoading) {
         return (
             <div className="space-y-6">
@@ -883,12 +914,36 @@ export default function CategoryEditPage() {
                     </FormField>
                 </FormSection>
 
-                <FormActions
-                    onCancel={() => router.push("/admin/categories")}
-                    submitLabel={isNew ? "Create Category" : "Save Changes"}
-                    isSubmitting={isSaving}
-                />
+                <div className="admin-form-actions">
+                    {!isNew && (
+                        <Button
+                            type="button"
+                            variant="outline"
+                            className="admin-action-cancel"
+                            onClick={() => setDeleteDialogOpen(true)}
+                            disabled={isDeleting}
+                        >
+                            Delete
+                        </Button>
+                    )}
+                    <FormActions
+                        onCancel={() => router.push("/admin/categories")}
+                        submitLabel={isNew ? "Create Category" : "Save Changes"}
+                        isSubmitting={isSaving}
+                    />
+                </div>
             </FormLayout>
+
+            {!isNew && (
+                <DeleteConfirmDialog
+                    open={deleteDialogOpen}
+                    onOpenChange={setDeleteDialogOpen}
+                    itemName="Category"
+                    description="Bu əməliyyat geri qaytarılmır. Kateqoriya silinəcək və varsa sub‑kateqoriyalar top‑level olacaq."
+                    onConfirm={handleDelete}
+                    isLoading={isDeleting}
+                />
+            )}
         </div>
     );
 }

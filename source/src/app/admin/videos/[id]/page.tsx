@@ -32,7 +32,6 @@ interface VideoFormData {
   slug: string;
   description: string;
   categoryId: string;
-  broadcastId: string;
   status: "draft" | "published";
   type: "video" | "list";
   duration: string;
@@ -48,11 +47,6 @@ interface VideoFormData {
 interface CategoryOption {
   id: string;
   name: string;
-}
-
-interface BroadcastOption {
-  id: string;
-  title: string;
 }
 
 const toLocalDateTimeInput = (iso: string) => {
@@ -91,7 +85,6 @@ export default function VideoEditPage() {
     slug: "",
     description: "",
     categoryId: "",
-    broadcastId: "",
     status: "draft",
     type: "video",
     duration: "",
@@ -107,7 +100,6 @@ export default function VideoEditPage() {
   const [isLoading, setIsLoading] = useState(!isNew);
   const [isSaving, setIsSaving] = useState(false);
   const [categories, setCategories] = useState<CategoryOption[]>([]);
-  const [broadcasts, setBroadcasts] = useState<BroadcastOption[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [autoSlug, setAutoSlug] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
@@ -127,7 +119,6 @@ export default function VideoEditPage() {
           slug: video.slug || "",
           description: video.description || "",
           categoryId: video.categoryId || "",
-          broadcastId: video.broadcastId || "",
           status: video.status || "draft",
           type: video.type || "video",
           duration: video.duration || "",
@@ -164,25 +155,12 @@ export default function VideoEditPage() {
     }
   }, []);
 
-  const fetchBroadcasts = useCallback(async () => {
-    try {
-      const response = await fetch("/api/broadcasts");
-      const data = await response.json();
-      if (data.success) {
-        setBroadcasts(data.data || []);
-      }
-    } catch {
-      // ignore
-    }
-  }, []);
-
   useEffect(() => {
     fetchCategories();
-    fetchBroadcasts();
     if (!isNew) {
       fetchVideo();
     }
-  }, [isNew, fetchVideo, fetchCategories, fetchBroadcasts]);
+  }, [isNew, fetchVideo, fetchCategories]);
 
   useEffect(() => {
     if (autoSlug && formData.title) {
@@ -268,7 +246,6 @@ export default function VideoEditPage() {
         slug: formData.slug.trim(),
         description: formData.description.trim() || null,
         categoryId: formData.categoryId || null,
-        broadcastId: formData.broadcastId || null,
         status: formData.status,
         type: formData.type,
         duration: formData.duration || null,
@@ -467,27 +444,6 @@ export default function VideoEditPage() {
                     {categories.map((cat) => (
                       <SelectItem key={cat.id} value={cat.id}>
                         {cat.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormField>
-
-              <FormField label="Broadcast" htmlFor="broadcast">
-                <Select
-                  value={formData.broadcastId}
-                  onValueChange={(value) =>
-                    handleChange("broadcastId", value === "none" ? "" : value)
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select broadcast" />
-                  </SelectTrigger>
-                  <SelectContent className="text-black">
-                    <SelectItem value="none">No Broadcast</SelectItem>
-                    {broadcasts.map((item) => (
-                      <SelectItem key={item.id} value={item.id}>
-                        {item.title}
                       </SelectItem>
                     ))}
                   </SelectContent>

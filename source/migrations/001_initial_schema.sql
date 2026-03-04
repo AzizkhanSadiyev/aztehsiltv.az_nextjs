@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS categories (
     slug VARCHAR(255) NOT NULL,
     description JSON NULL,
     parent_id CHAR(36) NULL,
-    icon VARCHAR(100) NULL,
+    icon VARCHAR(500) NULL,
     color VARCHAR(7) NOT NULL DEFAULT '#6366f1',
     `order` INT NOT NULL DEFAULT 0,
     positions JSON NULL COMMENT 'Array of position IDs (e.g., header/footer)',

@@ -19,7 +19,8 @@ import {
   getCategoryById,
   updateCategory,
   deleteCategory,
-  categoryHasChildren,
+  deleteCategoryWithReparent,
+  deleteCategoryCascade,
   isCategorySlugTaken
 } from '@/lib/data/categories.data';
 import { CategoryUpdateSchema } from '@/lib/models/category.model';
@@ -145,17 +146,20 @@ export async function DELETE(
   return withErrorHandling(async () => {
     const { id } = await context.params;
     
-    // Check if category has children
-    const hasChildren = await categoryHasChildren(id);
-    if (hasChildren) {
-      return errorResponse(
-        'CATEGORY_HAS_CHILDREN',
-        'Cannot delete category with subcategories',
-        400
-      );
+    const forceDelete = request.nextUrl.searchParams.get('force') === '1';
+
+    let deleted: boolean | number = false;
+
+    if (forceDelete) {
+      deleted = await deleteCategoryCascade(id);
+    } else {
+      try {
+        deleted = await deleteCategoryWithReparent(id);
+      } catch (err) {
+        console.error('deleteCategoryWithReparent failed, falling back to direct delete:', err);
+        deleted = await deleteCategory(id);
+      }
     }
-    
-    const deleted = await deleteCategory(id);
     
     if (!deleted) {
       return notFoundResponse('Category');

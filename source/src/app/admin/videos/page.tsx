@@ -41,7 +41,6 @@ interface VideoItem {
   slug: string;
   description?: string;
   categoryId: string | null;
-  broadcastId: string | null;
   status: "published" | "draft";
   views: number;
   isManshet: boolean;
@@ -55,11 +54,6 @@ interface VideoItem {
 interface CategoryOption {
   id: string;
   name: string;
-}
-
-interface BroadcastOption {
-  id: string;
-  title: string;
 }
 
 function StatusBadge({ status }: { status: string }) {
@@ -109,13 +103,11 @@ export default function VideosPage() {
 
   const [videos, setVideos] = useState<VideoItem[]>([]);
   const [categories, setCategories] = useState<CategoryOption[]>([]);
-  const [broadcasts, setBroadcasts] = useState<BroadcastOption[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
-  const [broadcastFilter, setBroadcastFilter] = useState<string>("all");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [videoToDelete, setVideoToDelete] = useState<VideoItem | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -150,23 +142,10 @@ export default function VideosPage() {
     }
   }, []);
 
-  const fetchBroadcasts = useCallback(async () => {
-    try {
-      const response = await fetch("/api/broadcasts");
-      const data = await response.json();
-      if (data.success) {
-        setBroadcasts(data.data || []);
-      }
-    } catch {
-      // ignore
-    }
-  }, []);
-
   useEffect(() => {
     fetchVideos();
     fetchCategories();
-    fetchBroadcasts();
-  }, [fetchVideos, fetchCategories, fetchBroadcasts]);
+  }, [fetchVideos, fetchCategories]);
 
   const handleDelete = async () => {
     if (!videoToDelete) return;
@@ -221,10 +200,6 @@ export default function VideosPage() {
   };
 
   const categoryMap = new Map(categories.map((cat) => [cat.id, cat.name]));
-  const broadcastMap = new Map(
-    broadcasts.map((item) => [item.id, item.title]),
-  );
-
   const filteredVideos = videos.filter((video) => {
     const matchesSearch =
       searchQuery === "" ||
@@ -234,9 +209,7 @@ export default function VideosPage() {
       statusFilter === "all" || video.status === statusFilter;
     const matchesCategory =
       categoryFilter === "all" || video.categoryId === categoryFilter;
-    const matchesBroadcast =
-      broadcastFilter === "all" || video.broadcastId === broadcastFilter;
-    return matchesSearch && matchesStatus && matchesCategory && matchesBroadcast;
+    return matchesSearch && matchesStatus && matchesCategory;
   });
 
   const columns: ColumnDef<VideoItem>[] = [
@@ -262,20 +235,6 @@ export default function VideosPage() {
         return (
           <span className="text-sm text-muted-foreground">
             {name || "Uncategorized"}
-          </span>
-        );
-      },
-    },
-    {
-      accessorKey: "broadcastId",
-      header: "Broadcast",
-      cell: ({ row }) => {
-        const name = row.original.broadcastId
-          ? broadcastMap.get(row.original.broadcastId)
-          : null;
-        return (
-          <span className="text-sm text-muted-foreground">
-            {name || "-"}
           </span>
         );
       },
@@ -451,19 +410,6 @@ export default function VideosPage() {
                 {categories.map((cat) => (
                   <option key={cat.id} value={cat.id}>
                     {cat.name}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={broadcastFilter}
-                onChange={(e) => setBroadcastFilter(e.target.value)}
-                className="admin-select"
-                aria-label="Filter by broadcast"
-              >
-                <option value="all">All Broadcasts</option>
-                {broadcasts.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.title}
                   </option>
                 ))}
               </select>

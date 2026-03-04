@@ -115,15 +115,16 @@ export default async function CategoriesPage({
     searchParams,
 }: {
     params: Promise<{ locale: string }>;
-    searchParams?: { page?: string | string[] };
+    searchParams?: Promise<{ page?: string | string[] }>;
 }) {
     const { locale } = await params;
     const dict = await getDictionary(locale as Locale);
+    const resolvedSearchParams = await searchParams;
     const itemsPerPage = 12;
     const totalItems = newsItems.length;
-    const pageParam = Array.isArray(searchParams?.page)
-        ? searchParams?.page[0]
-        : searchParams?.page;
+    const pageParam = Array.isArray(resolvedSearchParams?.page)
+        ? resolvedSearchParams?.page[0]
+        : resolvedSearchParams?.page;
     const parsedPage = Number.parseInt(pageParam ?? "1", 10);
     const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
     const currentPage = Number.isNaN(parsedPage)

@@ -287,6 +287,57 @@ export async function deleteCategory(id: string): Promise<boolean> {
   return affected > 0;
 }
 
+export async function deleteCategoryWithReparent(id: string): Promise<boolean> {
+  // Detach child categories and related videos before deleting
+  await updateQuery(`UPDATE categories SET parent_id = NULL WHERE parent_id = ?`, [id]);
+  await updateQuery(`UPDATE videos SET category_id = NULL WHERE category_id = ?`, [id]);
+  const affected = await updateQuery(`DELETE FROM categories WHERE id = ?`, [id]);
+  return affected > 0;
+}
+
+export async function deleteCategoryCascade(id: string): Promise<number> {
+  const categories = await getAllCategories();
+  if (!categories.length) return 0;
+
+  const childrenMap = new Map<string, string[]>();
+  categories.forEach((category) => {
+    if (category.parentId) {
+      const list = childrenMap.get(category.parentId) ?? [];
+      list.push(category.id);
+      childrenMap.set(category.parentId, list);
+    }
+  });
+
+  const toDelete = new Set<string>();
+  const stack = [id];
+  while (stack.length) {
+    const current = stack.pop();
+    if (!current || toDelete.has(current)) continue;
+    toDelete.add(current);
+    const children = childrenMap.get(current);
+    if (children) {
+      stack.push(...children);
+    }
+  }
+
+  const ids = Array.from(toDelete);
+  if (!ids.length) return 0;
+  const placeholders = ids.map(() => "?").join(",");
+  await updateQuery(
+    `UPDATE categories SET parent_id = NULL WHERE parent_id IN (${placeholders})`,
+    ids,
+  );
+  await updateQuery(
+    `UPDATE videos SET category_id = NULL WHERE category_id IN (${placeholders})`,
+    ids,
+  );
+  const affected = await updateQuery(
+    `DELETE FROM categories WHERE id IN (${placeholders})`,
+    ids,
+  );
+  return affected;
+}
+
 export async function getActiveCategories(): Promise<Category[]> {
   const rows = await query<CategoryRow>(
     `SELECT id,

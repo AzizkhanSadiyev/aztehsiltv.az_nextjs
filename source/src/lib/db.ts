@@ -23,6 +23,59 @@ const dbConfig = {
 // Create connection pool
 let pool: mysql.Pool | null = null;
 
+const CONNECTION_ERROR_CODES = new Set([
+  'PROTOCOL_CONNECTION_LOST',
+  'ECONNRESET',
+  'ECONNREFUSED',
+  'ETIMEDOUT',
+  'EPIPE',
+]);
+
+function isConnectionError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+  const code = (error as { code?: string }).code;
+  return Boolean(code && CONNECTION_ERROR_CODES.has(code));
+}
+
+async function getConnectionWithRetry(): Promise<mysql.PoolConnection> {
+  try {
+    return await getPool().getConnection();
+  } catch (error) {
+    if (isConnectionError(error)) {
+      await closePool();
+      return await getPool().getConnection();
+    }
+    throw error;
+  }
+}
+
+async function withConnection<T>(
+  executor: (connection: mysql.PoolConnection) => Promise<T>,
+): Promise<T> {
+  const run = async () => {
+    const connection = await getConnectionWithRetry();
+    try {
+      return await executor(connection);
+    } finally {
+      try {
+        connection.release();
+      } catch {
+        // ignore release errors
+      }
+    }
+  };
+
+  try {
+    return await run();
+  } catch (error) {
+    if (isConnectionError(error)) {
+      await closePool();
+      return await run();
+    }
+    throw error;
+  }
+}
+
 /**
  * Get database connection pool
  */
@@ -40,13 +93,10 @@ export async function query<T = any>(
   sql: string,
   params?: any[]
 ): Promise<T[]> {
-  const connection = await getPool().getConnection();
-  try {
+  return withConnection(async (connection) => {
     const [rows] = await connection.query(sql, params);
     return rows as T[];
-  } finally {
-    connection.release();
-  }
+  });
 }
 
 /**
@@ -67,13 +117,10 @@ export async function insert(
   sql: string,
   params?: any[]
 ): Promise<string | number> {
-  const connection = await getPool().getConnection();
-  try {
+  return withConnection(async (connection) => {
     const [result] = await connection.query(sql, params);
     return (result as any).insertId;
-  } finally {
-    connection.release();
-  }
+  });
 }
 
 /**
@@ -83,13 +130,10 @@ export async function update(
   sql: string,
   params?: any[]
 ): Promise<number> {
-  const connection = await getPool().getConnection();
-  try {
+  return withConnection(async (connection) => {
     const [result] = await connection.query(sql, params);
     return (result as any).affectedRows;
-  } finally {
-    connection.release();
-  }
+  });
 }
 
 /**
@@ -106,9 +150,24 @@ export async function remove(
  * Begin a transaction
  */
 export async function beginTransaction(): Promise<mysql.PoolConnection> {
-  const connection = await getPool().getConnection();
-  await connection.beginTransaction();
-  return connection;
+  const connection = await getConnectionWithRetry();
+  try {
+    await connection.beginTransaction();
+    return connection;
+  } catch (error) {
+    try {
+      connection.release();
+    } catch {
+      // ignore release errors
+    }
+    if (isConnectionError(error)) {
+      await closePool();
+      const retryConnection = await getConnectionWithRetry();
+      await retryConnection.beginTransaction();
+      return retryConnection;
+    }
+    throw error;
+  }
 }
 
 /**
