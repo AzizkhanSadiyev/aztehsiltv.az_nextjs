@@ -594,6 +594,22 @@ export async function updateVideo(
   };
 }
 
+export async function incrementVideoViews(
+  id: string,
+  amount: number = 1,
+): Promise<number | null> {
+  const affected = await updateQuery(
+    `UPDATE videos SET views = GREATEST(0, views + ?) WHERE id = ?`,
+    [amount, id],
+  );
+  if (!affected) return null;
+  const row = await queryOne<{ views: number }>(
+    `SELECT views FROM videos WHERE id = ?`,
+    [id],
+  );
+  return row?.views ?? null;
+}
+
 export async function deleteVideo(id: string): Promise<boolean> {
   const affected = await updateQuery(`DELETE FROM videos WHERE id = ?`, [id]);
   return affected > 0;

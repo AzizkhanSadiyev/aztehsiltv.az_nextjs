@@ -104,6 +104,41 @@ const uniqueTags = (tags: string[]) => {
 
 const tagsToString = (tags: string[]) => tags.join(", ");
 
+const formatDuration = (totalSeconds: number) => {
+  if (!Number.isFinite(totalSeconds) || totalSeconds <= 0) return "";
+  const total = Math.round(totalSeconds);
+  const hours = Math.floor(total / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  const seconds = total % 60;
+  if (hours > 0) {
+    return [
+      String(hours).padStart(2, "0"),
+      String(minutes).padStart(2, "0"),
+      String(seconds).padStart(2, "0"),
+    ].join(":");
+  }
+  return [String(minutes).padStart(2, "0"), String(seconds).padStart(2, "0")].join(
+    ":",
+  );
+};
+
+const getDurationFromFile = (file: File) =>
+  new Promise<number>((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const video = document.createElement("video");
+    video.preload = "metadata";
+    video.onloadedmetadata = () => {
+      const duration = video.duration;
+      URL.revokeObjectURL(url);
+      resolve(duration);
+    };
+    video.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("Failed to read video duration"));
+    };
+    video.src = url;
+  });
+
 export default function VideoEditPage() {
   const router = useRouter();
   const params = useParams();
@@ -162,6 +197,7 @@ export default function VideoEditPage() {
   const coverInputRef = useRef<HTMLInputElement | null>(null);
   const videoInputRef = useRef<HTMLInputElement | null>(null);
   const hasSetDefaultPublishedAt = useRef(false);
+  const hasManualDuration = useRef(false);
 
   const fetchVideo = useCallback(async () => {
     if (!videoId) return;
@@ -339,6 +375,7 @@ export default function VideoEditPage() {
   const isLiveSelected = categories.some(
     (category) => selectedCategoryIds.has(category.id) && isLiveCategory(category),
   );
+  const isDurationLocked = isLiveSelected && liveSourceType !== "upload";
 
   const fetchCategories = useCallback(async () => {
     try {
@@ -430,6 +467,13 @@ export default function VideoEditPage() {
   }, [autoSlug]);
 
   useEffect(() => {
+    if (!isDurationLocked) return;
+    if (!formData.duration) return;
+    setFormData((prev) => ({ ...prev, duration: "" }));
+    hasManualDuration.current = false;
+  }, [isDurationLocked, formData.duration]);
+
+  useEffect(() => {
     setFormData((prev) => ({
       ...prev,
       title: localizedTitle[activeLanguage] ?? "",
@@ -512,6 +556,10 @@ export default function VideoEditPage() {
         }
         return next;
       });
+    }
+
+    if (field === "duration") {
+      hasManualDuration.current = true;
     }
   };
 
@@ -653,8 +701,25 @@ export default function VideoEditPage() {
 
     setIsVideoUploading(true);
     try {
+      let detectedDuration = "";
+      try {
+        const durationSeconds = await getDurationFromFile(file);
+        detectedDuration = formatDuration(durationSeconds);
+      } catch {
+        detectedDuration = "";
+      }
       const url = await uploadVideoAsset(file, "video");
-      setFormData((prev) => ({ ...prev, sourceUrl: url }));
+      setFormData((prev) => {
+        const next = { ...prev, sourceUrl: url };
+        const shouldSetDuration =
+          !isDurationLocked &&
+          detectedDuration &&
+          (!hasManualDuration.current || !prev.duration);
+        if (shouldSetDuration) {
+          next.duration = detectedDuration;
+        }
+        return next;
+      });
       success("Video uploaded", "Video link updated");
     } catch (err) {
       error("Upload failed", "Please try again");
@@ -884,17 +949,30 @@ export default function VideoEditPage() {
                   </Select>
                 </FormField>
 
-                <FormField label="Duration" htmlFor="duration">
+                <FormField
+                  label="Duration"
+                  htmlFor="duration"
+                  hint={
+                    isDurationLocked
+                      ? "Live streams do not have a fixed duration."
+                      : "Auto-filled after upload. You can edit if needed."
+                  }
+                >
                   <Input
                     id="duration"
-                    type="time"
-                    value={formData.duration}
+                    type="text"
+                    value={isDurationLocked ? "" : formData.duration}
                     onChange={(e) => handleChange("duration", e.target.value)}
-                    placeholder="00:45"
+                    placeholder={isDurationLocked ? "Live" : "00:45"}
+                    disabled={isDurationLocked}
                   />
                 </FormField>
 
-                <FormField label="Views" htmlFor="views">
+                <FormField
+                  label="Views"
+                  htmlFor="views"
+                  hint="Views are counted automatically from the video page."
+                >
                   <Input
                     id="views"
                     type="number"
@@ -904,10 +982,20 @@ export default function VideoEditPage() {
                   />
                 </FormField>
 
+                <FormField label="Published At" htmlFor="publishedAt">
+                  <Input
+                    id="publishedAt"
+                    type="datetime-local"
+                    value={formData.publishedAt}
+                    onChange={(e) => handleChange("publishedAt", e.target.value)}
+                  />
+                </FormField>
+
                 <FormField
                   label={`Tags (${activeLanguage.toUpperCase()})`}
                   htmlFor="tags"
                   hint="Press Enter to add tags or click Add"
+                  className="col-span-full"
                 >
                   <div className="admin-tags">
                     <div className="admin-tags__input-row">
@@ -956,14 +1044,6 @@ export default function VideoEditPage() {
                   </div>
                 </FormField>
 
-                <FormField label="Published At" htmlFor="publishedAt">
-                  <Input
-                    id="publishedAt"
-                    type="datetime-local"
-                    value={formData.publishedAt}
-                    onChange={(e) => handleChange("publishedAt", e.target.value)}
-                  />
-                </FormField>
               </div>
             </FormSection>
           </FormMain>

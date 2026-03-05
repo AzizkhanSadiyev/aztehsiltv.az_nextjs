@@ -10,6 +10,7 @@ import NewsCard from "@/components/NewsCard/Card";
 import VideoPlayer from "@/components/VideoPlayer/VideoPlayer";
 import ShareBar from "@/components/ShareBar/ShareBar";
 import YouTubePlayer from "@/components/YouTubePlayer/YouTubePlayer";
+import VideoViewTracker from "@/components/VideoViewTracker/VideoViewTracker";
 import { getActiveCategories } from "@/lib/data/categories.data";
 import {
     getPublishedVideoBySlug,
@@ -450,6 +451,7 @@ export default async function VideoDetailPage({
             <div className="main_center">
                 <PageTopItems locale={resolvedLocale} dict={dict} />
             </div>
+            <VideoViewTracker videoId={video.id} />
             {/* Page top items */}
             <div className="main_center">
                 <div className="wrap_detail_page">
@@ -629,9 +631,9 @@ export default async function VideoDetailPage({
             </div>
 
             {/* Similar Videos */}
-            <div className="main_center pad_top_40">
+            <div className="main_center ">
                 <section className="detail_similar">
-                    <div className="section_wrap">
+                    <div className="section_wrap pad_top_40">
                         <div className="sect_header clearfix">
                             <div className="sect_title">{relatedLabel}</div>
                         </div>
