@@ -17,22 +17,42 @@ import { locales, defaultLocale } from "@/i18n/config";
 import { pickLocalized } from "@/lib/localization";
 import type { SiteSettings, SettingsLink } from "@/types/settings.types";
 
-interface Dictionary {
-    navigation: {
-        home: string;
-        categories: string;
-        contact: string;
-        about: string;
-        privacy: string;
-        terms: string;
+type Dictionary = Record<string, any> & {
+    navigation?: {
+        home?: string;
+        categories?: string;
+        contact?: string;
+        about?: string;
+        privacy?: string;
+        terms?: string;
     };
-    common: {
-        search: string;
-        loading: string;
-        noResults: string;
-        language: string;
+    common?: {
+        search?: string;
+        loading?: string;
+        noResults?: string;
+        language?: string;
     };
-}
+    home?: {
+        search?: {
+            title?: string;
+        };
+        subsearch?: {
+            title?: string;
+        };
+        livebtn?: {
+            title?: string;
+        };
+        allcategories?: {
+            title?: string;
+        };
+        allbroadcasts?: {
+            title?: string;
+        };
+        footer?: {
+            desc?: string;
+        };
+    };
+};
 
 interface HeaderProps {
     locale: string;
@@ -414,6 +434,20 @@ export default function Header({
             ...item,
             url: item.url!.trim(),
         }));
+    const dict = _dict ?? ({} as Dictionary);
+    const homeDict = dict?.home;
+    const searchLabel =
+        homeDict?.search?.title?.trim() || "Təhsildə axtar";
+    const searchPlaceholder =
+        homeDict?.subsearch?.title?.trim() ||
+        dict?.common?.search?.trim() ||
+        "Axtar...";
+    const liveLabel = homeDict?.livebtn?.title?.trim() || "Canlı yayın";
+    const allCategoriesLabel =
+        homeDict?.allcategories?.title?.trim() || "Bütün bölmələr";
+    const allBroadcastsLabel =
+        homeDict?.allbroadcasts?.title?.trim() || "Bütün verilişlər";
+    const footerSocialDesc = homeDict?.footer?.desc?.trim();
 
     useEffect(() => {
         let isMounted = true;
@@ -625,7 +659,7 @@ export default function Header({
                     {renderMenuLinks(styles.desk_little_menu)}
                 </div>
                 <div className={styles.logo_sect}>
-                    <Link href="/" className={styles.logo}>
+                    <Link href={`/${currentLocale}`} className={styles.logo}>
                         <div className={styles.logo_img}>
                             <Image
                                 className={styles["logo--light"]}
@@ -660,7 +694,7 @@ export default function Header({
                             onClick={toggleSearch}
                         >
                             <span className={cx("desktop", styles.pr_28)}>
-                                Təhsildə axtar
+                                {searchLabel}
                             </span>
                         </button>
                         <div className={styles.hd_line}></div>
@@ -734,7 +768,7 @@ export default function Header({
                                 className="btn_item btn_hotspot primary"
                                 style={{ marginLeft: 4 }}
                             >
-                                <span className="btn_icon">Canlı yayın</span>
+                                <span className="btn_icon">{liveLabel}</span>
                             </a>
                         </div>
                     </div>
@@ -745,10 +779,10 @@ export default function Header({
                     <div className={styles.search_row}>
                         <input
                             type="text"
-                            name="q"
-                            className={styles.search_input}
-                            placeholder="Axtar..."
-                        />
+                        name="q"
+                        className={styles.search_input}
+                        placeholder={searchPlaceholder}
+                    />
                         <button
                             type="submit"
                             className={cx(styles.search_opn, styles.icon_open)}
@@ -784,7 +818,7 @@ export default function Header({
                                         styles.icon_menu_live
                                     )}
                                 ></span>
-                                Canlı
+                                {liveCategory?.name || "Canlı"}
                             </Link>
                         </li>
                         <li>
@@ -795,7 +829,7 @@ export default function Header({
                                         styles.icon_menu_press
                                     )}
                                 ></span>
-                                Press-relizlər
+                                {pressCategory?.name || "Press-relizlər"}
                             </Link>
                         </li>
                         <li>
@@ -806,7 +840,7 @@ export default function Header({
                                         styles.icon_menu_short
                                     )}
                                 ></span>
-                                Shorts
+                                {shortsCategory?.name || "Shorts"}
                             </Link>
                         </li>
                         <li className={styles.has_sub}>
@@ -817,12 +851,12 @@ export default function Header({
                                         styles.icon_menu_exp
                                     )}
                                 ></span>
-                                Kəşf et
+                                {exploreParent?.name || "Kəşf et"}
                             </Link>
                             <ul className={styles.drop_menu}>
                                 <li>
                                     <Link href={categoryBasePath}>
-                                        Bütün bölmələr
+                                        {allCategoriesLabel}
                                     </Link>
                                 </li>
                                 {isCategoriesLoading ? (
@@ -859,12 +893,12 @@ export default function Header({
                                         styles.icon_menu_board
                                     )}
                                 ></span>
-                                Verilişlər
+                                {broadcastParent?.name || "Verilişlər"}
                             </Link>
                             <ul className={styles.drop_menu}>
                                 <li>
                                     <Link href={broadcastBasePath}>
-                                        Bütün verilişlər
+                                        {allBroadcastsLabel}
                                     </Link>
                                 </li>
                                 {isCategoriesLoading ? (
@@ -930,9 +964,15 @@ export default function Header({
                     <div className={mobileClass}>
                         <div className={styles.socials_section}>
                             <div className={styles.social_title}>
-                                Bizi
-                                <span>sosial şəbəkələrdən</span>
-                                izləyin:
+                                {footerSocialDesc ? (
+                                    footerSocialDesc
+                                ) : (
+                                    <>
+                                        Bizi{" "}
+                                        <span>sosial şəbəkələrdən</span>{" "}
+                                        izləyin:
+                                    </>
+                                )}
                             </div>
                             <ul className={styles.socials}>
                                 {socialLinks.map((item) => (

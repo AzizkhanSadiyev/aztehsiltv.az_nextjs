@@ -34,6 +34,7 @@ type SliderManshetProps = {
     items: ManshetItem[];
     loading?: boolean;
     title?: string;
+    watchLabel?: string;
     slidesPerView?: number;
     spaceBetween?: number;
     breakpoints?: Record<
@@ -46,6 +47,7 @@ export default function SliderNews({
     items,
     loading = false,
     title = "Manshet",
+    watchLabel,
     slidesPerView = 1,
     spaceBetween = 20,
     breakpoints,
@@ -108,7 +110,7 @@ export default function SliderNews({
                           ))
                         : items.map((item) => (
                               <SwiperSlide key={item.id}>
-                                  <ManshetCard {...item} />
+                                  <ManshetCard {...item} watchLabel={watchLabel} />
                               </SwiperSlide>
                           ))}
                 </Swiper>

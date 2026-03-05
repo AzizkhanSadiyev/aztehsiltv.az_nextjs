@@ -930,9 +930,13 @@
     flex-shrink: 0;
 }
 
+.admin-sidebar-logo img {
+    max-width: 100%;
+}
 .admin-sidebar-logo {
     display: flex;
-    align-items: center;
+    align-items: center;    
+    max-width: 100%;
     gap: 12px;
     font-weight: 600;
     font-size: var(--admin-font-size-lg);

@@ -366,14 +366,20 @@ export default async function VideoDetailPage({
         })
         .filter((item) => item.title.trim().length > 0);
 
-    const shareLabel = dict?.news?.shareNews ?? "Share";
-    const relatedLabel = dict?.news?.relatedNews ?? "Related videos";
+    const shareLabel =
+        dict?.home?.share?.title ||
+        dict?.news?.shareNews ||
+        "Share";
+    const relatedLabel =
+        dict?.home?.similar?.title ||
+        dict?.news?.relatedNews ||
+        "Related videos";
 
     return (
         <div className="section_wrap wrap_inner_page pad_bottom_40">
             {/* Page top items */}
             <div className="main_center">
-                <PageTopItems />
+                <PageTopItems locale={resolvedLocale} dict={dict} />
             </div>
             {/* Page top items */}
             <div className="main_center">

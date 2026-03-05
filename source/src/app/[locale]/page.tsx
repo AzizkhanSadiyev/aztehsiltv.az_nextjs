@@ -1,4 +1,5 @@
 import { type Locale, defaultLocale } from "@/i18n/config";
+import { getDictionary } from "@/i18n/getDictionary";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -34,6 +35,9 @@ export default async function HomePage({
     const { locale } = await params;
     const resolvedLocale = (locale || defaultLocale) as Locale;
     const categoryBasePath = `/${resolvedLocale}/categories`;
+
+    const dict = await getDictionary(resolvedLocale);
+    const homeDict = dict?.home ?? {};
 
     const categories = await getActiveCategories();
     const partners = await getPublishedPartners();
@@ -127,6 +131,13 @@ export default async function HomePage({
             );
         });
 
+    const getSectionTitle = (
+        category: (typeof activeCategories)[number] | undefined | null,
+    ) => {
+        if (!category) return "";
+        return getLocalizedCategoryName(category);
+    };
+
     const exploreParent = findCategory(
         ["kesf-et", "keshf-et", "kashf-et", "explore", "discover"],
         ["Kəşf et", "Kesf et", "Kashf et", "Explore", "Discover"],
@@ -154,11 +165,12 @@ export default async function HomePage({
     );
 
     const exploreAllLabel =
-        resolvedLocale === "az"
+        homeDict?.allcategories?.title?.trim() ||
+        (resolvedLocale === "az"
             ? "Bütün bölmələr"
             : resolvedLocale === "ru"
               ? "Все разделы"
-              : "All categories";
+              : "All categories");
 
     const exploreItems: ExploreItem[] = [
         {
@@ -230,6 +242,57 @@ export default async function HomePage({
         ["shorts", "short"],
         ["Shorts", "Short videolar", "Short videos"],
     );
+    const exploreTitle = getSectionTitle(exploreParent);
+    const broadcastTitle = getSectionTitle(broadcastParent);
+    const overseasTitle = getSectionTitle(overseasCategory);
+    const researchTitle = getSectionTitle(researchCategory);
+    const successTitle = getSectionTitle(successCategory);
+    const educationTitle = getSectionTitle(educationCategory);
+    const podcastTitle = getSectionTitle(podcastCategory);
+    const shortTitle = getSectionTitle(shortCategory) || "Shorts";
+    const latestTitle =
+        homeDict?.latest?.title?.trim() ||
+        homeDict?.lates?.title?.trim() ||
+        (resolvedLocale === "az"
+            ? "Son"
+            : resolvedLocale === "ru"
+              ? "Последний"
+              : "Latest");
+    const videosTitle =
+        homeDict?.videos?.title?.trim() ||
+        (resolvedLocale === "az"
+            ? "Videolar"
+            : resolvedLocale === "ru"
+              ? "Видео"
+              : "Videos");
+    const moreTitle =
+        homeDict?.more?.title?.trim() ||
+        (resolvedLocale === "az"
+            ? "Daha çox"
+            : resolvedLocale === "ru"
+              ? "Более"
+              : "More");
+    const dayVideoTitle =
+        homeDict?.dayvideo?.title?.trim() ||
+        (resolvedLocale === "az"
+            ? "Günün videosu"
+            : resolvedLocale === "ru"
+              ? "Видео дня"
+              : "Video of the day");
+    const watchTitle =
+        homeDict?.watch?.title?.trim() ||
+        (resolvedLocale === "az"
+            ? "Videonu izle"
+            : resolvedLocale === "ru"
+              ? "Смотреть видео"
+              : "Watch video");
+    const partnersTitle =
+        homeDict?.partners?.title?.trim() ||
+        (resolvedLocale === "az"
+            ? "Tərəfdaşlar"
+            : resolvedLocale === "ru"
+              ? "Партнеры"
+              : "Partners");
 
     const listLocale = {
         locale: resolvedLocale,
@@ -384,6 +447,7 @@ export default async function HomePage({
               date: formatDate(
                   topVideo.publishedAt || topVideo.updatedAt || topVideo.createdAt,
               ),
+              badgeText: dayVideoTitle,
           }
         : {};
 
@@ -391,7 +455,7 @@ export default async function HomePage({
         <>
             {/* Page top items */}
             <div className="main_center">
-                <PageTopItems />
+                <PageTopItems locale={resolvedLocale} dict={dict} />
             </div>
             {/* Page top items */}
 
@@ -403,17 +467,21 @@ export default async function HomePage({
                 <div className="main_center">
                     <div className="row_item_manshet same_h_block">
                         <div className="wrap_left">
-                            <SliderManhet items={manshetItems} slidesPerView={1} />
+                            <SliderManhet
+                                items={manshetItems}
+                                slidesPerView={1}
+                                watchLabel={watchTitle}
+                            />
                         </div>
                         <div className="wrap_right">
                             <section className="card video-card">
                                 <div className="video-card__header">
                                     <div className="section-label">
-                                        <span className="">Son</span>
-                                        <span className="accent">Videolar</span>
+                                        <span className="">{latestTitle}</span>
+                                        <span className="accent">{videosTitle}</span>
                                     </div>
                                     <Link className="link-more" href={categoryBasePath}>
-                                        {"Daha çox"}
+                                        {moreTitle}
                                         <span className="link-arrow">
                                             <Image
                                                 src="/assets/icons/chevron-right.svg"
@@ -477,7 +545,7 @@ export default async function HomePage({
             {/* Short videolar */}
             <div className="main_center">
                 <SliderShort
-                    title="Short videolar"
+                    title={shortTitle}
                     items={shortsItems}
                     slidesPerView={5}
                 />
@@ -490,7 +558,7 @@ export default async function HomePage({
                     <div className="main_center">
                         <div className="sect_header">
                             <Link href={categoryBasePath} className="sect_title">
-                                Son videolar
+                                {`${latestTitle} ${videosTitle}`.trim()}
                             </Link>
                         </div>
                         <div className="sect_body">
@@ -516,7 +584,7 @@ export default async function HomePage({
                                 title="AztehsilTv"
                                 className="more load_more_btn"
                             >
-                                Daha çox
+                                {moreTitle}
                             </Link>
                         </div>
                     </div>
@@ -525,11 +593,11 @@ export default async function HomePage({
             {/* section Last video  */}
 
             {/* Xaricdə təhsil */}
-            {overseasItems.length ? (
+            {overseasItems.length && overseasTitle ? (
                 <div className="desktop">
                     <div className="main_center">
                         <SliderNews
-                            title="Xaricdə təhsil"
+                            title={overseasTitle}
                             items={overseasItems}
                             slidesPerView={4}
                         />
@@ -539,23 +607,25 @@ export default async function HomePage({
             {/* Xaricdə təhsil */}
 
             {/* Kəşf et */}
-            <div className="desktop">
-                <div className="main_center">
-                    <SliderExplore
-                        title="Kəşf et"
-                        items={exploreItems}
-                        slidesPerView={6}
-                    />
+            {exploreTitle ? (
+                <div className="desktop">
+                    <div className="main_center">
+                        <SliderExplore
+                            title={exploreTitle}
+                            items={exploreItems}
+                            slidesPerView={6}
+                        />
+                    </div>
                 </div>
-            </div>
+            ) : null}
             {/* Kəşf et */}
 
             {/* Araşdırma */}
-            {researchItems.length ? (
+            {researchItems.length && researchTitle ? (
                 <div className="desktop">
                     <div className="main_center">
                         <SliderNews
-                            title="Araşdırma"
+                            title={researchTitle}
                             items={researchItems}
                             slidesPerView={3}
                         />
@@ -565,11 +635,11 @@ export default async function HomePage({
             {/* Araşdırma */}
 
             {/* Verilişlər */}
-            {broadcastItems.length ? (
+            {broadcastItems.length && broadcastTitle ? (
                 <div className="desktop">
                     <div className="main_center">
                         <SliderBroadcast
-                            title="Verilişlər"
+                            title={broadcastTitle}
                             items={broadcastItems}
                             slidesPerView={5}
                         />
@@ -579,11 +649,11 @@ export default async function HomePage({
             {/* Verilişlər */}
 
             {/* Uğur hekayələri */}
-            {successItems.length ? (
+            {successItems.length && successTitle ? (
                 <div className="desktop">
                     <div className="main_center">
                         <SliderNews
-                            title="Uğur hekayələri"
+                            title={successTitle}
                             items={successItems}
                             slidesPerView={4}
                         />
@@ -601,11 +671,11 @@ export default async function HomePage({
             {/* TopVideo */}
 
             {/* Təhsil saatı */}
-            {educationItems.length ? (
+            {educationItems.length && educationTitle ? (
                 <div className="desktop">
                     <div className="main_center">
                         <SliderNews
-                            title="Təhsil saatı"
+                            title={educationTitle}
                             items={educationItems}
                             slidesPerView={3}
                         />
@@ -615,11 +685,11 @@ export default async function HomePage({
             {/* Təhsil saatı */}
 
             {/* Podkast */}
-            {podcastItems.length ? (
+            {podcastItems.length && podcastTitle ? (
                 <div className="desktop">
                     <div className="main_center">
                         <SliderNews
-                            title="Podkast"
+                            title={podcastTitle}
                             items={podcastItems}
                             slidesPerView={4}
                         />
@@ -631,6 +701,7 @@ export default async function HomePage({
             {/* Partners */}
             <div className="main_center">
                 <SliderPartner
+                    title={partnersTitle}
                     partners={partners.map((partner) => ({
                         id: partner.id,
                         name: partner.name,

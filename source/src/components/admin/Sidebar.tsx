@@ -16,6 +16,7 @@ import {
   Settings,
   ChevronLeft,
   X,
+  FileText,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -31,6 +32,7 @@ const navItems = [
   // { href: "/admin/broadcasts", label: "Broadcasts", icon: Radio },
   { href: "/admin/categories", label: "Categories", icon: FolderTree },
   { href: "/admin/languages", label: "Languages", icon: Languages },
+  { href: "/admin/translations", label: "Translations", icon: FileText },
   { href: "/admin/media", label: "Media", icon: Image },
   { href: "/admin/partners", label: "Partners", icon: Handshake },
   { href: "/admin/users", label: "Users", icon: Users },

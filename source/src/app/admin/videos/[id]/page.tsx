@@ -131,7 +131,7 @@ export default function VideoEditPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [languages, setLanguages] = useState<LanguageOption[]>([]);
-  const [activeLanguage, setActiveLanguage] = useState<string>(defaultLocale);
+  const [activeLanguage, setActiveLanguage] = useState<string>("az");
   const [localizedTitle, setLocalizedTitle] = useState<Record<string, string>>(
     {},
   );
@@ -305,10 +305,19 @@ export default function VideoEditPage() {
 
   useEffect(() => {
     if (!languages.length) return;
+    if (isNew) {
+      const preferred =
+        languages.find((lang) => lang.code === "az")?.code ||
+        languages[0].code;
+      if (activeLanguage !== preferred) {
+        setActiveLanguage(preferred);
+      }
+      return;
+    }
     if (!languages.some((lang) => lang.code === activeLanguage)) {
       setActiveLanguage(languages[0].code);
     }
-  }, [languages, activeLanguage]);
+  }, [languages, activeLanguage, isNew]);
 
   useEffect(() => {
     if (autoSlug && formData.title && activeLanguage === defaultLocale) {

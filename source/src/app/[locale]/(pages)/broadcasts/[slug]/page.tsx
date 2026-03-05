@@ -124,7 +124,7 @@ export default async function BroadcastCategoryPage({
     return (
         <div className="section_wrap pad_bottom_40">
             <div className="main_center">
-                <PageTopItems />
+                <PageTopItems locale={resolvedLocale} dict={dict} />
             </div>
 
             <div className="main_center margin_top_12">

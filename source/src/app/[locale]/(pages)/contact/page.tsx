@@ -1,8 +1,11 @@
 import Link from "next/link";
 import Image from "next/image";
-import { type Locale } from "@/i18n/config";
+import { type Locale, defaultLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/getDictionary";
-import { notFound } from "next/navigation";
+import { getSiteSettings } from "@/lib/data/settings.data";
+import { getPublishedVideos } from "@/lib/data/videos.data";
+import { pickLocalized, pickLocalizedExact } from "@/lib/localization";
+import type { Video } from "@/types/video.types";
 
 import PageTopItems from "@/components/PageTopItems/PageTopItems";
 import NewsCard from "@/components/NewsCard/Card";
@@ -19,51 +22,11 @@ type NewsItem = {
     type: "video" | "list";
 };
 
-const similarItems: NewsItem[] = [
-    {
-        id: 1,
-        title: "Konqres kend mektebleri ucun Fondu yeniden berpa etdi",
-        image: "/assets/images/card_3.png",
-        views: "1.2 M baxis",
-        date: "28 Dek 2026",
-        category: "Imtahan",
-        duration: "00:35",
-        slug: "konqres-kend-mektebleri-fond",
-        type: "video",
-    },
-    {
-        id: 2,
-        title: "STEAM laboratoriyalari ucun yeni tecrube setleri paylandi",
-        image: "/assets/images/card_4.png",
-        views: "540 K baxis",
-        date: "25 Dek 2026",
-        category: "Tehsil",
-        duration: "00:42",
-        slug: "steam-laboratoriyalari-tecrube-setleri",
-        type: "video",
-    },
-    {
-        id: 3,
-        title: '"Silikon Sehrasi"nda bir mekteb sagirdleri yarimkecirici buna qosulmaga hazirlayir',
-        image: "/assets/images/card_1.png",
-        views: "1.2 M baxis",
-        date: "28 Dek 2026",
-        category: "Verilis",
-        duration: "00:35",
-        slug: "silikon-sehrasi-mekteb-sagirdleri",
-        type: "video",
-    },
-    {
-        id: 4,
-        title: "Tramp mekteb naharlarina tam sud qaytaran qanun imzaladi",
-        image: "/assets/images/card_2.png",
-        views: "960 K baxis",
-        date: "27 Dek 2026",
-        category: "Verilis",
-        duration: "00:35",
-        slug: "tramp-mekteb-naharlari-sud-qanun",
-        type: "video",
-    },
+const fallbackImages = [
+    "/assets/images/card_1.png",
+    "/assets/images/card_2.png",
+    "/assets/images/card_3.png",
+    "/assets/images/card_4.png",
 ];
 
 const shareItems = [
@@ -103,13 +66,76 @@ const shareItems = [
 export default async function VideoDetailPage({
     params,
 }: {
-    params: Promise<{ locale: string; slug: string }>;
+    params: Promise<{ locale: string }>;
 }) {
-    const { locale, slug } = await params;
+    const { locale } = await params;
 
-    const dict = await getDictionary(locale as Locale);
+    const resolvedLocale = locale as Locale;
+    const dict = await getDictionary(resolvedLocale);
+    const homeDict = dict?.home ?? {};
+    const settings = await getSiteSettings();
     const categoryBasePath = `/${locale}/categories`;
-    const sidebarItems = [...similarItems, ...similarItems].slice(0, 8);
+    const contact = settings?.contact ?? { email: "", phone: "", address: "" };
+    const phoneValue = contact.phone?.trim() || "";
+    const emailValue = contact.email?.trim() || "";
+    const addressValue = contact.address?.trim() || "";
+    const phoneHref = phoneValue
+        ? `tel:${phoneValue.replace(/\s+/g, "")}`
+        : "#";
+    const emailHref = emailValue ? `mailto:${emailValue}` : "#";
+    const latestTitle =
+        homeDict?.latest?.title?.trim() ||
+        homeDict?.lates?.title?.trim() ||
+        (locale === "az" ? "Son" : locale === "ru" ? "Последний" : "Latest");
+    const videosTitle =
+        homeDict?.videos?.title?.trim() ||
+        (locale === "az" ? "Videolar" : locale === "ru" ? "Видео" : "Videos");
+    const moreTitle =
+        homeDict?.more?.title?.trim() ||
+        (locale === "az" ? "Daha çox" : locale === "ru" ? "Более" : "More");
+    const footerSocialDesc = homeDict?.footer?.desc?.trim();
+    const socialLinks = [
+        {
+            id: "facebook",
+            label: "Facebook",
+            url: settings?.social?.facebook,
+            light: "/assets/icons/icon_facebook_light.svg",
+            dark: "/assets/icons/icon_facebook.svg",
+        },
+        {
+            id: "instagram",
+            label: "Instagram",
+            url: settings?.social?.instagram,
+            light: "/assets/icons/icon_instagram_light.svg",
+            dark: "/assets/icons/icon_instagram.svg",
+        },
+        {
+            id: "youtube",
+            label: "Youtube",
+            url: settings?.social?.youtube,
+            light: "/assets/icons/icon_ytb_light.svg",
+            dark: "/assets/icons/icon_ytb.svg",
+        },
+        {
+            id: "telegram",
+            label: "Telegram",
+            url: settings?.social?.telegram,
+            light: "/assets/icons/icon_telegram_light.svg",
+            dark: "/assets/icons/icon_telegram.svg",
+        },
+        {
+            id: "tiktok",
+            label: "Tiktok",
+            url: settings?.social?.tiktok,
+            light: "/assets/icons/icon_tiktok_light.svg",
+            dark: "/assets/icons/icon_tiktok.svg",
+        },
+    ]
+        .filter((item) => item.url && item.url.trim().length > 0)
+        .map((item) => ({
+            ...item,
+            url: item.url!.trim(),
+        }));
 
     const resolveSlug = (slug: string) => {
         if (!slug || slug === "#") return "#";
@@ -124,11 +150,76 @@ export default async function VideoDetailPage({
         return `${categoryBasePath}/${slug}`;
     };
 
+    const formatViews = (value: number) => {
+        const compact = new Intl.NumberFormat(resolvedLocale, {
+            notation: "compact",
+            maximumFractionDigits: 1,
+        }).format(Math.max(0, value || 0));
+        const suffix =
+            resolvedLocale === "en"
+                ? "views"
+                : resolvedLocale === "ru"
+                  ? "views"
+                  : "baxış";
+        return `${compact} ${suffix}`;
+    };
+
+    const formatDate = (value: string | null | undefined) => {
+        if (!value) return "";
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return "";
+        return new Intl.DateTimeFormat(resolvedLocale, {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+        }).format(date);
+    };
+
+    const getVideoTitle = (video: Video) =>
+        pickLocalizedExact(video.title, resolvedLocale, defaultLocale).trim();
+
+    const listLocale = {
+        locale: resolvedLocale,
+        fallbackLocale: defaultLocale,
+    };
+
+    const sidebarVideosRaw = await getPublishedVideos({
+        flags: { isSidebar: true },
+        limit: 8,
+        ...listLocale,
+    });
+    const fallbackVideosRaw =
+        sidebarVideosRaw.length > 0
+            ? []
+            : await getPublishedVideos({ limit: 8, ...listLocale });
+    const sidebarSource = sidebarVideosRaw.length
+        ? sidebarVideosRaw
+        : fallbackVideosRaw;
+
+    const sidebarItems: NewsItem[] = sidebarSource.map((video, index) => {
+        const slugValue = pickLocalized(video.slug, resolvedLocale, defaultLocale);
+        return {
+            id: index + 1,
+            title: getVideoTitle(video),
+            image:
+                video.coverUrl ||
+                fallbackImages[index % fallbackImages.length],
+            views: formatViews(video.views ?? 0),
+            date: formatDate(
+                video.publishedAt || video.updatedAt || video.createdAt,
+            ),
+            category: "",
+            duration: video.duration || "",
+            slug: slugValue || "#",
+            type: video.type ?? "video",
+        };
+    });
+
     return (
         <div className="section_wrap wrap_inner_page pad_bottom_40">
             {/* Page top items */}
             <div className="main_center">
-                <PageTopItems />
+                <PageTopItems locale={locale} dict={dict} />
             </div>
             {/* Page top items */}
             <div
@@ -137,7 +228,7 @@ export default async function VideoDetailPage({
                 <div className="main_center">
                     <div className="section_wrap wrap_contact_page">
                         <div className="sect_header">
-                            <h1 className="sect_title">Bizimlə əlaqə</h1>
+                            <h1 className="sect_title">{dict.contact?.title || "Contact"}</h1>
                         </div>
                         <div className="sect_body clearfix">
                             <div className="wrap_left">
@@ -189,257 +280,115 @@ export default async function VideoDetailPage({
                                         </div>
                                     </div>
                                     <div className="card contact-card">
-                                        <div className="card-title">
-                                            Əlaqə məlumatları
-                                        </div>
-                                        <ul className="contact-list">
-                                            <li className="contact-row">
-                                                <span
-                                                    className="contact-icon"
-                                                >
-                                                    <Image
-                                                        src="/assets/icons/phone.svg"
-                                                        alt="Telefon"
-                                                        width="20"
-                                                        height="20"
-                                                    />
-                                                </span>
-                                                <div
-                                                    className="contact-text"
-                                                >
-                                                    <Link
-                                                        href="tel:+994000000000"
-                                                        className="contact-value"
-                                                    >
-                                                        +994 00 000 00
-                                                        00
-                                                    </Link>
-                                                    <div
-                                                        className="contact-label"
-                                                    >
-                                                        Telefon
+                                        <div className="card-title">{dict.contact?.title || "Contact"}</div>
+                                                                                <ul className="contact-list">
+                                            {phoneValue && (
+                                                <li className="contact-row">
+                                                    <span className="contact-icon">
+                                                        <Image
+                                                            src="/assets/icons/phone.svg"
+                                                            alt={dict.contact?.phone || "Phone"}
+                                                            width="20"
+                                                            height="20"
+                                                        />
+                                                    </span>
+                                                    <div className="contact-text">
+                                                        <Link
+                                                            href={phoneHref}
+                                                            className="contact-value"
+                                                        >
+                                                            {phoneValue}
+                                                        </Link>
+                                                        <div className="contact-label">
+                                                            {dict.contact?.phone || "Phone"}
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            </li>
-                                            <li className="contact-row">
-                                                <span
-                                                    className="contact-icon"
-                                                >
-                                                    <Image
-                                                        src="/assets/icons/mail.svg"
-                                                        alt="E-poçt"
-                                                        width="20"
-                                                        height="20"
-                                                    />
-                                                </span>
-                                                <div
-                                                    className="contact-text"
-                                                >
-                                                    <Link
-                                                        href="mailto:info@aztehsil.com"
-                                                        className="contact-value"
-                                                    >
-                                                        info@aztehsil.com
-                                                    </Link>
-                                                    <div
-                                                        className="contact-label"
-                                                    >
-                                                        E-poçt
+                                                </li>
+                                            )}
+                                            {emailValue && (
+                                                <li className="contact-row">
+                                                    <span className="contact-icon">
+                                                        <Image
+                                                            src="/assets/icons/mail.svg"
+                                                            alt={dict.contact?.email || "Email"}
+                                                            width="20"
+                                                            height="20"
+                                                        />
+                                                    </span>
+                                                    <div className="contact-text">
+                                                        <Link
+                                                            href={emailHref}
+                                                            className="contact-value"
+                                                        >
+                                                            {emailValue}
+                                                        </Link>
+                                                        <div className="contact-label">
+                                                            {dict.contact?.email || "Email"}
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            </li>
-                                            <li className="contact-row">
-                                                <span
-                                                    className="contact-icon"
-                                                >
-                                                    <Image
-                                                        src="/assets/icons/location.svg"
-                                                        alt="Ünvan"
-                                                        width="20"
-                                                        height="20"
-                                                    />
-                                                </span>
-                                                <div
-                                                    className="contact-text"
-                                                >
-                                                    <div
-                                                        className="contact-value"
-                                                    >
-                                                        Bakı şəh, Səbail
-                                                        ray, Maqomayev
-                                                        3. 78
+                                                </li>
+                                            )}
+                                            {addressValue && (
+                                                <li className="contact-row">
+                                                    <span className="contact-icon">
+                                                        <Image
+                                                            src="/assets/icons/location.svg"
+                                                            alt={dict.contact?.address || "Address"}
+                                                            width="20"
+                                                            height="20"
+                                                        />
+                                                    </span>
+                                                    <div className="contact-text">
+                                                        <div className="contact-value">
+                                                            {addressValue}
+                                                        </div>
+                                                        <div className="contact-label">
+                                                            {dict.contact?.address || "Address"}
+                                                        </div>
                                                     </div>
-                                                    <div
-                                                        className="contact-label"
-                                                    >
-                                                        Ünvan
-                                                    </div>
-                                                </div>
-                                            </li>
+                                                </li>
+                                            )}
                                         </ul>
                                     </div>
-                                    <div className="socials_section">
-                                        <div className="social_title">
-                                            Sosial şəbəkələr
+                                    {socialLinks.length > 0 && (
+                                        <div className="socials_section">
+                                            <div className="social_title">
+                                                {footerSocialDesc || "Social networks"}
+                                            </div>
+                                            <ul className="socials">
+                                                {socialLinks.map((item) => (
+                                                    <li key={item.id}>
+                                                        <Link
+                                                            href={item.url as string}
+                                                            className="social_icon"
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                        >
+                                                            <span className="scl_icn">
+                                                                <Image
+                                                                    className="logo--light"
+                                                                    src={item.light}
+                                                                    alt={item.label}
+                                                                    width="16"
+                                                                    height="16"
+                                                                />
+                                                                <Image
+                                                                    className="logo--dark"
+                                                                    src={item.dark}
+                                                                    alt={item.label}
+                                                                    width="16"
+                                                                    height="16"
+                                                                />
+                                                            </span>
+                                                            <span className="scl_name">
+                                                                {item.label}
+                                                            </span>
+                                                        </Link>
+                                                    </li>
+                                                ))}
+                                            </ul>
                                         </div>
-                                        <ul className="socials">
-                                            <li>
-                                                <Link
-                                                    href=""
-                                                    className="social_icon"
-                                                    target="_blank"
-                                                >
-                                                    <span
-                                                        className="scl_icn"
-                                                    >
-                                                        <Image
-                                                            className="logo--light"
-                                                            src="/assets/icons/icon_facebook_light.svg"
-                                                            alt="facebook"
-                                                            width="16"
-                                                            height="16"
-                                                        />
-                                                        <Image
-                                                            className="logo--dark"
-                                                            src="/assets/icons/icon_facebook.svg"
-                                                            alt="facebook"
-                                                            width="16"
-                                                            height="16"
-                                                        />
-                                                    </span>
-                                                    <span
-                                                        className="scl_name"
-                                                    >
-                                                        Facebook
-                                                    </span>
-                                                </Link>
-                                            </li>
-                                            <li>
-                                                <Link
-                                                    href=""
-                                                    className="social_icon"
-                                                    target="_blank"
-                                                >
-                                                    <span
-                                                        className="scl_icn"
-                                                    >
-                                                        <Image
-                                                            className="logo--light"
-                                                            src="/assets/icons/icon_instagram_light.svg"
-                                                            alt="instagram"
-                                                            width="16"
-                                                            height="16"
-                                                        />
-                                                        <Image
-                                                            className="logo--dark"
-                                                            src="/assets/icons/icon_instagram.svg"
-                                                            alt="instagram"
-                                                            width="16"
-                                                            height="16"
-                                                        />
-                                                    </span>
-                                                    <span
-                                                        className="scl_name"
-                                                    >
-                                                        Instagram
-                                                    </span>
-                                                </Link>
-                                            </li>
-                                            <li>
-                                                <Link
-                                                    href=""
-                                                    className="social_icon"
-                                                    target="_blank"
-                                                >
-                                                    <span
-                                                        className="scl_icn"
-                                                    >
-                                                        <Image
-                                                            className="logo--light"
-                                                            src="/assets/icons/icon_ytb_light.svg"
-                                                            alt="youtube"
-                                                            width="16"
-                                                            height="16"
-                                                        />
-                                                        <Image
-                                                            className="logo--dark"
-                                                            src="/assets/icons/icon_ytb.svg"
-                                                            alt="youtube"
-                                                            width="16"
-                                                            height="16"
-                                                        />
-                                                    </span>
-                                                    <span
-                                                        className="scl_name"
-                                                    >
-                                                        Youtube
-                                                    </span>
-                                                </Link>
-                                            </li>
-                                            <li>
-                                                <Link
-                                                    href=""
-                                                    className="social_icon"
-                                                    target="_blank"
-                                                >
-                                                    <span
-                                                        className="scl_icn"
-                                                    >
-                                                        <Image
-                                                            className="logo--light"
-                                                            src="/assets/icons/icon_telegram_light.svg"
-                                                            alt="telegram"
-                                                            width="16"
-                                                            height="16"
-                                                        />
-                                                        <Image
-                                                            className="logo--dark"
-                                                            src="/assets/icons/icon_telegram.svg"
-                                                            alt="telegram"
-                                                            width="16"
-                                                            height="16"
-                                                        />
-                                                    </span>
-                                                    <span
-                                                        className="scl_name"
-                                                    >
-                                                        Telegram
-                                                    </span>
-                                                </Link>
-                                            </li>
-                                            <li>
-                                                <Link
-                                                    href=""
-                                                    className="social_icon"
-                                                    target="_blank"
-                                                >
-                                                    <span
-                                                        className="scl_icn"
-                                                    >
-                                                        <Image
-                                                            className="logo--light"
-                                                            src="/assets/icons/icon_tiktok_light.svg"
-                                                            alt="tiktok"
-                                                            width="16"
-                                                            height="16"
-                                                        />
-                                                        <Image
-                                                            className="logo--dark"
-                                                            src="/assets/icons/icon_tiktok.svg"
-                                                            alt="tiktok"
-                                                            width="16"
-                                                            height="16"
-                                                        />
-                                                    </span>
-                                                    <span
-                                                        className="scl_name"
-                                                    >
-                                                        Tiktok
-                                                    </span>
-                                                </Link>
-                                            </li>
-                                        </ul>
-                                    </div>
+                                    )}
                                 </div>
                             </div>
 
@@ -447,14 +396,16 @@ export default async function VideoDetailPage({
                                 <section className="card video-card">
                                     <div className="video-card__header">
                                         <div className="section-label">
-                                            <span className="">Son</span>
-                                            <span className="accent">Videolar</span>
+                                            <span className="">{latestTitle}</span>
+                                            <span className="accent">
+                                                {videosTitle}
+                                            </span>
                                         </div>
                                         <Link
                                             className="link-more"
                                             href={categoryBasePath}
                                         >
-                                            {"Daha çox"}
+                                            {moreTitle}
                                             <span className="link-arrow">
                                                 <Image
                                                     src="/assets/icons/chevron-right.svg"
@@ -512,3 +463,6 @@ export default async function VideoDetailPage({
         </div>
     );
 }
+
+
+

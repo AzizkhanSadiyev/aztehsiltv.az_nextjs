@@ -2,11 +2,24 @@ import Link from "next/link";
 import Image from "next/image";
 import styles from "./PageTopItems.module.css";
 import { getSiteSettings } from "@/lib/data/settings.data";
+import { getDictionary } from "@/i18n/getDictionary";
+import { defaultLocale, type Locale } from "@/i18n/config";
 
 const cx = (...classes: Array<string | false | null | undefined>) =>
     classes.filter(Boolean).join(" ");
 
-export default async function PageTopItems() {
+type PageTopItemsProps = {
+    locale?: string;
+    dict?: Record<string, any>;
+};
+
+export default async function PageTopItems({
+    locale,
+    dict,
+}: PageTopItemsProps = {}) {
+    const resolvedLocale = (locale || defaultLocale) as Locale;
+    const resolvedDict = dict ?? (await getDictionary(resolvedLocale));
+    const footerSocialDesc = resolvedDict?.home?.footer?.desc?.trim();
     const settings = await getSiteSettings();
     const socialLinks = [
         {
@@ -61,7 +74,15 @@ export default async function PageTopItems() {
                     )}
                 >
                     <div className={styles.socialTitle}>
-                        Bizi <span>sosial şəbəkələrdən</span> izləyin:
+                        {footerSocialDesc ? (
+                            footerSocialDesc
+                        ) : (
+                            <>
+                                Bizi{' '}
+                                <span>sosial şəbəkələrdən</span>{' '}
+                                izl?yin:
+                            </>
+                        )}
                     </div>
                     <ul className={styles.socials}>
                         {socialLinks.map((item) => (

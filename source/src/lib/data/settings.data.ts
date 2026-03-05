@@ -5,6 +5,7 @@
 import { v4 as uuidv4 } from "uuid";
 import { queryOne, insert, update as updateQuery } from "@/lib/db";
 import type { SiteSettings } from "@/types/settings.types";
+import type { SettingsUpdateInput } from "@/lib/models/settings.model";
 import { defaultLocale } from "@/i18n/config";
 
 type SettingsRow = {
@@ -182,7 +183,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
 }
 
 export async function updateSiteSettings(
-  update: Partial<SiteSettings>,
+  update: SettingsUpdateInput,
 ): Promise<SiteSettings> {
   const current = await getSiteSettings();
   const merged = deepMerge(current, update);

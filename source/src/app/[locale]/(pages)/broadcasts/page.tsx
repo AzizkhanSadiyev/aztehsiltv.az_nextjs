@@ -61,6 +61,10 @@ export default async function BroadcastsPage({
         });
 
     const parent = findParent();
+    const allBroadcastsTitle =
+        _dict?.home?.allbroadcasts?.title ||
+        parent?.name ||
+        (resolvedLocale === "ru" ? "Вещания" : "Broadcasts");
     const children = parent
         ? categories.filter((category) => category.parentId === parent.id)
         : [];
@@ -112,7 +116,7 @@ export default async function BroadcastsPage({
         <div className={`section_wrap pad_bottom_40`}>
             {/* Page top items */}
             <div className="main_center">
-                <PageTopItems />
+                <PageTopItems locale={resolvedLocale} dict={_dict} />
             </div>
             {/* Page top items */}
             
@@ -121,7 +125,9 @@ export default async function BroadcastsPage({
                 <div className="section_wrap">
                     <div className="sect_header">
                         <div>
-                            <h1 className="sect_title">Verilişlər</h1>
+                            <h1 className="sect_title">
+                                {allBroadcastsTitle}
+                            </h1>
                         </div>
                     </div>
                     <div className="row_item gap_20">

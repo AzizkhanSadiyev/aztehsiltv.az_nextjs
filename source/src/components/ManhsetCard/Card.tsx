@@ -19,6 +19,7 @@ type ManshetItemProps = {
     titleAs?: ElementType;
     loading?: boolean;
     variant?: "default" | "short";
+    watchLabel?: string;
 };
 
 /* ================= COMPONENT ================= */
@@ -37,6 +38,7 @@ export default function ManshetItem({
     titleAs: TitleTag = "div",
     loading = false,
     variant = "default",
+    watchLabel = "Videonu izle",
 }: ManshetItemProps) {
     const params = useParams<{ locale?: string | string[] }>();
     const localeParam =
@@ -142,7 +144,7 @@ export default function ManshetItem({
                                 styles.action_button,
                             )}
                         >
-                            <span className="btn_icon">Videonu izle</span>
+                            <span className="btn_icon">{watchLabel}</span>
                         </div>
                     ) : null}
                 </div>

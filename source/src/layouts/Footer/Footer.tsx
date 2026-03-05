@@ -8,16 +8,21 @@ import { pickLocalized } from "@/lib/localization";
 import { getSiteSettings } from "@/lib/data/settings.data";
 import type { SiteSettings, SettingsLink } from "@/types/settings.types";
 
-interface Dictionary {
-    navigation: {
-        home: string;
-        categories: string;
-        contact: string;
-        about: string;
-        privacy: string;
-        terms: string;
+type Dictionary = Record<string, any> & {
+    navigation?: {
+        home?: string;
+        categories?: string;
+        contact?: string;
+        about?: string;
+        privacy?: string;
+        terms?: string;
     };
-}
+    home?: {
+        footer?: {
+            desc?: string;
+        };
+    };
+};
 
 interface FooterProps {
     locale: string;
@@ -126,6 +131,8 @@ export default async function Footer({
             ...item,
             url: item.url!.trim(),
         }));
+    const dict = _dict ?? ({} as Dictionary);
+    const footerSocialDesc = dict?.home?.footer?.desc?.trim();
     const copyrightText = pickLocalized(
         resolvedSettings.footer?.copyright,
         locale,
@@ -138,7 +145,7 @@ export default async function Footer({
                     <div className={styles["site-footer__top"]}>
                         <div className={styles["middle-grid"]}>
                             <div className={styles["footer-brand"]}>
-                                <Link href="/" className={styles["footer-logo"]}>
+                                <Link href={`/${currentLocale}`} className={styles["footer-logo"]}>
                                     <div className={styles.logo_img}>
                                         <Image
                                             src="/assets/icons/logo_dark.svg"
@@ -172,9 +179,15 @@ export default async function Footer({
                     <div className={styles["site-footer__middle"]}>
                         <div className={styles.socials_section}>
                             <div className={styles.social_title}>
-                                Bizi
-                                <span>sosial şəbəkələrdən</span>
-                                izləyin:
+                                {footerSocialDesc ? (
+                                    footerSocialDesc
+                                ) : (
+                                    <>
+                                        Bizi{' '}
+                                        <span>sosial şəbəkələrdən</span>{' '}
+                                        izl?yin:
+                                    </>
+                                )}
                             </div>
                             <ul className={styles.socials}>
                                 {socialLinks.map((item) => (

@@ -87,11 +87,7 @@ export default async function LocaleLayout({
         notFound();
     }
 
-    const dictionaryLocale =
-        isStaticLocale
-            ? resolvedLocale
-            : settings.localization?.defaultLocale || defaultLocale;
-    const dict = await getDictionary(dictionaryLocale as Locale);
+    const dict = await getDictionary(resolvedLocale as Locale);
 
     return (
         <div className="page">

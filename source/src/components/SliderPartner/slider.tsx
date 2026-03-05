@@ -21,25 +21,28 @@ type Partner = {
 
 interface SliderPartnerProps {
     partners: Partner[];
+    title?: string;
 }
 
 /* ================= COMPONENT ================= */
 
-export default function SliderPartner({ partners }: SliderPartnerProps) {
+export default function SliderPartner({ partners, title }: SliderPartnerProps) {
     const swiperRef = useRef<SwiperType | null>(null);
 
     if (!partners.length) {
         return null;
     }
 
+    const resolvedTitle = title?.trim() || "Tərəfdaşlar";
+
     return (
         <section
             className={`${styles.partnerSection} pad_top_40 margin_bottom_18`}
-            aria-label="Tərəfdaşlar"
+            aria-label={resolvedTitle}
         >
             <div className={styles.partnerShell}>
                 <div className={styles.partnerHeader}>
-                    <h2 className={styles.partnerTitle}>Tərəfdaşlar</h2>
+                    <h2 className={styles.partnerTitle}>{resolvedTitle}</h2>
                 </div>
                 <div className={styles.partnerSlider}>
                     <Swiper

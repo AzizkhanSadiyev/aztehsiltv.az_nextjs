@@ -144,13 +144,16 @@ export default async function CategoriesPage({
     });
 
     const basePath = `/${locale}/categories`;
-    const allLabel = dict?.category?.allNews ?? "All";
+    const allLabel =
+        dict?.home?.allcategories?.title ||
+        dict?.category?.allNews ||
+        "All";
 
     return (
         <div className={`section_wrap pad_bottom_40`}>
             {/* Page top items */}
             <div className="main_center">
-                <PageTopItems />
+                <PageTopItems locale={resolvedLocale} dict={dict} />
             </div>
             {/* Page top items */}
 

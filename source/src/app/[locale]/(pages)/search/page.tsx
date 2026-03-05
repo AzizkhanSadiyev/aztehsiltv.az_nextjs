@@ -148,7 +148,10 @@ export default async function SearchPage({
     });
 
     const basePath = `/${locale}/search`;
-    const allLabel = dict?.category?.allNews ?? "All News";
+    const allLabel =
+        dict?.home?.allcategories?.title ||
+        dict?.category?.allNews ||
+        "All";
 
     const buildFilterHref = (slug?: string) => {
         const params = new URLSearchParams();
@@ -162,7 +165,7 @@ export default async function SearchPage({
         <div className={`section_wrap pad_bottom_40 wrap_search_page`}>
             {/* Page top items */}
             <div className="main_center">
-                <PageTopItems />
+                <PageTopItems locale={resolvedLocale} dict={dict} />
             </div>
             {/* Page top items */}
 
