@@ -31,6 +31,7 @@ const navItems = [
   { href: "/admin/videos", label: "Videos", icon: Video },
   // { href: "/admin/broadcasts", label: "Broadcasts", icon: Radio },
   { href: "/admin/categories", label: "Categories", icon: FolderTree },
+  { href: "/admin/pages", label: "Pages", icon: FileText },
   { href: "/admin/languages", label: "Languages", icon: Languages },
   { href: "/admin/translations", label: "Translations", icon: FileText },
   { href: "/admin/media", label: "Media", icon: Image },

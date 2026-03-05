@@ -9,6 +9,7 @@ import PageTopItems from "@/components/PageTopItems/PageTopItems";
 import NewsCard from "@/components/NewsCard/Card";
 import VideoPlayer from "@/components/VideoPlayer/VideoPlayer";
 import ShareBar from "@/components/ShareBar/ShareBar";
+import YouTubePlayer from "@/components/YouTubePlayer/YouTubePlayer";
 import { getActiveCategories } from "@/lib/data/categories.data";
 import {
     getPublishedVideoBySlug,
@@ -141,6 +142,20 @@ export default async function VideoDetailPage({
 
     const dict = await getDictionary(resolvedLocale);
     const categories = await getActiveCategories();
+    const normalizeKey = (value: string) =>
+        value
+            .normalize("NFKD")
+            .toLowerCase()
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/ə/g, "e")
+            .replace(/ı/g, "i")
+            .replace(/ş/g, "s")
+            .replace(/ğ/g, "g")
+            .replace(/ç/g, "c")
+            .replace(/ö/g, "o")
+            .replace(/ü/g, "u")
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/^-+|-+$/g, "");
     const categoryMap = new Map(
         categories.map((category) => [
             category.id,
@@ -251,8 +266,45 @@ export default async function VideoDetailPage({
         return { ...item, href: pageUrl };
     });
 
-    const sources = buildVideoSources(video.sourceUrl);
-    const youtubeEmbed = getYoutubeEmbedUrl(video.sourceUrl);
+    const liveSlugs = new Set([
+        "canli",
+        "canlı",
+        "live",
+        "live-video",
+        "youtube-live",
+        "youtube-live-video",
+    ]);
+    const isLiveCategory = (category: (typeof categories)[number]) => {
+        const slugKey = normalizeKey(category.slug || "");
+        if (slugKey && liveSlugs.has(slugKey)) return true;
+        const label = pickLocalizedExact(
+            category.name,
+            resolvedLocale,
+            fallbackLocale
+        ).trim();
+        return label ? liveSlugs.has(normalizeKey(label)) : false;
+    };
+    const liveCategoryIds = categories
+        .filter((category) => isLiveCategory(category))
+        .map((category) => category.id);
+    const videoCategoryIds = [
+        video.categoryId,
+        ...(video.categoryIds ?? []),
+    ].filter(Boolean) as string[];
+    const isLiveVideo = liveCategoryIds.some((id) =>
+        videoCategoryIds.includes(id)
+    );
+
+    const liveStreamUrl =
+        typeof (video.metadata as any)?.liveStreamUrl === "string"
+            ? (video.metadata as any).liveStreamUrl
+            : "";
+    const resolvedSourceUrl =
+        isLiveVideo && liveStreamUrl.trim().length > 0
+            ? liveStreamUrl.trim()
+            : video.sourceUrl;
+    const sources = buildVideoSources(resolvedSourceUrl);
+    const youtubeEmbed = getYoutubeEmbedUrl(resolvedSourceUrl);
 
     const resolveSlug = (slugValue: string) => {
         if (!slugValue || slugValue === "#") return "#";
@@ -389,17 +441,19 @@ export default async function VideoDetailPage({
                             <div className="detail_content_card">
                                 <div className="news_in_img">
                                     {youtubeEmbed ? (
-                                        <iframe
+                                        <YouTubePlayer
                                             src={youtubeEmbed}
                                             title={title}
-                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                            allowFullScreen
+                                            autoPlay={isLiveVideo}
+                                            className="youtube-embed"
                                         />
                                     ) : sources.length > 0 ? (
                                         <VideoPlayer
                                             title={title}
                                             poster={video.coverUrl || undefined}
                                             sources={sources}
+                                            isLive={isLiveVideo}
+                                            autoPlay={isLiveVideo}
                                         />
                                     ) : (
                                         <Image

@@ -52,6 +52,7 @@ interface VideoFormData {
 interface CategoryOption {
   id: string;
   name: string;
+  slug?: string;
 }
 
 interface LanguageOption {
@@ -132,6 +133,7 @@ export default function VideoEditPage() {
   const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [languages, setLanguages] = useState<LanguageOption[]>([]);
   const [activeLanguage, setActiveLanguage] = useState<string>("az");
+  const hasUserSelectedLanguage = useRef(false);
   const [localizedTitle, setLocalizedTitle] = useState<Record<string, string>>(
     {},
   );
@@ -141,17 +143,20 @@ export default function VideoEditPage() {
   const [localizedTags, setLocalizedTags] = useState<Record<string, string>>(
     {},
   );
+  const [liveStreamUrl, setLiveStreamUrl] = useState("");
   const [videoMetadata, setVideoMetadata] = useState<Record<string, any> | null>(
     null,
   );
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [autoSlug, setAutoSlug] = useState(true);
+  const slugSourceLanguage = useRef<string | null>(null);
   const [isCoverUploading, setIsCoverUploading] = useState(false);
   const [isVideoUploading, setIsVideoUploading] = useState(false);
   const [categoryQuery, setCategoryQuery] = useState("");
   const [tagInput, setTagInput] = useState("");
   const coverInputRef = useRef<HTMLInputElement | null>(null);
   const videoInputRef = useRef<HTMLInputElement | null>(null);
+  const hasSetDefaultPublishedAt = useRef(false);
 
   const fetchVideo = useCallback(async () => {
     if (!videoId) return;
@@ -202,6 +207,7 @@ export default function VideoEditPage() {
         setLocalizedDescription(descriptionMap || {});
         setLocalizedTags(tagsLocaleStrings);
         setVideoMetadata(video.metadata || null);
+        setLiveStreamUrl(video.metadata?.liveStreamUrl || "");
 
         const resolvedTitle =
           titleMap?.[activeLanguage] ||
@@ -250,6 +256,43 @@ export default function VideoEditPage() {
       setIsLoading(false);
     }
   }, [videoId, error, router]);
+
+  const normalizeKey = (value: string) =>
+    value
+      .normalize("NFKD")
+      .toLowerCase()
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/ə/g, "e")
+      .replace(/ı/g, "i")
+      .replace(/ş/g, "s")
+      .replace(/ğ/g, "g")
+      .replace(/ç/g, "c")
+      .replace(/ö/g, "o")
+      .replace(/ü/g, "u")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+
+  const liveSlugCandidates = new Set([
+    "canli",
+    "canlı",
+    "live",
+    "live-video",
+    "youtube-live",
+    "youtube-live-video",
+  ]);
+
+  const isLiveCategory = (category: CategoryOption) => {
+    const slugKey = normalizeKey(category.slug || "");
+    if (slugKey && liveSlugCandidates.has(slugKey)) return true;
+    return liveSlugCandidates.has(normalizeKey(category.name || ""));
+  };
+
+  const selectedCategoryIds = new Set(
+    [...formData.categoryIds, formData.categoryId].filter(Boolean),
+  );
+  const isLiveSelected = categories.some(
+    (category) => selectedCategoryIds.has(category.id) && isLiveCategory(category),
+  );
 
   const fetchCategories = useCallback(async () => {
     try {
@@ -304,26 +347,41 @@ export default function VideoEditPage() {
   }, [isNew, fetchVideo, fetchCategories, fetchLanguages]);
 
   useEffect(() => {
+    if (!isNew || hasSetDefaultPublishedAt.current) return;
+    if (!formData.publishedAt) {
+      setFormData((prev) => ({
+        ...prev,
+        publishedAt: toLocalDateTimeInput(new Date().toISOString()),
+      }));
+    }
+    hasSetDefaultPublishedAt.current = true;
+  }, [isNew, formData.publishedAt]);
+
+  useEffect(() => {
     if (!languages.length) return;
-    if (isNew) {
+    const hasActive = languages.some((lang) => lang.code === activeLanguage);
+    if (!hasActive) {
+      const fallback =
+        languages.find((lang) => lang.code === "az")?.code ||
+        languages[0].code;
+      setActiveLanguage(fallback);
+      return;
+    }
+    if (isNew && !hasUserSelectedLanguage.current) {
       const preferred =
         languages.find((lang) => lang.code === "az")?.code ||
         languages[0].code;
       if (activeLanguage !== preferred) {
         setActiveLanguage(preferred);
       }
-      return;
-    }
-    if (!languages.some((lang) => lang.code === activeLanguage)) {
-      setActiveLanguage(languages[0].code);
     }
   }, [languages, activeLanguage, isNew]);
 
   useEffect(() => {
-    if (autoSlug && formData.title && activeLanguage === defaultLocale) {
-      setFormData((prev) => ({ ...prev, slug: slugify(prev.title) }));
+    if (!autoSlug) {
+      slugSourceLanguage.current = null;
     }
-  }, [formData.title, autoSlug, activeLanguage]);
+  }, [autoSlug]);
 
   useEffect(() => {
     setFormData((prev) => ({
@@ -339,7 +397,22 @@ export default function VideoEditPage() {
     field: keyof VideoFormData,
     value: string | number | boolean,
   ) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    setFormData((prev) => {
+      const next = { ...prev, [field]: value } as VideoFormData;
+      if (field === "title" && typeof value === "string" && autoSlug) {
+        const trimmed = value.trim();
+        const shouldUpdateSlug =
+          !slugSourceLanguage.current ||
+          slugSourceLanguage.current === activeLanguage;
+        if (trimmed && shouldUpdateSlug) {
+          if (!slugSourceLanguage.current) {
+            slugSourceLanguage.current = activeLanguage;
+          }
+          next.slug = slugify(trimmed);
+        }
+      }
+      return next;
+    });
 
     if (errors[field]) {
       setErrors((prev) => {
@@ -351,6 +424,7 @@ export default function VideoEditPage() {
 
     if (field === "slug") {
       setAutoSlug(false);
+      slugSourceLanguage.current = null;
     }
     if (field === "status" && value !== "published" && errors.categoryIds) {
       setErrors((prev) => {
@@ -437,6 +511,7 @@ export default function VideoEditPage() {
 
   const handleLanguageChange = (code: string) => {
     if (code === activeLanguage) return;
+    hasUserSelectedLanguage.current = true;
     setLocalizedTitle((prev) => ({ ...prev, [activeLanguage]: formData.title }));
     setLocalizedDescription((prev) => ({
       ...prev,
@@ -592,6 +667,12 @@ export default function VideoEditPage() {
     const tags = tagsByLocale[fallbackTagLocale] ?? [];
 
     const mergedMetadata = { ...(videoMetadata ?? {}) } as Record<string, any>;
+    const trimmedLiveStreamUrl = liveStreamUrl.trim();
+    if (trimmedLiveStreamUrl) {
+      mergedMetadata.liveStreamUrl = trimmedLiveStreamUrl;
+    } else if ("liveStreamUrl" in mergedMetadata) {
+      delete mergedMetadata.liveStreamUrl;
+    }
     if (Object.keys(tagsByLocale).length) {
       mergedMetadata.tagsByLocale = tagsByLocale;
     } else if ("tagsByLocale" in mergedMetadata) {
@@ -1028,6 +1109,20 @@ export default function VideoEditPage() {
                   placeholder="https://youtube.com/watch?v=..."
                 />
               </FormField>
+              {isLiveSelected && (
+                <FormField
+                  label="Live Stream URL (m3u8)"
+                  htmlFor="liveStreamUrl"
+                  hint="Best practice for live: use an HLS .m3u8 link. This will be preferred over YouTube."
+                >
+                  <Input
+                    id="liveStreamUrl"
+                    value={liveStreamUrl}
+                    onChange={(e) => setLiveStreamUrl(e.target.value)}
+                    placeholder="https://example.com/live/stream.m3u8"
+                  />
+                </FormField>
+              )}
 
               <div className="mt-3 space-y-2">
                 <div className="flex items-center gap-3">
