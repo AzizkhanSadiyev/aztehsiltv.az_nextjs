@@ -21,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/admin/ui/ToastProvider";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -63,6 +64,8 @@ interface LanguageOption {
   isActive?: boolean;
   sortOrder?: number;
 }
+
+type LiveSourceType = "youtube" | "upload" | "liveStream";
 
 const toLocalDateTimeInput = (iso: string) => {
   const date = new Date(iso);
@@ -144,6 +147,8 @@ export default function VideoEditPage() {
     {},
   );
   const [liveStreamUrl, setLiveStreamUrl] = useState("");
+  const [liveSourceType, setLiveSourceType] =
+    useState<LiveSourceType>("youtube");
   const [videoMetadata, setVideoMetadata] = useState<Record<string, any> | null>(
     null,
   );
@@ -208,6 +213,9 @@ export default function VideoEditPage() {
         setLocalizedTags(tagsLocaleStrings);
         setVideoMetadata(video.metadata || null);
         setLiveStreamUrl(video.metadata?.liveStreamUrl || "");
+        setLiveSourceType(
+          resolveInitialLiveSourceType(video.sourceUrl || "", video.metadata || null),
+        );
 
         const resolvedTitle =
           titleMap?.[activeLanguage] ||
@@ -271,6 +279,44 @@ export default function VideoEditPage() {
       .replace(/ü/g, "u")
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "");
+
+  const isYouTubeUrl = (value: string) => {
+    if (!value) return false;
+    try {
+      const url = new URL(value);
+      const host = url.hostname.replace("www.", "");
+      return (
+        host === "youtube.com" ||
+        host === "m.youtube.com" ||
+        host === "youtu.be"
+      );
+    } catch {
+      return false;
+    }
+  };
+
+  const resolveInitialLiveSourceType = (
+    sourceUrl: string,
+    metadata: Record<string, any> | null,
+  ): LiveSourceType => {
+    const fromMeta = metadata?.liveSourceType;
+    if (
+      fromMeta === "youtube" ||
+      fromMeta === "upload" ||
+      fromMeta === "liveStream"
+    ) {
+      return fromMeta;
+    }
+    if (
+      typeof metadata?.liveStreamUrl === "string" &&
+      metadata.liveStreamUrl.trim()
+    ) {
+      return "liveStream";
+    }
+    if (isYouTubeUrl(sourceUrl)) return "youtube";
+    if (sourceUrl && sourceUrl.trim()) return "upload";
+    return "youtube";
+  };
 
   const liveSlugCandidates = new Set([
     "canli",
@@ -668,10 +714,20 @@ export default function VideoEditPage() {
 
     const mergedMetadata = { ...(videoMetadata ?? {}) } as Record<string, any>;
     const trimmedLiveStreamUrl = liveStreamUrl.trim();
-    if (trimmedLiveStreamUrl) {
-      mergedMetadata.liveStreamUrl = trimmedLiveStreamUrl;
-    } else if ("liveStreamUrl" in mergedMetadata) {
-      delete mergedMetadata.liveStreamUrl;
+    if (isLiveSelected) {
+      mergedMetadata.liveSourceType = liveSourceType;
+      if (liveSourceType === "liveStream" && trimmedLiveStreamUrl) {
+        mergedMetadata.liveStreamUrl = trimmedLiveStreamUrl;
+      } else if ("liveStreamUrl" in mergedMetadata) {
+        delete mergedMetadata.liveStreamUrl;
+      }
+    } else {
+      if ("liveStreamUrl" in mergedMetadata) {
+        delete mergedMetadata.liveStreamUrl;
+      }
+      if ("liveSourceType" in mergedMetadata) {
+        delete mergedMetadata.liveSourceType;
+      }
     }
     if (Object.keys(tagsByLocale).length) {
       mergedMetadata.tagsByLocale = tagsByLocale;
@@ -1099,71 +1155,190 @@ export default function VideoEditPage() {
 
             <FormSection
               title="Source"
-              description="Paste a YouTube link or upload a video file"  className="margin_bottom_18" 
+              description={
+                isLiveSelected
+                  ? "Choose the live source type."
+                  : "Paste a YouTube link or upload a video file"
+              }
+              className="margin_bottom_18"
             >
-              <FormField label="Video Link" htmlFor="sourceUrl">
-                <Input
-                  id="sourceUrl"
-                  value={formData.sourceUrl}
-                  onChange={(e) => handleChange("sourceUrl", e.target.value)}
-                  placeholder="https://youtube.com/watch?v=..."
-                />
-              </FormField>
-              {isLiveSelected && (
-                <FormField
-                  label="Live Stream URL (m3u8)"
-                  htmlFor="liveStreamUrl"
-                  hint="Best practice for live: use an HLS .m3u8 link. This will be preferred over YouTube."
+              {isLiveSelected ? (
+                <Tabs
+                  value={liveSourceType}
+                  onValueChange={(value) =>
+                    setLiveSourceType(value as LiveSourceType)
+                  }
                 >
-                  <Input
-                    id="liveStreamUrl"
-                    value={liveStreamUrl}
-                    onChange={(e) => setLiveStreamUrl(e.target.value)}
-                    placeholder="https://example.com/live/stream.m3u8"
-                  />
-                </FormField>
-              )}
+                  <TabsList className="w-full justify-start gap-2">
+                    <TabsTrigger value="youtube">YouTube Link</TabsTrigger>
+                    <TabsTrigger value="upload">Video Upload</TabsTrigger>
+                    <TabsTrigger value="liveStream">Live Stream URL</TabsTrigger>
+                  </TabsList>
 
-              <div className="mt-3 space-y-2">
-                <div className="flex items-center gap-3">
-                  <input
-                    ref={videoInputRef}
-                    type="file"
-                    accept="video/*"
-                    className="hidden"
-                    onChange={handleVideoUpload}
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={triggerVideoPicker}
-                    disabled={isVideoUploading}
-                  >
-                    {isVideoUploading ? "Uploading..." : "Upload video"}
-                  </Button>
-                  {formData.sourceUrl && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleChange("sourceUrl", "")}
+                  <TabsContent value="youtube">
+                    <FormField label="YouTube Link" htmlFor="sourceUrlYoutube">
+                      <Input
+                        id="sourceUrlYoutube"
+                        value={formData.sourceUrl}
+                        onChange={(e) => handleChange("sourceUrl", e.target.value)}
+                        placeholder="https://youtube.com/watch?v=..."
+                      />
+                    </FormField>
+                    <div className="mt-3 space-y-2">
+                      <div className="flex items-center gap-3">
+                        {formData.sourceUrl && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleChange("sourceUrl", "")}
+                          >
+                            Clear
+                          </Button>
+                        )}
+                      </div>
+                      {formData.sourceUrl && (
+                        <a
+                          href={formData.sourceUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-xs text-blue-600 hover:underline"
+                        >
+                          Open current link
+                        </a>
+                      )}
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="upload">
+                    <FormField label="Video File URL" htmlFor="sourceUrlUpload">
+                      <Input
+                        id="sourceUrlUpload"
+                        value={formData.sourceUrl}
+                        onChange={(e) => handleChange("sourceUrl", e.target.value)}
+                        placeholder="https://.../video.mp4"
+                      />
+                    </FormField>
+                    <div className="mt-3 space-y-2">
+                      <div className="flex items-center gap-3">
+                        <input
+                          ref={videoInputRef}
+                          type="file"
+                          accept="video/*"
+                          className="hidden"
+                          onChange={handleVideoUpload}
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={triggerVideoPicker}
+                          disabled={isVideoUploading}
+                        >
+                          {isVideoUploading ? "Uploading..." : "Upload video"}
+                        </Button>
+                        {formData.sourceUrl && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleChange("sourceUrl", "")}
+                          >
+                            Clear
+                          </Button>
+                        )}
+                      </div>
+                      {formData.sourceUrl && (
+                        <a
+                          href={formData.sourceUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-xs text-blue-600 hover:underline"
+                        >
+                          Open current link
+                        </a>
+                      )}
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="liveStream">
+                    <FormField
+                      label="Live Stream URL (m3u8)"
+                      htmlFor="liveStreamUrl"
+                      hint="Best practice for live: use an HLS .m3u8 link."
                     >
-                      Clear
-                    </Button>
-                  )}
-                </div>
-                {formData.sourceUrl && (
-                  <a
-                    href={formData.sourceUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-xs text-blue-600 hover:underline"
-                  >
-                    Open current link
-                  </a>
-                )}
-              </div>
+                      <Input
+                        id="liveStreamUrl"
+                        value={liveStreamUrl}
+                        onChange={(e) => setLiveStreamUrl(e.target.value)}
+                        placeholder="https://example.com/live/stream.m3u8"
+                      />
+                    </FormField>
+                    {liveStreamUrl && (
+                      <a
+                        href={liveStreamUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-xs text-blue-600 hover:underline"
+                      >
+                        Open current link
+                      </a>
+                    )}
+                  </TabsContent>
+                </Tabs>
+              ) : (
+                <>
+                  <FormField label="Video Link" htmlFor="sourceUrl">
+                    <Input
+                      id="sourceUrl"
+                      value={formData.sourceUrl}
+                      onChange={(e) => handleChange("sourceUrl", e.target.value)}
+                      placeholder="https://youtube.com/watch?v=..."
+                    />
+                  </FormField>
+
+                  <div className="mt-3 space-y-2">
+                    <div className="flex items-center gap-3">
+                      <input
+                        ref={videoInputRef}
+                        type="file"
+                        accept="video/*"
+                        className="hidden"
+                        onChange={handleVideoUpload}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={triggerVideoPicker}
+                        disabled={isVideoUploading}
+                      >
+                        {isVideoUploading ? "Uploading..." : "Upload video"}
+                      </Button>
+                      {formData.sourceUrl && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleChange("sourceUrl", "")}
+                        >
+                          Clear
+                        </Button>
+                      )}
+                    </div>
+                    {formData.sourceUrl && (
+                      <a
+                        href={formData.sourceUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-xs text-blue-600 hover:underline"
+                      >
+                        Open current link
+                      </a>
+                    )}
+                  </div>
+                </>
+              )}
             </FormSection>
 
             <FormSection title="Cover Image"  className="margin_bottom_18">

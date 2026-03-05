@@ -171,6 +171,29 @@ export default function VideoPlayer({
         };
     }, [hlsSource, isLive, sources, thumbnails]);
 
+    useEffect(() => {
+        const video = videoRef.current;
+        if (!video) return;
+
+        const handlePlay = () => {
+            if (video.muted) {
+                video.muted = false;
+            }
+            if (video.volume < 1) {
+                video.volume = 1;
+            }
+            if (plyrRef.current) {
+                plyrRef.current.muted = false;
+                plyrRef.current.volume = 1;
+            }
+        };
+
+        video.addEventListener("play", handlePlay);
+        return () => {
+            video.removeEventListener("play", handlePlay);
+        };
+    }, []);
+
     return (
         <div className={`${styles.root} ${className}`.trim()}>
             <video

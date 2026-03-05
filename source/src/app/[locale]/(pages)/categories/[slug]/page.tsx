@@ -112,7 +112,14 @@ const getYoutubeEmbedUrl = (url?: string | null) => {
         }
         if (hostname === "youtube.com" || hostname === "m.youtube.com") {
             const id = parsed.searchParams.get("v");
-            return id ? `https://www.youtube.com/embed/${id}` : null;
+            if (id) return `https://www.youtube.com/embed/${id}`;
+            const parts = parsed.pathname.split("/").filter(Boolean);
+            const head = parts[0] || "";
+            const tail = parts[1] || "";
+            if (["live", "embed", "shorts", "v"].includes(head) && tail) {
+                return `https://www.youtube.com/embed/${tail}`;
+            }
+            return null;
         }
     } catch {
         return null;
@@ -299,10 +306,20 @@ export default async function VideoDetailPage({
         typeof (video.metadata as any)?.liveStreamUrl === "string"
             ? (video.metadata as any).liveStreamUrl
             : "";
-    const resolvedSourceUrl =
-        isLiveVideo && liveStreamUrl.trim().length > 0
-            ? liveStreamUrl.trim()
-            : video.sourceUrl;
+    const liveSourceType =
+        typeof (video.metadata as any)?.liveSourceType === "string"
+            ? (video.metadata as any).liveSourceType
+            : "";
+    const resolvedSourceUrl = (() => {
+        if (!isLiveVideo) return video.sourceUrl;
+        if (liveSourceType === "liveStream") {
+            return liveStreamUrl.trim() || video.sourceUrl;
+        }
+        if (liveSourceType === "youtube" || liveSourceType === "upload") {
+            return video.sourceUrl;
+        }
+        return liveStreamUrl.trim() || video.sourceUrl;
+    })();
     const sources = buildVideoSources(resolvedSourceUrl);
     const youtubeEmbed = getYoutubeEmbedUrl(resolvedSourceUrl);
 
@@ -444,7 +461,7 @@ export default async function VideoDetailPage({
                                         <YouTubePlayer
                                             src={youtubeEmbed}
                                             title={title}
-                                            autoPlay={isLiveVideo}
+                                            autoPlay={false}
                                             className="youtube-embed"
                                         />
                                     ) : sources.length > 0 ? (
@@ -453,7 +470,7 @@ export default async function VideoDetailPage({
                                             poster={video.coverUrl || undefined}
                                             sources={sources}
                                             isLive={isLiveVideo}
-                                            autoPlay={isLiveVideo}
+                                            autoPlay={false}
                                         />
                                     ) : (
                                         <Image

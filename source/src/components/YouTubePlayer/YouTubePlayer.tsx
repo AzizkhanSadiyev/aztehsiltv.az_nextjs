@@ -16,7 +16,7 @@ export default function YouTubePlayer({
   className = "",
 }: YouTubePlayerProps) {
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
-  const [hasSound, setHasSound] = useState(!autoPlay);
+  const [hasSound, setHasSound] = useState(false);
   const hasAttemptedAutoUnmute = useRef(false);
 
   const resolvedSrc = useMemo(() => {
@@ -24,6 +24,9 @@ export default function YouTubePlayer({
       const url = new URL(src);
       url.searchParams.set("enablejsapi", "1");
       url.searchParams.set("playsinline", "1");
+      if (typeof window !== "undefined") {
+        url.searchParams.set("origin", window.location.origin);
+      }
       if (autoPlay) {
         url.searchParams.set("autoplay", "1");
         url.searchParams.set("mute", "1");
@@ -94,24 +97,38 @@ export default function YouTubePlayer({
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         allowFullScreen
       />
-      {!hasSound && autoPlay ? (
+      {!hasSound ? (
         <button
           type="button"
           onClick={handleUnmute}
           style={{
             position: "absolute",
-            left: 16,
-            bottom: 16,
+            inset: 0,
             zIndex: 2,
-            background: "rgba(0,0,0,0.7)",
+            background: autoPlay ? "rgba(0,0,0,0.35)" : "transparent",
             color: "#fff",
-            borderRadius: 999,
-            padding: "8px 14px",
+            border: "none",
+            borderRadius: 0,
+            padding: 0,
             fontSize: 12,
             fontWeight: 600,
+            display: "flex",
+            alignItems: "flex-end",
+            justifyContent: "flex-start",
           }}
         >
-          Səsi aç
+          {autoPlay ? (
+            <span
+              style={{
+                margin: 16,
+                background: "rgba(0,0,0,0.7)",
+                borderRadius: 999,
+                padding: "8px 14px",
+              }}
+            >
+              Sesi ac
+            </span>
+          ) : null}
         </button>
       ) : null}
     </div>
