@@ -102,17 +102,19 @@ TabsTrigger.displayName = "TabsTrigger"
 const TabsContent = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement> & { value: string; active?: boolean }
->(({ className, active, value, ...props }, ref) => {
+>(({ className, active, value, style, ...props }, ref) => {
   const context = React.useContext(TabsContext)
   const isActive = active ?? (context ? context.value === value : false)
+  const mergedStyle = !isActive ? { ...style, display: "none" } : style
 
   return (
     <div
       ref={ref}
       role="tabpanel"
+      data-state={isActive ? "active" : "inactive"}
+      style={mergedStyle}
       className={cn(
         "mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-        !isActive && "hidden",
         className
       )}
       {...props}

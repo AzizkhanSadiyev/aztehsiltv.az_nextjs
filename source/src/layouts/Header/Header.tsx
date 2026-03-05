@@ -355,8 +355,9 @@ export default function Header({
     const renderMenuLinks = (className: string) => (
         <ul className={className}>
             {menuLinks.map((link) => {
-                const href = link.url?.trim() || "#";
-                const isExternal = /^https?:\/\//i.test(href);
+                const rawHref = link.url?.trim() || "#";
+                const isExternal = /^https?:\/\//i.test(rawHref);
+                const href = buildMenuHref(rawHref);
                 return (
                     <li key={link.id}>
                         <Link
@@ -572,12 +573,14 @@ export default function Header({
           )
         : [];
 
-    const localeCodesForPath = languageItems.map((lang) => lang.code);
+    const localeCodesForPath = languageItems.map((lang) =>
+        (lang.code || "").toLowerCase()
+    );
     const pathWithoutLocale = (() => {
         const rawPath = pathname ?? "/";
         const segments = rawPath.split("/").filter(Boolean);
         if (segments.length === 0) return "";
-        if (localeCodesForPath.includes(segments[0])) {
+        if (localeCodesForPath.includes(segments[0].toLowerCase())) {
             segments.shift();
         }
         return segments.length ? `/${segments.join("/")}` : "";
@@ -587,6 +590,22 @@ export default function Header({
         `/${nextLocale}${pathWithoutLocale}`;
     const buildCategoryFilterHref = (slug?: string | null) =>
         slug ? `${categoryBasePath}?category=${encodeURIComponent(slug)}` : categoryBasePath;
+    const buildMenuHref = (rawHref?: string | null) => {
+        const trimmed = rawHref?.trim() || "";
+        if (!trimmed) return "#";
+        if (trimmed.startsWith("#")) return trimmed;
+        if (/^(https?:)?\/\//i.test(trimmed)) return trimmed;
+        if (/^(mailto:|tel:)/i.test(trimmed)) return trimmed;
+
+        const withSlash = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+        const url = new URL(withSlash, "http://localhost");
+        const segments = url.pathname.split("/").filter(Boolean);
+        if (segments.length && localeCodesForPath.includes(segments[0].toLowerCase())) {
+            segments.shift();
+        }
+        const path = segments.length ? `/${segments.join("/")}` : "";
+        return `/${currentLocale}${path}${url.search}${url.hash}`;
+    };
 
     return (
         <header className={styles.header} id="header">

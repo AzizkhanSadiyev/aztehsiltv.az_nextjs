@@ -28,6 +28,7 @@ import { Image as ImageIcon, X, Search, Folder } from "lucide-react";
 import { RichTextEditor } from "@/components/admin/RichTextEditor";
 import { defaultLocale, locales } from "@/i18n/config";
 import { cn } from "@/lib/utils";
+import { slugify } from "@/lib/slugify";
 
 interface VideoFormData {
   title: string;
@@ -98,15 +99,6 @@ const uniqueTags = (tags: string[]) => {
 };
 
 const tagsToString = (tags: string[]) => tags.join(", ");
-
-function generateSlug(title: string): string {
-  return title
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .trim();
-}
 
 export default function VideoEditPage() {
   const router = useRouter();
@@ -320,7 +312,7 @@ export default function VideoEditPage() {
 
   useEffect(() => {
     if (autoSlug && formData.title && activeLanguage === defaultLocale) {
-      setFormData((prev) => ({ ...prev, slug: generateSlug(prev.title) }));
+      setFormData((prev) => ({ ...prev, slug: slugify(prev.title) }));
     }
   }, [formData.title, autoSlug, activeLanguage]);
 
@@ -421,7 +413,7 @@ export default function VideoEditPage() {
     const trimmed = formData.slug.trim();
     if (trimmed) return trimmed;
     const fallback = formData.title.trim() || "video";
-    return generateSlug(fallback) || "video";
+    return slugify(fallback) || "video";
   };
 
   const tagList = uniqueTags(splitTags(formData.tags));

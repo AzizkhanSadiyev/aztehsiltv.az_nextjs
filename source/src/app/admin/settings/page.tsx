@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, FormEvent } from "react";
+import { useEffect, useMemo, useState, FormEvent, useRef } from "react";
 import { PageHeader } from "@/components/admin/ui/PageHeader";
 import {
   FormLayout,
@@ -63,6 +63,9 @@ const createEmptySettings = (): SiteSettings => ({
   seo: {
     defaultTitle: buildLocalized(""),
     defaultDescription: buildLocalized(""),
+    ogTitle: buildLocalized(""),
+    ogDescription: buildLocalized(""),
+    ogImageUrl: "",
   },
   analytics: {
     gaId: "",
@@ -107,6 +110,14 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("general");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isOgUploading, setIsOgUploading] = useState(false);
+  const [saveNotice, setSaveNotice] = useState<{
+    type: "success" | "error";
+    title: string;
+    description?: string;
+  } | null>(null);
+  const ogImageInputRef = useRef<HTMLInputElement | null>(null);
+  const saveNoticeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const languageCodes = useMemo(
     () =>
@@ -177,6 +188,9 @@ export default function SettingsPage() {
                 next.seo?.defaultDescription,
                 codes,
               ),
+              ogTitle: ensureLocalized(next.seo?.ogTitle, codes),
+              ogDescription: ensureLocalized(next.seo?.ogDescription, codes),
+              ogImageUrl: next.seo?.ogImageUrl || "",
             },
             menuLinks: Array.isArray(next.menuLinks)
               ? next.menuLinks.map((link) => ({
@@ -209,6 +223,28 @@ export default function SettingsPage() {
     loadSettings();
   }, [error, languageCodes]);
 
+  useEffect(() => {
+    return () => {
+      if (saveNoticeTimerRef.current) {
+        clearTimeout(saveNoticeTimerRef.current);
+      }
+    };
+  }, []);
+
+  const showSaveNotice = (
+    type: "success" | "error",
+    title: string,
+    description?: string,
+  ) => {
+    setSaveNotice({ type, title, description });
+    if (saveNoticeTimerRef.current) {
+      clearTimeout(saveNoticeTimerRef.current);
+    }
+    saveNoticeTimerRef.current = setTimeout(() => {
+      setSaveNotice(null);
+    }, 4000);
+  };
+
   const updateLocalized = (
     section: keyof SiteSettings,
     key: string,
@@ -239,11 +275,18 @@ export default function SettingsPage() {
       const data = await response.json();
       if (data.success) {
         success("Settings saved", "Your changes are live.");
+        showSaveNotice("success", "Settings saved", "Your changes are live.");
       } else {
         error("Failed to save settings", data.error);
+        showSaveNotice("error", "Failed to save settings", data.error);
       }
     } catch {
       error("Failed to save settings", "Please try again later");
+      showSaveNotice(
+        "error",
+        "Failed to save settings",
+        "Please try again later",
+      );
     } finally {
       setIsSaving(false);
     }
@@ -304,6 +347,64 @@ export default function SettingsPage() {
     });
   };
 
+  const triggerOgImagePicker = () => {
+    ogImageInputRef.current?.click();
+  };
+
+  const uploadOgImage = async (file: File) => {
+    const payload = new FormData();
+    payload.append("file", file);
+    payload.append("entity", "settings");
+    payload.append("entitySlug", "seo");
+    payload.append("field", "og-image");
+
+    const response = await fetch("/api/uploads", {
+      method: "POST",
+      body: payload,
+    });
+    const data = await response.json();
+
+    if (data.success && data.data?.url) {
+      return data.data.url as string;
+    }
+    throw new Error(data.error?.message || data.error || "Upload failed");
+  };
+
+  const handleOgImageUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      error("Invalid file", "Please upload an image file");
+      event.target.value = "";
+      return;
+    }
+
+    setIsOgUploading(true);
+    try {
+      const url = await uploadOgImage(file);
+      setSettings((prev) => ({
+        ...prev,
+        seo: { ...prev.seo, ogImageUrl: url },
+      }));
+      success("Image uploaded", "Open Graph image updated");
+    } catch {
+      error("Upload failed", "Please try again");
+    } finally {
+      setIsOgUploading(false);
+      event.target.value = "";
+    }
+  };
+
+  const handleOgImageRemove = () => {
+    setSettings((prev) => ({
+      ...prev,
+      seo: { ...prev.seo, ogImageUrl: "" },
+    }));
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -325,6 +426,23 @@ export default function SettingsPage() {
           </Button>
         }
       />
+
+      {saveNotice && (
+        <div
+          className={`rounded-lg border px-4 py-3 text-sm ${
+            saveNotice.type === "success"
+              ? "bg-green-50 border-green-200 text-green-800"
+              : "bg-red-50 border-red-200 text-red-800"
+          }`}
+          role={saveNotice.type === "success" ? "status" : "alert"}
+          aria-live={saveNotice.type === "success" ? "polite" : "assertive"}
+        >
+          <p className="font-medium">{saveNotice.title}</p>
+          {saveNotice.description && (
+            <p className="mt-1 opacity-80">{saveNotice.description}</p>
+          )}
+        </div>
+      )}
 
       <FormLayout onSubmit={handleSubmit} className="max-w-6xl" id="settings-form">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="admin-tabs">
@@ -622,6 +740,98 @@ export default function SettingsPage() {
                   </FormField>
                 ))}
               </div>
+            </FormSection>
+
+            <FormSection title="Open Graph">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {languageCodes.map((code) => (
+                  <FormField
+                    key={`seo-og-title-${code}`}
+                    label={`OG Title (${code.toUpperCase()})`}
+                    hint="Sosial şəbəkələrdə paylaşılan başlıq"
+                  >
+                    <Input
+                      value={settings.seo.ogTitle?.[code] ?? ""}
+                      onChange={(e) =>
+                        updateLocalized("seo", "ogTitle", code, e.target.value)
+                      }
+                      placeholder="Open Graph title"
+                    />
+                  </FormField>
+                ))}
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {languageCodes.map((code) => (
+                  <FormField
+                    key={`seo-og-description-${code}`}
+                    label={`OG Description (${code.toUpperCase()})`}
+                    hint="Sosial paylaşımlar üçün təsvir"
+                  >
+                    <Textarea
+                      rows={3}
+                      value={settings.seo.ogDescription?.[code] ?? ""}
+                      onChange={(e) =>
+                        updateLocalized(
+                          "seo",
+                          "ogDescription",
+                          code,
+                          e.target.value,
+                        )
+                      }
+                      placeholder="Open Graph description"
+                    />
+                  </FormField>
+                ))}
+              </div>
+              <FormField label="OG Image" hint="Sosial paylaşımlar üçün şəkil">
+                <div className="admin-icon-field admin-cover-field">
+                  <div className="admin-icon-preview admin-cover-preview">
+                    {settings.seo.ogImageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={settings.seo.ogImageUrl}
+                        alt="Open Graph"
+                      />
+                    ) : (
+                      <span className="admin-icon-placeholder">No image</span>
+                    )}
+                  </div>
+                  <div className="admin-icon-actions">
+                    <input
+                      ref={ogImageInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleOgImageUpload}
+                      className="hidden"
+                      disabled={isOgUploading}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={triggerOgImagePicker}
+                      disabled={isOgUploading}
+                    >
+                      {isOgUploading
+                        ? "Uploading..."
+                        : settings.seo.ogImageUrl
+                          ? "Change Image"
+                          : "Upload Image"}
+                    </Button>
+                    {settings.seo.ogImageUrl && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="admin-icon-remove"
+                        onClick={handleOgImageRemove}
+                      >
+                        Remove
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </FormField>
             </FormSection>
 
             <FormSection title="Analytics">

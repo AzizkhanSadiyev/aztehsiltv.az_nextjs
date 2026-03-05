@@ -35,6 +35,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { locales, defaultLocale } from "@/i18n/config";
 import type { Language } from "@/types/language.types";
 import { DeleteConfirmDialog } from "@/components/admin/ui/ConfirmDialog";
+import { slugify } from "@/lib/slugify";
 
 type LocalizedValues = Record<string, string>;
 
@@ -78,23 +79,7 @@ const fallbackLocaleLabels: Record<string, string> = {
     tr: "Türkçe",
 };
 
-function generateSlug(value: string): string {
-    return value
-        .normalize("NFKD")
-        .toLowerCase()
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/ə/g, "e")
-        .replace(/ı/g, "i")
-        .replace(/ş/g, "s")
-        .replace(/ğ/g, "g")
-        .replace(/ç/g, "c")
-        .replace(/ö/g, "o")
-        .replace(/ü/g, "u")
-        .replace(/[^a-z0-9\s-]/g, "")
-        .trim()
-        .replace(/\s+/g, "-")
-        .replace(/-+/g, "-");
-}
+const generateSlug = slugify;
 
 export default function CategoryEditPage() {
     const router = useRouter();
@@ -947,3 +932,4 @@ export default function CategoryEditPage() {
         </div>
     );
 }
+

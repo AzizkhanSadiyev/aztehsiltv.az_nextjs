@@ -86,6 +86,17 @@ const DEFAULT_SETTINGS: SiteSettings = {
       en: "Education video portal.",
       ru: "Education video portal.",
     },
+    ogTitle: {
+      az: "AztehsilTV.az",
+      en: "AztehsilTV.az",
+      ru: "AztehsilTV.az",
+    },
+    ogDescription: {
+      az: "Education video portal.",
+      en: "Education video portal.",
+      ru: "Education video portal.",
+    },
+    ogImageUrl: "",
   },
   analytics: {
     gaId: "",

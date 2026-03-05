@@ -3,7 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 
 import styles from "./footer.module.css";
-import { defaultLocale } from "@/i18n/config";
+import { defaultLocale, locales } from "@/i18n/config";
 import { pickLocalized } from "@/lib/localization";
 import { getSiteSettings } from "@/lib/data/settings.data";
 import type { SiteSettings, SettingsLink } from "@/types/settings.types";
@@ -59,12 +59,36 @@ export default async function Footer({
     const resolvedSettings = settings ?? (await getSiteSettings());
     const fallbackLocale =
         resolvedSettings.localization?.defaultLocale || defaultLocale;
+    const currentLocale = (locale || fallbackLocale).toLowerCase();
+    const supportedLocales =
+        resolvedSettings.localization?.supportedLocales?.length
+            ? resolvedSettings.localization.supportedLocales
+            : locales;
+    const localeCodesForPath = supportedLocales.map((code) =>
+        (code || "").toLowerCase()
+    );
     const menuLinks =
         resolvedSettings.menuLinks && resolvedSettings.menuLinks.length > 0
             ? resolvedSettings.menuLinks
             : fallbackMenuLinks;
     const resolveMenuLabel = (link: SettingsLink) =>
         pickLocalized(link.label, locale, fallbackLocale) || link.url || "Link";
+    const buildMenuHref = (rawHref?: string | null) => {
+        const trimmed = rawHref?.trim() || "";
+        if (!trimmed) return "#";
+        if (trimmed.startsWith("#")) return trimmed;
+        if (/^(https?:)?\/\//i.test(trimmed)) return trimmed;
+        if (/^(mailto:|tel:)/i.test(trimmed)) return trimmed;
+
+        const withSlash = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+        const url = new URL(withSlash, "http://localhost");
+        const segments = url.pathname.split("/").filter(Boolean);
+        if (segments.length && localeCodesForPath.includes(segments[0].toLowerCase())) {
+            segments.shift();
+        }
+        const path = segments.length ? `/${segments.join("/")}` : "";
+        return `/${currentLocale}${path}${url.search}${url.hash}`;
+    };
     const socialLinks = [
         {
             id: "facebook",
@@ -127,8 +151,9 @@ export default async function Footer({
                             </div>
                             <ul className={styles.desk_little_menu}>
                                 {menuLinks.map((link) => {
-                                    const href = link.url?.trim() || "#";
-                                    const isExternal = /^https?:\/\//i.test(href);
+                                    const rawHref = link.url?.trim() || "#";
+                                    const isExternal = /^https?:\/\//i.test(rawHref);
+                                    const href = buildMenuHref(rawHref);
                                     return (
                                         <li key={link.id}>
                                             <Link

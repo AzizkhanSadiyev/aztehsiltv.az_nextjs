@@ -19,6 +19,7 @@ import {
   normalizeLocalizedNullable,
   toJsonOrNull,
 } from "@/lib/localization";
+import { slugify } from "@/lib/slugify";
 
 type VideoRow = {
   id: string;
@@ -48,6 +49,8 @@ export type VideoFilters = {
   categoryId?: string;
   broadcastId?: string;
   search?: string;
+  locale?: string;
+  fallbackLocale?: string;
 };
 
 const parseMetadata = (value: any) => {
@@ -91,15 +94,6 @@ const mergeTagsIntoMetadata = (
     delete next.tags;
   }
   return Object.keys(next).length > 0 ? next : null;
-};
-
-const generateSlug = (value: string): string => {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .trim();
 };
 
 async function getVideoCategoryMap(
@@ -209,6 +203,9 @@ export async function getAllVideos(limit = 500): Promise<Video[]> {
 function buildFilters(filters?: VideoFilters) {
   const where: string[] = [];
   const params: any[] = [];
+  const locale = filters?.locale;
+  const fallbackLocale = filters?.fallbackLocale ?? defaultLocale;
+  const localePath = locale ? jsonPathForLocale(locale, fallbackLocale) : null;
 
   if (filters?.status) {
     where.push("status = ?");
@@ -224,12 +221,25 @@ function buildFilters(filters?: VideoFilters) {
     where.push("broadcast_id = ?");
     params.push(filters.broadcastId);
   }
+  if (localePath) {
+    where.push(
+      "JSON_UNQUOTE(JSON_EXTRACT(title, ?)) IS NOT NULL AND JSON_UNQUOTE(JSON_EXTRACT(title, ?)) <> ''",
+    );
+    params.push(localePath, localePath);
+  }
   if (filters?.search) {
     const search = `%${filters.search.toLowerCase()}%`;
-    where.push(
-      "(LOWER(CAST(title AS CHAR)) LIKE ? OR LOWER(CAST(slug AS CHAR)) LIKE ?)",
-    );
-    params.push(search, search);
+    if (localePath) {
+      where.push(
+        "(LOWER(JSON_UNQUOTE(JSON_EXTRACT(title, ?))) LIKE ? OR LOWER(CAST(slug AS CHAR)) LIKE ?)",
+      );
+      params.push(localePath, search, search);
+    } else {
+      where.push(
+        "(LOWER(CAST(title AS CHAR)) LIKE ? OR LOWER(CAST(slug AS CHAR)) LIKE ?)",
+      );
+      params.push(search, search);
+    }
   }
 
   const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
@@ -325,10 +335,18 @@ export async function getPublishedVideos(options?: {
   categoryId?: string | null;
   broadcastId?: string | null;
   flags?: Partial<Pick<Video, "isManshet" | "isShort" | "isSidebar" | "isTopVideo">>;
+  locale?: string;
+  fallbackLocale?: string;
 }): Promise<Video[]> {
   const limit = options?.limit ?? 100;
   const where: string[] = ["status = 'published'"];
   const params: any[] = [];
+  const localePath = options?.locale
+    ? jsonPathForLocale(
+        options.locale,
+        options.fallbackLocale ?? defaultLocale,
+      )
+    : null;
 
   if (options?.categoryId) {
     where.push(
@@ -339,6 +357,12 @@ export async function getPublishedVideos(options?: {
   if (options?.broadcastId) {
     where.push("broadcast_id = ?");
     params.push(options.broadcastId);
+  }
+  if (localePath) {
+    where.push(
+      "JSON_UNQUOTE(JSON_EXTRACT(title, ?)) IS NOT NULL AND JSON_UNQUOTE(JSON_EXTRACT(title, ?)) <> ''",
+    );
+    params.push(localePath, localePath);
   }
   const flags = options?.flags || {};
   if (flags.isManshet !== undefined) {
@@ -392,7 +416,7 @@ export async function createVideo(input: VideoCreateInput): Promise<Video> {
   const title = normalizeLocalized(input.title);
   const slug = input.slug
     ? normalizeLocalized(input.slug)
-    : buildSlugMap(title, generateSlug);
+    : buildSlugMap(title, slugify);
 
   const description = input.description ?? null;
   const publishedAt = input.publishedAt ? new Date(input.publishedAt) : null;
@@ -638,13 +662,30 @@ export async function getVideoCountsByBroadcast(): Promise<Record<string, number
   return result;
 }
 
-export async function getPublishedVideoCountsByCategory(): Promise<Record<string, number>> {
+export async function getPublishedVideoCountsByCategory(options?: {
+  locale?: string;
+  fallbackLocale?: string;
+}): Promise<Record<string, number>> {
+  const conditions = ["v.status = 'published'"];
+  const params: any[] = [];
+  if (options?.locale) {
+    const localePath = jsonPathForLocale(
+      options.locale,
+      options.fallbackLocale ?? defaultLocale,
+    );
+    conditions.push(
+      "JSON_UNQUOTE(JSON_EXTRACT(v.title, ?)) IS NOT NULL AND JSON_UNQUOTE(JSON_EXTRACT(v.title, ?)) <> ''",
+    );
+    params.push(localePath, localePath);
+  }
+
   const rows = await query<{ category_id: string | null; count: number }>(
     `SELECT vc.category_id AS category_id, COUNT(DISTINCT vc.video_id) AS count
      FROM video_categories vc
      INNER JOIN videos v ON v.id = vc.video_id
-     WHERE v.status = 'published'
+     WHERE ${conditions.join(" AND ")}
      GROUP BY vc.category_id`,
+    params,
   );
   const result: Record<string, number> = {};
   rows.forEach((row) => {

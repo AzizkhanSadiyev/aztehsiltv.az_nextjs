@@ -39,6 +39,9 @@ export interface SettingsFooter {
 export interface SettingsSeo {
   defaultTitle: LocalizedString;
   defaultDescription: LocalizedString;
+  ogTitle: LocalizedString;
+  ogDescription: LocalizedString;
+  ogImageUrl?: string;
 }
 
 export interface SettingsAnalytics {

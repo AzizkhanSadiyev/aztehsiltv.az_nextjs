@@ -49,6 +49,9 @@ export const SettingsUpdateSchema = z
       .object({
         defaultTitle: LocalizedStringSchema.optional(),
         defaultDescription: LocalizedStringSchema.optional(),
+        ogTitle: LocalizedStringSchema.optional(),
+        ogDescription: LocalizedStringSchema.optional(),
+        ogImageUrl: z.string().optional(),
       })
       .optional(),
     analytics: z

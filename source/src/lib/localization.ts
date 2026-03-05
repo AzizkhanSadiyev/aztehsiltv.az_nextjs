@@ -95,3 +95,23 @@ export const pickLocalized = (
   );
   return typeof first === "string" ? first : "";
 };
+
+export const pickLocalizedExact = (
+  value: LocalizedString | null | undefined,
+  locale: string,
+  fallbackLocale: string,
+): string => {
+  if (!value) return "";
+  const safeLocale = safeLocaleKey(locale, fallbackLocale);
+  const entry = value[safeLocale];
+  return typeof entry === "string" ? entry : "";
+};
+
+export const hasLocalizedEntry = (
+  value: LocalizedString | null | undefined,
+  locale: string,
+  fallbackLocale: string,
+): boolean => {
+  const entry = pickLocalizedExact(value, locale, fallbackLocale).trim();
+  return entry.length > 0;
+};

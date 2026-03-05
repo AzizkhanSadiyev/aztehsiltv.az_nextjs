@@ -6,7 +6,7 @@ import PageTopItems from "@/components/PageTopItems/PageTopItems";
 import Pagination from "@/components/Pagination/Pagination";
 import { getActiveCategories } from "@/lib/data/categories.data";
 import { getVideosList } from "@/lib/data/videos.data";
-import { pickLocalized } from "@/lib/localization";
+import { pickLocalized, pickLocalizedExact } from "@/lib/localization";
 import styles from "./page.module.css";
 
 export const dynamic = "force-dynamic";
@@ -73,11 +73,16 @@ export default async function SearchPage({
         : Math.max(parsedPage, 1);
 
     const categories = await getActiveCategories();
-    const sortedCategories = categories.slice().sort((a, b) => {
+    const localizedCategories = categories.filter(
+        (category) =>
+            pickLocalizedExact(category.name, resolvedLocale, defaultLocale).trim()
+                .length > 0,
+    );
+    const sortedCategories = localizedCategories.slice().sort((a, b) => {
         const orderDiff = (a.order ?? 0) - (b.order ?? 0);
         if (orderDiff != 0) return orderDiff;
-        const nameA = pickLocalized(a.name, resolvedLocale, defaultLocale);
-        const nameB = pickLocalized(b.name, resolvedLocale, defaultLocale);
+        const nameA = pickLocalizedExact(a.name, resolvedLocale, defaultLocale).trim();
+        const nameB = pickLocalizedExact(b.name, resolvedLocale, defaultLocale).trim();
         return nameA.localeCompare(nameB);
     });
     const selectedCategory = categoryParam
@@ -93,7 +98,11 @@ export default async function SearchPage({
     let { videos, total } = await getVideosList({
         page: requestedPage,
         limit: itemsPerPage,
-        filters,
+        filters: {
+            ...filters,
+            locale: resolvedLocale,
+            fallbackLocale: defaultLocale,
+        },
     });
 
     const totalPages = Math.max(1, Math.ceil(total / itemsPerPage));
@@ -103,7 +112,11 @@ export default async function SearchPage({
         const refreshed = await getVideosList({
             page: currentPage,
             limit: itemsPerPage,
-            filters,
+            filters: {
+                ...filters,
+                locale: resolvedLocale,
+                fallbackLocale: defaultLocale,
+            },
         });
         videos = refreshed.videos;
         total = refreshed.total;
@@ -112,12 +125,12 @@ export default async function SearchPage({
     const categoryNameMap = new Map(
         sortedCategories.map((category) => [
             category.id,
-            pickLocalized(category.name, resolvedLocale, defaultLocale),
+            pickLocalizedExact(category.name, resolvedLocale, defaultLocale).trim(),
         ])
     );
 
     const displayItems = videos.map((video, index) => {
-        const title = pickLocalized(video.title, resolvedLocale, defaultLocale);
+        const title = pickLocalizedExact(video.title, resolvedLocale, defaultLocale).trim();
         const slug = pickLocalized(video.slug, resolvedLocale, defaultLocale);
         return {
             id: video.id,
@@ -204,11 +217,11 @@ export default async function SearchPage({
                             {allLabel}
                         </Link>
                         {sortedCategories.map((category) => {
-                            const label = pickLocalized(
+                            const label = pickLocalizedExact(
                                 category.name,
                                 resolvedLocale,
                                 defaultLocale
-                            );
+                            ).trim();
                             return (
                                 <Link
                                     key={category.id}

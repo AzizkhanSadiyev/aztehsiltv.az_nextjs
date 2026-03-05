@@ -18,6 +18,7 @@ import {
   pickLocalized,
   toJsonOrNull,
 } from "@/lib/localization";
+import { slugify } from "@/lib/slugify";
 import type { LocalizedString } from "@/types/admin.types";
 
 type CategoryRow = {
@@ -58,24 +59,6 @@ const normalizePositions = (positions?: number[] | null): number[] => {
   return Array.from(new Set(cleaned));
 };
 
-const generateSlug = (value: string): string => {
-  return value
-    .normalize("NFKD")
-    .toLowerCase()
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/ə/g, "e")
-    .replace(/ı/g, "i")
-    .replace(/ş/g, "s")
-    .replace(/ğ/g, "g")
-    .replace(/ç/g, "c")
-    .replace(/ö/g, "o")
-    .replace(/ü/g, "u")
-    .replace(/[^a-z0-9\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .trim();
-};
-
 export const resolveCategorySlug = (
   name: LocalizedString,
   slug?: string | null,
@@ -86,7 +69,7 @@ export const resolveCategorySlug = (
     pickLocalized(name, defaultLocale, defaultLocale) ||
     Object.values(name || {}).find((value) => value.trim().length > 0) ||
     "";
-  return generateSlug(source);
+  return slugify(source);
 };
 
 function mapRow(row: CategoryRow): Category {

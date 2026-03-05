@@ -17,6 +17,7 @@ import {
   normalizeLocalizedNullable,
   toJsonOrNull,
 } from "@/lib/localization";
+import { slugify } from "@/lib/slugify";
 
 type BroadcastRow = {
   id: string;
@@ -28,15 +29,6 @@ type BroadcastRow = {
   sort_order: number;
   created_at: Date;
   updated_at: Date;
-};
-
-const generateSlug = (value: string): string => {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .trim();
 };
 
 function mapRow(row: BroadcastRow): Broadcast {
@@ -130,7 +122,7 @@ export async function createBroadcast(
   const title = normalizeLocalized(input.title);
   const slug = input.slug
     ? normalizeLocalized(input.slug)
-    : buildSlugMap(title, generateSlug);
+    : buildSlugMap(title, slugify);
   const description = input.description ?? null;
 
   await insert(

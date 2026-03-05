@@ -19,7 +19,7 @@ import SliderExplore, {
 import TopVideo from "@/components/TopVideo/TopVideo";
 import { getPublishedPartners } from "@/lib/data/partners.data";
 import { getActiveCategories } from "@/lib/data/categories.data";
-import { pickLocalized } from "@/lib/localization";
+import { pickLocalized, pickLocalizedExact } from "@/lib/localization";
 import {
     getPublishedVideos,
     getPublishedVideoCountsByCategory,
@@ -37,7 +37,10 @@ export default async function HomePage({
 
     const categories = await getActiveCategories();
     const partners = await getPublishedPartners();
-    const counts = await getPublishedVideoCountsByCategory();
+    const counts = await getPublishedVideoCountsByCategory({
+        locale: resolvedLocale,
+        fallbackLocale: defaultLocale,
+    });
 
     const fallbackImages = [
         "/assets/images/card_1.png",
@@ -93,27 +96,24 @@ export default async function HomePage({
         activeCategories.map((category) => [category.id, category]),
     );
 
+    const getLocalizedCategoryName = (category: (typeof activeCategories)[number]) =>
+        pickLocalizedExact(category.name, resolvedLocale, defaultLocale).trim();
+
     const getCategoryLabel = (id?: string | null) => {
         if (!id) return "";
         const category = categoryById.get(id);
         if (!category) return "";
-        return (
-            pickLocalized(category.name, resolvedLocale, defaultLocale) ||
-            category.slug
-        );
+        return getLocalizedCategoryName(category);
     };
 
-    const getVideoTitle = (video: Video) => {
-        const title = pickLocalized(video.title, resolvedLocale, defaultLocale);
-        if (title) return title;
-        return (
-            pickLocalized(video.slug, resolvedLocale, defaultLocale) ||
-            "Video"
-        );
-    };
+    const getVideoTitle = (video: Video) =>
+        pickLocalizedExact(video.title, resolvedLocale, defaultLocale).trim();
 
     const getVideoSlug = (video: Video) =>
         pickLocalized(video.slug, resolvedLocale, defaultLocale);
+
+    const hasLocalizedTitle = (video: Video) =>
+        getVideoTitle(video).length > 0;
 
     const getVideoCategoryId = (video: Video) =>
         video.categoryId ?? video.categoryIds?.[0] ?? null;
@@ -121,11 +121,7 @@ export default async function HomePage({
     const findCategory = (slugCandidates: string[], nameCandidates: string[]) =>
         activeCategories.find((category) => {
             if (slugCandidates.includes(category.slug)) return true;
-            const label = pickLocalized(
-                category.name,
-                resolvedLocale,
-                defaultLocale,
-            );
+            const label = getLocalizedCategoryName(category);
             return nameCandidates.some(
                 (name) => normalizeKey(label) === normalizeKey(name),
             );
@@ -150,6 +146,12 @@ export default async function HomePage({
               (category) => category.parentId === broadcastParent.id,
           )
         : [];
+    const localizedExploreChildren = exploreChildren.filter(
+        (category) => getLocalizedCategoryName(category).trim().length > 0,
+    );
+    const localizedBroadcastChildren = broadcastChildren.filter(
+        (category) => getLocalizedCategoryName(category).trim().length > 0,
+    );
 
     const exploreAllLabel =
         resolvedLocale === "az"
@@ -164,21 +166,19 @@ export default async function HomePage({
             title: exploreAllLabel,
             slug: categoryBasePath,
         },
-        ...exploreChildren
+        ...localizedExploreChildren
             .filter((item) => item.slug !== "butun-bolmeler")
             .slice()
             .sort((a, b) => {
                 const orderDiff = (a.order ?? 0) - (b.order ?? 0);
                 if (orderDiff !== 0) return orderDiff;
-                const nameA = pickLocalized(a.name, resolvedLocale, defaultLocale);
-                const nameB = pickLocalized(b.name, resolvedLocale, defaultLocale);
+                const nameA = getLocalizedCategoryName(a);
+                const nameB = getLocalizedCategoryName(b);
                 return nameA.localeCompare(nameB);
             })
             .map((item, index) => ({
                 id: index + 1,
-                title:
-                    pickLocalized(item.name, resolvedLocale, defaultLocale) ||
-                    item.slug,
+                title: getLocalizedCategoryName(item),
                 slug: `${categoryBasePath}?category=${encodeURIComponent(
                     item.slug,
                 )}`,
@@ -186,19 +186,18 @@ export default async function HomePage({
     ];
 
     const videoCountLabel = resolvedLocale === "ru" ? "видео" : "video";
-    const broadcastItems: BroadcastItem[] = broadcastChildren
+    const broadcastItems: BroadcastItem[] = localizedBroadcastChildren
         .slice()
         .sort((a, b) => {
             const orderDiff = (a.order ?? 0) - (b.order ?? 0);
             if (orderDiff !== 0) return orderDiff;
-            const nameA = pickLocalized(a.name, resolvedLocale, defaultLocale);
-            const nameB = pickLocalized(b.name, resolvedLocale, defaultLocale);
+            const nameA = getLocalizedCategoryName(a);
+            const nameB = getLocalizedCategoryName(b);
             return nameA.localeCompare(nameB);
         })
         .map((item, index) => ({
             id: index + 1,
-            title:
-                pickLocalized(item.name, resolvedLocale, defaultLocale) || item.slug,
+            title: getLocalizedCategoryName(item),
             count: `${counts[item.id] ?? 0} ${videoCountLabel}`,
             image:
                 item.coverUrl ||
@@ -232,6 +231,11 @@ export default async function HomePage({
         ["Shorts", "Short videolar", "Short videos"],
     );
 
+    const listLocale = {
+        locale: resolvedLocale,
+        fallbackLocale: defaultLocale,
+    };
+
     const [
         manshetVideosRaw,
         shortVideosRaw,
@@ -244,38 +248,67 @@ export default async function HomePage({
         educationVideosRaw,
         podcastVideosRaw,
     ] = await Promise.all([
-        getPublishedVideos({ flags: { isManshet: true }, limit: 200 }),
+        getPublishedVideos({ flags: { isManshet: true }, limit: 200, ...listLocale }),
         shortCategory
-            ? getPublishedVideos({ categoryId: shortCategory.id, limit: 12 })
-            : getPublishedVideos({ flags: { isShort: true }, limit: 12 }),
-        getPublishedVideos({ flags: { isSidebar: true }, limit: 6 }),
-        getPublishedVideos({ flags: { isTopVideo: true }, limit: 12 }),
-        getPublishedVideos({ limit: 16 }),
+            ? getPublishedVideos({
+                  categoryId: shortCategory.id,
+                  limit: 12,
+                  ...listLocale,
+              })
+            : getPublishedVideos({ flags: { isShort: true }, limit: 12, ...listLocale }),
+        getPublishedVideos({ flags: { isSidebar: true }, limit: 6, ...listLocale }),
+        getPublishedVideos({ flags: { isTopVideo: true }, limit: 12, ...listLocale }),
+        getPublishedVideos({ limit: 16, ...listLocale }),
         overseasCategory
-            ? getPublishedVideos({ categoryId: overseasCategory.id, limit: 12 })
+            ? getPublishedVideos({
+                  categoryId: overseasCategory.id,
+                  limit: 12,
+                  ...listLocale,
+              })
             : Promise.resolve([] as Video[]),
         researchCategory
-            ? getPublishedVideos({ categoryId: researchCategory.id, limit: 12 })
+            ? getPublishedVideos({
+                  categoryId: researchCategory.id,
+                  limit: 12,
+                  ...listLocale,
+              })
             : Promise.resolve([] as Video[]),
         successCategory
-            ? getPublishedVideos({ categoryId: successCategory.id, limit: 12 })
+            ? getPublishedVideos({
+                  categoryId: successCategory.id,
+                  limit: 12,
+                  ...listLocale,
+              })
             : Promise.resolve([] as Video[]),
         educationCategory
-            ? getPublishedVideos({ categoryId: educationCategory.id, limit: 12 })
+            ? getPublishedVideos({
+                  categoryId: educationCategory.id,
+                  limit: 12,
+                  ...listLocale,
+              })
             : Promise.resolve([] as Video[]),
         podcastCategory
-            ? getPublishedVideos({ categoryId: podcastCategory.id, limit: 12 })
+            ? getPublishedVideos({
+                  categoryId: podcastCategory.id,
+                  limit: 12,
+                  ...listLocale,
+              })
             : Promise.resolve([] as Video[]),
     ]);
 
-    const latestVideos = latestVideosRaw ?? [];
-    const manshetVideos = manshetVideosRaw;
-    const shortVideos = shortVideosRaw;
-    const sidebarVideos = sidebarVideosRaw.length
-        ? sidebarVideosRaw
+    const filterLocalizedVideos = (videos: Video[]) =>
+        videos.filter((video) => hasLocalizedTitle(video));
+
+    const latestVideos = filterLocalizedVideos(latestVideosRaw ?? []);
+    const manshetVideos = filterLocalizedVideos(manshetVideosRaw);
+    const shortVideos = filterLocalizedVideos(shortVideosRaw);
+    const sidebarCandidates = filterLocalizedVideos(sidebarVideosRaw);
+    const sidebarVideos = sidebarCandidates.length
+        ? sidebarCandidates
         : latestVideos.slice(0, 6);
-    const topVideo = topVideosRaw.length
-        ? topVideosRaw
+    const topVideoCandidates = filterLocalizedVideos(topVideosRaw);
+    const topVideo = topVideoCandidates.length
+        ? topVideoCandidates
               .slice()
               .sort((a, b) => {
                   const dateA = new Date(
@@ -312,11 +345,21 @@ export default async function HomePage({
     const latestItems: NewsItem[] = latestVideos.map(mapVideoToItem);
     const sidebarItems: NewsItem[] = sidebarVideos.map(mapVideoToItem);
 
-    const overseasItems: NewsItem[] = overseasVideosRaw.map(mapVideoToItem);
-    const researchItems: NewsItem[] = researchVideosRaw.map(mapVideoToItem);
-    const successItems: NewsItem[] = successVideosRaw.map(mapVideoToItem);
-    const educationItems: NewsItem[] = educationVideosRaw.map(mapVideoToItem);
-    const podcastItems: NewsItem[] = podcastVideosRaw.map(mapVideoToItem);
+    const overseasItems: NewsItem[] = filterLocalizedVideos(
+        overseasVideosRaw,
+    ).map(mapVideoToItem);
+    const researchItems: NewsItem[] = filterLocalizedVideos(
+        researchVideosRaw,
+    ).map(mapVideoToItem);
+    const successItems: NewsItem[] = filterLocalizedVideos(
+        successVideosRaw,
+    ).map(mapVideoToItem);
+    const educationItems: NewsItem[] = filterLocalizedVideos(
+        educationVideosRaw,
+    ).map(mapVideoToItem);
+    const podcastItems: NewsItem[] = filterLocalizedVideos(
+        podcastVideosRaw,
+    ).map(mapVideoToItem);
 
     const resolveSlug = (slug?: string) => {
         if (!slug || slug === "#") return "#";

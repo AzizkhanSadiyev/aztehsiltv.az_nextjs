@@ -14,7 +14,13 @@ import {
     getPublishedVideoBySlug,
     getPublishedVideos,
 } from "@/lib/data/videos.data";
-import { pickLocalized } from "@/lib/localization";
+import {
+    pickLocalized,
+    pickLocalizedExact,
+    safeLocaleKey,
+} from "@/lib/localization";
+import { getSiteSettings } from "@/lib/data/settings.data";
+import type { Video } from "@/types/video.types";
 
 export const dynamic = "force-dynamic";
 
@@ -119,12 +125,15 @@ export default async function VideoDetailPage({
     params: Promise<{ locale: string; slug: string }>;
 }) {
     const { locale, slug } = await params;
-    const resolvedLocale = locale as Locale;
+    const settings = await getSiteSettings();
+    const fallbackLocale =
+        settings.localization?.defaultLocale || defaultLocale;
+    const resolvedLocale = (locale || fallbackLocale) as Locale;
 
     const video = await getPublishedVideoBySlug(
         slug,
         resolvedLocale,
-        defaultLocale
+        fallbackLocale
     );
     if (!video) {
         notFound();
@@ -135,18 +144,47 @@ export default async function VideoDetailPage({
     const categoryMap = new Map(
         categories.map((category) => [
             category.id,
-            pickLocalized(category.name, resolvedLocale, defaultLocale),
+            pickLocalizedExact(category.name, resolvedLocale, fallbackLocale).trim(),
         ])
     );
 
     const categoryBasePath = `/${locale}/categories`;
-    const title =
-        pickLocalized(video.title, resolvedLocale, defaultLocale) || "Video";
-    const descriptionHtml = pickLocalized(
+    const safeLocale = safeLocaleKey(resolvedLocale, fallbackLocale);
+    const localizedTitle = pickLocalizedExact(
+        video.title,
+        resolvedLocale,
+        fallbackLocale
+    );
+    if (!localizedTitle.trim()) {
+        notFound();
+    }
+    const title = localizedTitle.trim();
+    const rawDescription = pickLocalizedExact(
         video.description ?? {},
         resolvedLocale,
-        defaultLocale
+        fallbackLocale
     );
+    const escapeHtml = (value: string) =>
+        value
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/\"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    const normalizeDescriptionHtml = (value: string) => {
+        const trimmed = value.trim();
+        if (!trimmed) return "";
+        if (/<[a-z][\s\S]*>/i.test(trimmed)) {
+            return trimmed;
+        }
+        return trimmed
+            .split(/\n{2,}/)
+            .map((block) =>
+                `<p>${escapeHtml(block).replace(/\n/g, "<br />")}</p>`
+            )
+            .join("");
+    };
+    const descriptionHtml = normalizeDescriptionHtml(rawDescription);
     const metaCategory = video.categoryId
         ? categoryMap.get(video.categoryId) || "Category"
         : "Category";
@@ -154,14 +192,12 @@ export default async function VideoDetailPage({
     const metaViews = formatViews(video.views ?? 0, resolvedLocale);
     const tagsByLocale =
         (video.metadata as any)?.tagsByLocale || null;
-    const localizedTags = Array.isArray(tagsByLocale?.[resolvedLocale])
-        ? tagsByLocale[resolvedLocale]
-        : Array.isArray(tagsByLocale?.[defaultLocale])
-          ? tagsByLocale[defaultLocale]
-          : [];
+    const localizedTags = Array.isArray(tagsByLocale?.[safeLocale])
+        ? tagsByLocale[safeLocale]
+        : [];
     const tagItems = localizedTags.length
         ? localizedTags
-        : Array.isArray(video.tags)
+        : safeLocale === fallbackLocale && Array.isArray(video.tags)
           ? video.tags
           : [];
 
@@ -231,7 +267,20 @@ export default async function VideoDetailPage({
         return `${categoryBasePath}/${slugValue}`;
     };
 
-    const sidebarSource = await getPublishedVideos({ limit: 12 });
+    const hasLocalizedTitle = (item: Video) => {
+        const title = pickLocalizedExact(
+            item.title,
+            resolvedLocale,
+            fallbackLocale
+        ).trim();
+        return title.length > 0;
+    };
+
+    const sidebarSource = (await getPublishedVideos({
+        limit: 12,
+        locale: resolvedLocale,
+        fallbackLocale,
+    })).filter((item) => hasLocalizedTitle(item));
     const sidebarCandidates = sidebarSource.filter(
         (item) => item.id !== video.id
     );
@@ -241,19 +290,19 @@ export default async function VideoDetailPage({
     )
         .slice(0, 8)
         .map((item, index) => {
-            const itemTitle = pickLocalized(
+            const itemTitle = pickLocalizedExact(
                 item.title,
                 resolvedLocale,
-                defaultLocale
-            );
+                fallbackLocale
+            ).trim();
             const itemSlug = pickLocalized(
                 item.slug,
                 resolvedLocale,
-                defaultLocale
+                fallbackLocale
             );
             return {
                 id: item.id,
-                title: itemTitle || "Video",
+                title: itemTitle,
                 image:
                     item.coverUrl ||
                     fallbackImages[index % fallbackImages.length],
@@ -262,7 +311,8 @@ export default async function VideoDetailPage({
                 duration: item.duration ?? "",
                 slug: itemSlug || "#",
             };
-        });
+        })
+        .filter((item) => item.title.trim().length > 0);
 
     const relatedCategoryId =
         video.categoryId || video.categoryIds?.[0] || null;
@@ -270,10 +320,13 @@ export default async function VideoDetailPage({
         ? (await getPublishedVideos({
               categoryId: relatedCategoryId,
               limit: 8,
+              locale: resolvedLocale,
+              fallbackLocale,
           })).filter(
               (item) =>
-                  item.categoryId === relatedCategoryId ||
-                  item.categoryIds?.includes(relatedCategoryId),
+                  hasLocalizedTitle(item) &&
+                  (item.categoryId === relatedCategoryId ||
+                      item.categoryIds?.includes(relatedCategoryId)),
           )
         : [];
 
@@ -281,19 +334,19 @@ export default async function VideoDetailPage({
         .filter((item) => item.id !== video.id)
         .slice(0, 4)
         .map((item, index) => {
-            const itemTitle = pickLocalized(
+            const itemTitle = pickLocalizedExact(
                 item.title,
                 resolvedLocale,
-                defaultLocale
-            );
+                fallbackLocale
+            ).trim();
             const itemSlug = pickLocalized(
                 item.slug,
                 resolvedLocale,
-                defaultLocale
+                fallbackLocale
             );
             return {
                 id: item.id,
-                title: itemTitle || "Video",
+                title: itemTitle,
                 image:
                     item.coverUrl ||
                     fallbackImages[(index + 1) % fallbackImages.length],
@@ -310,7 +363,8 @@ export default async function VideoDetailPage({
                 slug: itemSlug || "#",
                 type: item.type ?? "video",
             };
-        });
+        })
+        .filter((item) => item.title.trim().length > 0);
 
     const shareLabel = dict?.news?.shareNews ?? "Share";
     const relatedLabel = dict?.news?.relatedNews ?? "Related videos";

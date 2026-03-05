@@ -7,7 +7,7 @@ import Pagination from "@/components/Pagination/Pagination";
 import styles from "./page.module.css";
 import { getActiveCategories } from "@/lib/data/categories.data";
 import { getPublishedVideoCountsByCategory } from "@/lib/data/videos.data";
-import { pickLocalized } from "@/lib/localization";
+import { pickLocalizedExact } from "@/lib/localization";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +23,10 @@ export default async function BroadcastsPage({
     const resolvedSearchParams = await searchParams;
     const resolvedLocale = locale as Locale;
     const categories = await getActiveCategories();
-    const counts = await getPublishedVideoCountsByCategory();
+    const counts = await getPublishedVideoCountsByCategory({
+        locale: resolvedLocale,
+        fallbackLocale: defaultLocale,
+    });
 
     const normalizeKey = (value: string) =>
         value
@@ -40,10 +43,13 @@ export default async function BroadcastsPage({
             .replace(/[^a-z0-9]+/g, "-")
             .replace(/^-+|-+$/g, "");
 
+    const getLocalizedCategoryName = (category: (typeof categories)[number]) =>
+        pickLocalizedExact(category.name, resolvedLocale, defaultLocale).trim();
+
     const findParent = () =>
         categories.find((category) => {
             const slug = category.slug;
-            const name = pickLocalized(category.name, resolvedLocale, defaultLocale);
+            const name = getLocalizedCategoryName(category);
             const normalized = normalizeKey(name);
             return (
                 slug === "verilisler" ||
@@ -58,18 +64,21 @@ export default async function BroadcastsPage({
     const children = parent
         ? categories.filter((category) => category.parentId === parent.id)
         : [];
+    const localizedChildren = children.filter(
+        (category) => getLocalizedCategoryName(category).trim().length > 0,
+    );
 
-    const broadcastItems = children
+    const broadcastItems = localizedChildren
         .slice()
         .sort((a, b) => {
             const orderDiff = (a.order ?? 0) - (b.order ?? 0);
             if (orderDiff !== 0) return orderDiff;
-            const nameA = pickLocalized(a.name, resolvedLocale, defaultLocale);
-            const nameB = pickLocalized(b.name, resolvedLocale, defaultLocale);
+            const nameA = getLocalizedCategoryName(a);
+            const nameB = getLocalizedCategoryName(b);
             return nameA.localeCompare(nameB);
         })
         .map((item, index) => {
-            const title = pickLocalized(item.name, resolvedLocale, defaultLocale);
+            const title = getLocalizedCategoryName(item);
             const count = counts[item.id] ?? 0;
             const image =
                 item.coverUrl ||

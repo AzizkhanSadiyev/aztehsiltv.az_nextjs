@@ -6,7 +6,7 @@ import NewsCard from "@/components/NewsCard/Card";
 import Pagination from "@/components/Pagination/Pagination";
 import { getCategoryBySlug } from "@/lib/data/categories.data";
 import { getVideosList } from "@/lib/data/videos.data";
-import { pickLocalized } from "@/lib/localization";
+import { pickLocalized, pickLocalizedExact } from "@/lib/localization";
 import styles from "../page.module.css";
 
 export const dynamic = "force-dynamic";
@@ -55,6 +55,14 @@ export default async function BroadcastCategoryPage({
     if (!category) {
         notFound();
     }
+    const categoryLabel = pickLocalizedExact(
+        category.name,
+        resolvedLocale,
+        defaultLocale
+    ).trim();
+    if (!categoryLabel) {
+        notFound();
+    }
 
     const itemsPerPage = 16;
     const pageParam = Array.isArray(resolvedSearchParams?.page)
@@ -71,7 +79,11 @@ export default async function BroadcastCategoryPage({
     let { videos, total } = await getVideosList({
         page: requestedPage,
         limit: itemsPerPage,
-        filters,
+        filters: {
+            ...filters,
+            locale: resolvedLocale,
+            fallbackLocale: defaultLocale,
+        },
     });
 
     const totalPages = Math.max(1, Math.ceil(total / itemsPerPage));
@@ -81,19 +93,18 @@ export default async function BroadcastCategoryPage({
         const refreshed = await getVideosList({
             page: currentPage,
             limit: itemsPerPage,
-            filters,
+            filters: {
+                ...filters,
+                locale: resolvedLocale,
+                fallbackLocale: defaultLocale,
+            },
         });
         videos = refreshed.videos;
         total = refreshed.total;
     }
 
-    const categoryLabel =
-        pickLocalized(category.name, resolvedLocale, defaultLocale) ||
-        category.slug ||
-        "Broadcasts";
-
     const displayItems = videos.map((video, index) => {
-        const title = pickLocalized(video.title, resolvedLocale, defaultLocale);
+        const title = pickLocalizedExact(video.title, resolvedLocale, defaultLocale).trim();
         const slugValue = pickLocalized(video.slug, resolvedLocale, defaultLocale);
         return {
             id: video.id,

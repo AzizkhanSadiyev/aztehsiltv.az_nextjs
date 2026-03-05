@@ -5,6 +5,10 @@
 
 import mysql from 'mysql2/promise';
 
+const globalForDb = globalThis as typeof globalThis & {
+  __mysqlPool?: mysql.Pool;
+};
+
 // Database configuration from environment variables
 const dbConfig = {
   host: process.env.DB_HOST || 'localhost',
@@ -29,12 +33,22 @@ const CONNECTION_ERROR_CODES = new Set([
   'ECONNREFUSED',
   'ETIMEDOUT',
   'EPIPE',
+  'POOL_CLOSED',
+  'ERR_POOL_CLOSED',
+  'ER_POOL_CLOSED',
+  'POOL_ENDED',
 ]);
 
 function isConnectionError(error: unknown): boolean {
   if (!error || typeof error !== 'object') return false;
   const code = (error as { code?: string }).code;
-  return Boolean(code && CONNECTION_ERROR_CODES.has(code));
+  const message = (error as { message?: string }).message;
+  if (code && CONNECTION_ERROR_CODES.has(code)) return true;
+  if (typeof message === 'string') {
+    const normalized = message.toLowerCase();
+    if (normalized.includes('pool is closed')) return true;
+  }
+  return false;
 }
 
 async function getConnectionWithRetry(): Promise<mysql.PoolConnection> {
@@ -81,7 +95,19 @@ async function withConnection<T>(
  */
 export function getPool(): mysql.Pool {
   if (!pool) {
+    pool = globalForDb.__mysqlPool ?? null;
+  }
+  if (pool) {
+    const anyPool = pool as { _closed?: boolean; closed?: boolean; _ending?: boolean; ended?: boolean };
+    if (anyPool._closed || anyPool.closed || anyPool._ending || anyPool.ended) {
+      pool = null;
+    }
+  }
+  if (!pool) {
     pool = mysql.createPool(dbConfig);
+    if (process.env.NODE_ENV !== 'production') {
+      globalForDb.__mysqlPool = pool;
+    }
   }
   return pool;
 }
@@ -228,8 +254,14 @@ export async function checkConnection(): Promise<boolean> {
  */
 export async function closePool(): Promise<void> {
   if (pool) {
-    await pool.end();
-    pool = null;
+    try {
+      await pool.end();
+    } finally {
+      pool = null;
+      if (globalForDb.__mysqlPool) {
+        globalForDb.__mysqlPool = undefined;
+      }
+    }
   }
 }
 

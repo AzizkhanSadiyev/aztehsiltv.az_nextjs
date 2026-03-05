@@ -36,6 +36,12 @@ export async function generateMetadata({
             fallbackLocale,
         ) ||
         pickLocalized(settings.site?.description, locale, fallbackLocale);
+    const ogTitle =
+        pickLocalized(settings.seo?.ogTitle, locale, fallbackLocale) || title;
+    const ogDescription =
+        pickLocalized(settings.seo?.ogDescription, locale, fallbackLocale) ||
+        description;
+    const ogImageUrl = settings.seo?.ogImageUrl?.trim() || "";
 
     const metadata: Metadata = {};
     if (title) metadata.title = title;
@@ -46,6 +52,14 @@ export async function generateMetadata({
         } catch {
             // ignore invalid url
         }
+    }
+    if (ogTitle || ogDescription || ogImageUrl) {
+        metadata.openGraph = {
+            title: ogTitle || undefined,
+            description: ogDescription || undefined,
+            type: "website",
+            images: ogImageUrl ? [{ url: ogImageUrl }] : undefined,
+        };
     }
     return metadata;
 }

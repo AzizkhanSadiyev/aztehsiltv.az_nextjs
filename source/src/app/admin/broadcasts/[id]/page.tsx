@@ -22,6 +22,7 @@ import { useToast } from "@/components/admin/ui/ToastProvider";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Image as ImageIcon, X } from "lucide-react";
+import { slugify } from "@/lib/slugify";
 
 interface BroadcastFormData {
   title: string;
@@ -30,15 +31,6 @@ interface BroadcastFormData {
   imageUrl: string;
   status: "draft" | "published";
   sortOrder: number;
-}
-
-function generateSlug(title: string): string {
-  return title
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .trim();
 }
 
 export default function BroadcastEditPage() {
@@ -105,7 +97,7 @@ export default function BroadcastEditPage() {
     if (autoSlug && formData.title) {
       setFormData((prev) => ({
         ...prev,
-        slug: generateSlug(prev.title),
+        slug: slugify(prev.title),
       }));
     }
   }, [formData.title, autoSlug]);
